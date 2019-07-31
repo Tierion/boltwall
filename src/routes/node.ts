@@ -5,7 +5,7 @@ import { LndRequest } from '../typings/request'
 
 const router: Router = express.Router()
 
-router.get('/', async (req: LndRequest, res: Response) => {
+router.get('/node', async (req: LndRequest, res: Response) => {
   if (req.lnd) {
     const { public_key, alias } = await lnService.getWalletInfo({
       lnd: req.lnd,

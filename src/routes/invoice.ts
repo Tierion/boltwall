@@ -11,7 +11,7 @@ import {
 
 const router: Router = express.Router()
 
-router.post('/', async (req: LndRequest, res: Response) => {
+router.post('/invoice', async (req: LndRequest, res: Response) => {
   console.log('Request to create a new invoice')
   try {
     const invoice = await createInvoice(req)
@@ -22,7 +22,7 @@ router.post('/', async (req: LndRequest, res: Response) => {
   }
 })
 
-router.get('/', async (req: LndRequest, res: Response) => {
+router.get('/invoice', async (req: LndRequest, res: Response) => {
   let invoiceId = req.query.id
 
   // if the query doesn't have an id, but we have a root macaroon, we can

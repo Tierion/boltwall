@@ -31,7 +31,7 @@
     lodash.camelcase "^4.3.0"
     protobufjs "^6.8.6"
 
-"@now/node@^0.12.1":
+"@now/node@0.12.1":
   version "0.12.1"
   resolved "https://registry.yarnpkg.com/@now/node/-/node-0.12.1.tgz#8cceae1bf8ee37d448cb3adeb6ccc5e47889d9a9"
   integrity sha512-4Oxd9m9uD55AFbF9adsqgJkPUIEw2P6joBpLuB7s1PcQv58yRZo5aoZcVKH+d/SCEY9IcdAv24HbnQ9mf8pZ3Q==
@@ -106,7 +106,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/cookie-session@^2.0.37":
+"@types/cookie-session@2.0.37":
   version "2.0.37"
   resolved "https://registry.yarnpkg.com/@types/cookie-session/-/cookie-session-2.0.37.tgz#1a981defe81f2db73576203103605f505d12cb12"
   integrity sha512-h8uZLDGyfAgER6kHbHlYWm1g/P/7zCBMOW6yT5/fQydVJxByJD4tohSvHBzJrGoLVmQJefQdfwuNkKb23cq29Q==
@@ -114,14 +114,19 @@
     "@types/express" "*"
     "@types/keygrip" "*"
 
-"@types/cors@^2.8.5":
+"@types/cors@2.8.5":
   version "2.8.5"
   resolved "https://registry.yarnpkg.com/@types/cors/-/cors-2.8.5.tgz#c0c54c4e643e1d943d447292f2baf9dc82cfc8ec"
   integrity sha512-GmK8AKu8i+s+EChK/uZ5IbrXPcPaQKWaNSGevDT/7o3gFObwSUQwqb1jMqxuo+YPvj0ckGzINI+EO7EHcmJjKg==
   dependencies:
     "@types/express" "*"
 
-"@types/dotenv@^6.1.1":
+"@types/debug@0.0.31":
+  version "0.0.31"
+  resolved "https://registry.yarnpkg.com/@types/debug/-/debug-0.0.31.tgz#bac8d8aab6a823e91deb7f79083b2a35fa638f33"
+  integrity sha512-LS1MCPaQKqspg7FvexuhmDbWUhE2yIJ+4AgVIyObfc06/UKZ8REgxGNjZc82wPLWmbeOm7S+gSsLgo75TanG4A==
+
+"@types/dotenv@6.1.1":
   version "6.1.1"
   resolved "https://registry.yarnpkg.com/@types/dotenv/-/dotenv-6.1.1.tgz#f7ce1cc4fe34f0a4373ba99fefa437b0bec54b46"
   integrity sha512-ftQl3DtBvqHl9L16tpqqzA4YzCSXZfi7g8cQceTz5rOlYtk/IZbFjAv3mLOQlNIgOaylCQWQoBdDQHPgEBJPHg==
@@ -355,6 +360,11 @@ array-flatten@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/array-flatten/-/array-flatten-1.1.1.tgz#9a5f699051b1e7073328f2a008968b64ea2955d2"
   integrity sha1-ml9pkFGx5wczKPKgCJaLZOopVdI=
+
+array-flatten@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/array-flatten/-/array-flatten-2.1.2.tgz#24ef80a28c1a893617e2149b0c6d0d788293b099"
+  integrity sha512-hNfzcOV8W4NdualtqBFPyVO+54DSJuZGY9qT4pRroB6S9e3iiido2ISIC5h9R2sPJ8H3FHCIiEnsv1lPXO3KtQ==
 
 array-unique@^0.3.2:
   version "0.3.2"
@@ -871,6 +881,15 @@ component-emitter@^1.2.1:
   resolved "https://registry.yarnpkg.com/component-emitter/-/component-emitter-1.3.0.tgz#16e4070fba8ae29b679f2215853ee181ab2eabc0"
   integrity sha512-Rd3se6QB+sO1TwqZjscQrurpEPIfO0/yYnSin6Q/rD3mOutHvUrCAhJub3r90uNb+SESBuE0QYoB90YdfatsRg==
 
+compose-middleware@5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/compose-middleware/-/compose-middleware-5.0.1.tgz#4c0adb751afdde45d637a7a0b361095e510fafff"
+  integrity sha512-Rcv19QgPOtYHu8wDJsu4ehSfkqSXjQLwKRXhIy9TFiIijSZz330ORyLCeirb4sPuBBbDNC5lUvQLuM72vWjKSQ==
+  dependencies:
+    "@types/debug" "0.0.31"
+    array-flatten "^2.1.2"
+    debug "^4.1.0"
+
 compressible@~2.0.16:
   version "2.0.17"
   resolved "https://registry.yarnpkg.com/compressible/-/compressible-2.0.17.tgz#6e8c108a16ad58384a977f3a482ca20bff2f38c1"
@@ -1053,7 +1072,7 @@ debug@^3.1.0, debug@^3.2.6:
   dependencies:
     ms "^2.1.1"
 
-debug@^4.0.1:
+debug@^4.0.1, debug@^4.1.0:
   version "4.1.1"
   resolved "https://registry.yarnpkg.com/debug/-/debug-4.1.1.tgz#3b72260255109c6b589cee050f1d516139664791"
   integrity sha512-pYAIzeRo8J6KPEaJ0VWOh5Pzkbw/RetuzehGM7QRRX5he4fPHx2rdKMB256ehJCkX+XRQm16eZLqLNS8RSZXZw==
@@ -1146,7 +1165,7 @@ dot-prop@^4.1.0:
   dependencies:
     is-obj "^1.0.0"
 
-dotenv@8.0.0, dotenv@^8.0.0:
+dotenv@8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.0.0.tgz#ed310c165b4e8a97bb745b0a9d99c31bda566440"
   integrity sha512-30xVGqjLjiUOArT4+M5q9sYdvuR4riM6yK9wMcas9Vbp6zZa+ocC9dp6QoftuhTPhFAiLK/0C5Ni2nou/Bk8lg==

@@ -1,35 +1,38 @@
-import express from 'express'
 import cookieSession from 'cookie-session'
-const cors = require('cors')
-var bodyParser = require('body-parser')
+import { compose } from 'compose-middleware'
 
-const app: express.Application = express()
+import { node, invoice } from './routes'
+import { parseEnvVars } from './middleware'
+import { getEnvVars } from './helpers'
 
-// middleware
-app.use(cors())
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
-// parse application/json
-app.use(bodyParser.json())
+const { SESSION_SECRET } = getEnvVars()
+
+const keys = SESSION_SECRET ? [SESSION_SECRET] : []
 
 // a session cookie to store request macaroons in
-app.use(
-  cookieSession({
-    name: 'macaroon',
-    maxAge: 86400000,
-    secret: process.env.SESSION_SECRET,
-    overwrite: true,
-    signed: true,
-  })
-)
+const rootMacaroon = cookieSession({
+  name: 'macaroon',
+  maxAge: 86400000,
+  secret: SESSION_SECRET,
+  keys,
+  overwrite: true,
+  signed: true,
+})
 
 // separate cookie for the discharge macaroon
-app.use(
-  cookieSession({
-    name: 'dischargeMacaroon',
-    maxAge: 86400000,
-    secret: process.env.SESSION_SECRET,
-    overwrite: true,
-    signed: true,
-  })
-)
+const dischargeMacaroon = cookieSession({
+  name: 'dischargeMacaroon',
+  maxAge: 86400000,
+  secret: SESSION_SECRET,
+  keys,
+  overwrite: true,
+  signed: true,
+})
+
+export default compose([
+  parseEnvVars,
+  rootMacaroon,
+  dischargeMacaroon,
+  node,
+  invoice,
+])

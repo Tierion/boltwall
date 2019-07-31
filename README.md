@@ -8,3 +8,5 @@ To run the test server, clone the repo, and from the directory run:
 $ yarn install
 $ yarn start
 ```
+
+See `src/server.ts` for an example of how to use the middleware.
