@@ -1,8 +1,7 @@
 import cookieSession from 'cookie-session'
 import { compose } from 'compose-middleware'
 
-import { node, invoice } from './routes'
-import { parseEnvVars } from './middleware'
+import { node, invoice, parseEnv, boltwall } from './routes'
 import { getEnvVars } from './helpers'
 
 const { SESSION_SECRET } = getEnvVars()
@@ -30,9 +29,10 @@ const dischargeMacaroon = cookieSession({
 })
 
 export default compose([
-  parseEnvVars,
+  parseEnv,
   rootMacaroon,
   dischargeMacaroon,
   node,
   invoice,
+  boltwall,
 ])

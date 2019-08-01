@@ -10,3 +10,9 @@ $ yarn start
 ```
 
 See `src/server.ts` for an example of how to use the middleware.
+
+## API Documentation
+
+Check out the Swagger Docs for detailed API information:
+
+### [Swagger API](https://app.swaggerhub.com/apis-docs/prism8/boltwall/1.0.0)

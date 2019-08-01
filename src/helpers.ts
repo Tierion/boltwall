@@ -9,8 +9,7 @@ import dotenv from 'dotenv'
 import Macaroon from 'macaroons.js/lib/Macaroon'
 const lnService = require('ln-service')
 
-import { LndRequest } from './typings/request'
-import { InvoiceResponse } from './typings/invoice'
+import { LndRequest, InvoiceResponse } from './typings'
 
 export function getEnvVars(): any {
   dotenv.config()
@@ -73,8 +72,13 @@ See README for instructions: https://github.com/bucko13/now-paywall'
  * @params {Object} req - express request object that either contains an lnd or opennode object
  * @returns {Object} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
-export async function createInvoice({ lnd, opennode, body, ip }: LndRequest) {
-  let { time, title, expiresAt, appName } = body // time in seconds
+export async function createInvoice({
+  lnd,
+  opennode,
+  body,
+  ip,
+}: LndRequest): Promise<InvoiceResponse> {
+  let { time, title, expiresAt, appName, amount } = body // time in seconds
 
   if (!appName) appName = `[unknown application @ ${ip}]`
 
@@ -83,12 +87,12 @@ export async function createInvoice({ lnd, opennode, body, ip }: LndRequest) {
   let invoice: InvoiceResponse
   console.log('creating invoice')
   const _description = `Access for ${time} seconds in ${appName} for requested data: ${title}`
-  const tokens = time
+  const tokens = time || amount
   if (lnd) {
     const {
       request: payreq,
       id,
-      description,
+      description = _description,
       created_at: createdAt,
       tokens: amount,
     } = await lnService.createInvoice({
@@ -265,7 +269,7 @@ export function getDischargeMacaroon(
   invoiceId: string,
   location: string,
   caveat: string
-) {
+): string {
   if (!invoiceId) throw new Error('Missing invoiceId in request')
 
   const { CAVEAT_KEY } = getEnvVars()
@@ -296,7 +300,7 @@ export function getDischargeMacaroon(
  * Utility to extract first party caveat value from a serialized root macaroon
  * See `getFirstPartyCaveat` for what this value represents
  */
-export function getFirstPartyCaveatFromMacaroon(serialized: string) {
+export function getFirstPartyCaveatFromMacaroon(serialized: Macaroon) {
   let macaroon = MacaroonsBuilder.deserialize(serialized)
   const firstPartyCaveat = getFirstPartyCaveat()
   for (let caveat of macaroon.caveatPackets) {

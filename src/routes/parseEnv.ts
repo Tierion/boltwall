@@ -1,10 +1,10 @@
 import { Response, NextFunction } from 'express'
 const lnService = require('ln-service')
 
-import { testEnvVars, getEnvVars } from './helpers'
-import { LndRequest } from './typings/request'
+import { testEnvVars, getEnvVars } from '../helpers'
+import { LndRequest } from '../typings/request'
 
-export function parseEnvVars(
+export default function parseEnv(
   req: LndRequest,
   _res: Response,
   next: NextFunction
