@@ -12,5 +12,6 @@
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "allowJs": true
-  }
+  },
+  "exclude": ["./src/server.ts"]
 }

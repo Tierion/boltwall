@@ -28,7 +28,7 @@ const dischargeMacaroon = cookieSession({
   signed: true,
 })
 
-export default compose([
+module.exports = compose([
   parseEnv,
   rootMacaroon,
   dischargeMacaroon,
