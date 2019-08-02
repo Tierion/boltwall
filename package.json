@@ -9,14 +9,13 @@
   "scripts": {
     "start": "nodemon",
     "build": "tsc --project src/tsconfig.json --outDir dist/",
-    "lint": "eslint ./src/**/*.ts",
+    "lint": "eslint ./src/**/*.ts --quiet",
     "prePublish": "npm run build",
     "docs": "typedoc --out docs --tsconfig src/tsconfig.json src/ && touch docs/.nojekyll"
   },
   "husky": {
     "hooks": {
-      "pre-push": "npm run docs",
-      "pre-commit": "npm run lint"
+      "pre-commit": "npm run lint && npm run docs"
     }
   },
   "dependencies": {
