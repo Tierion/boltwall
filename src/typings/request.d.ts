@@ -1,9 +1,9 @@
 import { Request } from 'express'
-import { CaveatConfig } from '.'
+import { BoltwallConfig } from '.'
 
 export interface LndRequest extends Request {
   lnd?: any
   opennode?: any
   hostname: string
-  caveatConfig?: CaveatConfig
+  boltwallConfig?: BoltwallConfig
 }

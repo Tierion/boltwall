@@ -71,22 +71,19 @@ See README for instructions: https://github.com/bucko13/now-paywall'
  * @params {Object} req - express request object that either contains an lnd or opennode object
  * @returns {Object} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
-export async function createInvoice({
-  lnd,
-  opennode,
-  body,
-  ip,
-}: LndRequest): Promise<InvoiceResponse> {
-  let { time, title, expiresAt, appName, amount } = body // time in seconds
+export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
+  const { lnd, opennode, body, boltwallConfig } = req
+  let { time, expiresAt, amount } = body // time in seconds
 
-  if (!appName) appName = `[unknown application @ ${ip}]`
+  let _description
 
-  if (!title) title = '[unknown data]'
+  if (boltwallConfig && boltwallConfig.getInvoiceDescription)
+    _description = boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
-  console.log('creating invoice')
-  const _description = `Access for ${time} seconds in ${appName} for requested data: ${title}`
+
   const tokens = time || amount
+
   if (lnd) {
     const {
       request: payreq,
@@ -214,7 +211,7 @@ export async function checkInvoiceStatus(
 export function validateMacaroons(
   root: Macaroon,
   discharge: Macaroon,
-  exactCaveat: FirstPartyCaveat,
+  firstPartyCaveat: FirstPartyCaveat,
   caveatVerifier?: CaveatVerifier
 ) {
   root = MacaroonsBuilder.deserialize(root)
@@ -229,7 +226,7 @@ export function validateMacaroons(
   // lets verify the macaroon caveats
   const verifier = new MacaroonsVerifier(root)
     // root macaroon should have a caveat to match the docId
-    .satisfyExact(exactCaveat.caveat)
+    .satisfyExact(firstPartyCaveat.caveat)
     // confirm that the payment node has discharged appropriately
     .satisfy3rdParty(boundMacaroon)
 
@@ -252,8 +249,11 @@ export function validateMacaroons(
     const caveat = rawCaveat.getValueAsText()
     // TODO: should probably generalize the exact caveat check or export as constant.
     // This would fail even if there is a space missing in the caveat creation
-    if (exactCaveat.prefixMatch(caveat) && caveat !== exactCaveat.caveat) {
-      throw new Error(`${exactCaveat.key} did not match with macaroon`)
+    if (
+      firstPartyCaveat.prefixMatch(caveat) &&
+      caveat !== firstPartyCaveat.caveat
+    ) {
+      throw new Error(`${firstPartyCaveat.key} did not match with macaroon`)
     }
   }
 }

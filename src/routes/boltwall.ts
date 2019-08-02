@@ -54,8 +54,8 @@ export default async function boltwall(
 
     if (status === 'paid') {
       let caveat: string | undefined
-      if (req.caveatConfig && req.caveatConfig.getCaveat)
-        caveat = req.caveatConfig.getCaveat(req, invoice)
+      if (req.boltwallConfig && req.boltwallConfig.getCaveat)
+        caveat = req.boltwallConfig.getCaveat(req, invoice)
 
       dischargeMacaroon = getDischargeMacaroon(invoiceId, location, caveat)
 
@@ -80,8 +80,8 @@ export default async function boltwall(
     const exactCaveat = getFirstPartyCaveat(invoiceId)
 
     // get a verifier if one is attached to the configs
-    const verifier: CaveatVerifier | undefined = req.caveatConfig
-      ? req.caveatConfig.caveatVerifier
+    const verifier: CaveatVerifier | undefined = req.boltwallConfig
+      ? req.boltwallConfig.caveatVerifier
       : undefined
     validateMacaroons(rootMacaroon, dischargeMacaroon, exactCaveat, verifier)
 

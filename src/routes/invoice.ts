@@ -39,8 +39,8 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
       const location = getLocation(req)
 
       let caveat: string | undefined
-      if (req.caveatConfig && req.caveatConfig.getCaveat)
-        caveat = req.caveatConfig.getCaveat(req, invoice)
+      if (req.boltwallConfig && req.boltwallConfig.getCaveat)
+        caveat = req.boltwallConfig.getCaveat(req, invoice)
 
       const macaroon = getDischargeMacaroon(invoiceId, location, caveat)
 
