@@ -1,4 +1,4 @@
-import express, { Response, Router } from 'express'
+import { Response, Router } from 'express'
 
 import { LndRequest, InvoiceResponse } from '../typings'
 import {
@@ -10,9 +10,68 @@ import {
   createRootMacaroon,
 } from '../helpers'
 
-const router: Router = express.Router()
+const router: Router = Router()
 
-router.post('/invoice', async (req: LndRequest, res: Response) => {
+/**
+ * ## Route: GET /invoice
+ * Checks the status of an invoice based on a specific id in the query parameter.
+ * If the invoice is paid then a discharge macaroon will be attached to the session.
+ * The discharge macaroon can have a custom caveat set on it based on configs passed into
+ * Boltwall on initialization of the middleware.
+ */
+async function getInvoiceStatus(req: LndRequest, res: Response) {
+  let invoiceId = req.query.id
+
+  // if the query doesn't have an id, but we have a root macaroon, we can
+  // get the id from that
+  if (!invoiceId && req.session && req.session.macaroon) {
+    invoiceId = getFirstPartyCaveatFromMacaroon(req.session.macaroon)
+  } else if (!invoiceId) {
+    return res.status(404).json({ message: 'Missing invoiceId in request' })
+  }
+
+  try {
+    console.log('checking status of invoice:', invoiceId)
+    const { lnd, opennode } = req
+    const invoice = await checkInvoiceStatus(lnd, opennode, invoiceId)
+    const { status } = invoice
+    if (status === 'paid') {
+      const location = getLocation(req)
+
+      let caveat: string | undefined
+      if (req.caveatConfig && req.caveatConfig.getCaveat)
+        caveat = req.caveatConfig.getCaveat(req, invoice)
+
+      const macaroon = getDischargeMacaroon(invoiceId, location, caveat)
+
+      // save discharge macaroon in a cookie. Request should have two macaroons now
+      if (req.session) req.session.dischargeMacaroon = macaroon // tslint-disable-line
+
+      console.log(`Invoice ${invoiceId} has been paid`)
+
+      return res.status(200).json({ status, discharge: macaroon })
+    } else if (status === 'processing' || status === 'unpaid') {
+      console.log('still processing invoice %s...', invoiceId)
+      return res.status(202).json(invoice)
+    } else {
+      return res
+        .status(400)
+        .json({ message: `unknown invoice status ${status}` })
+    }
+  } catch (error) {
+    console.error('error getting invoice:', error)
+    return res.status(400).json({ message: error.message })
+  }
+}
+
+/**
+ * ## Route: POST /invoice
+ * Generate a new invoice based on a given request.
+ * This will also create a new root macaroon to associate with the session.
+ * The root macaroon and associated 3rd party caveat must be satisfied
+ * before access to the protected route will be granted
+ */
+async function postNewInvoice(req: LndRequest, res: Response) {
   console.log('Request to create a new invoice')
   try {
     const location: string = getLocation(req)
@@ -33,57 +92,10 @@ router.post('/invoice', async (req: LndRequest, res: Response) => {
     console.error('error getting invoice:', error)
     res.status(400).json({ message: error.message })
   }
-})
+}
 
-router.get('/invoice', async (req: LndRequest, res: Response) => {
-  let invoiceId = req.query.id
+router.post('/invoice', postNewInvoice)
 
-  // if the query doesn't have an id, but we have a root macaroon, we can
-  // get the id from that
-  if (!invoiceId && req.session && req.session.macaroon) {
-    invoiceId = getFirstPartyCaveatFromMacaroon(req.session.macaroon)
-  } else if (!invoiceId) {
-    return res.status(404).json({ message: 'Missing invoiceId in request' })
-  }
-
-  try {
-    console.log('checking status of invoice:', invoiceId)
-    const { lnd, opennode } = req
-    const { status, amount, payreq } = await checkInvoiceStatus(
-      lnd,
-      opennode,
-      invoiceId
-    )
-
-    if (status === 'paid') {
-      // amount is in satoshis which is equal to the amount of seconds paid for
-      const milli = amount * 1000
-      // add 200 milliseconds of "free time" as a buffer
-      const time = new Date(Date.now() + milli + 200)
-      const caveat = `time < ${time}`
-      const location = getLocation(req)
-      const macaroon = getDischargeMacaroon(invoiceId, location, caveat)
-
-      // save discharge macaroon in a cookie. Request should have two macaroons now
-      if (req.session) req.session.dischargeMacaroon = macaroon // tslint-disable-line
-
-      console.log(
-        `Invoice ${invoiceId} has been paid and is valid until ${time}`
-      )
-
-      return res.status(200).json({ status, discharge: macaroon })
-    } else if (status === 'processing' || status === 'unpaid') {
-      console.log('still processing invoice %s...', invoiceId)
-      return res.status(202).json({ status, payreq })
-    } else {
-      return res
-        .status(400)
-        .json({ message: `unknown invoice status ${status}` })
-    }
-  } catch (error) {
-    console.error('error getting invoice:', error)
-    return res.status(400).json({ message: error.message })
-  }
-})
+router.get('/invoice', getInvoiceStatus)
 
 export default router

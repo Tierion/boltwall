@@ -9,7 +9,7 @@ import {
   validateMacaroons,
   getLocation,
 } from '../helpers'
-import { LndRequest } from '../typings'
+import { LndRequest, CaveatVerifier } from '../typings'
 
 export default async function boltwall(
   req: LndRequest,
@@ -49,29 +49,24 @@ export default async function boltwall(
   if (!dischargeMacaroon) {
     // then check status of invoice (Note: Anyone can pay this! It's not tied to the request or origin.
     // Once paid, the requests are authorized and can get the macaroon)
-    const { status, amount, payreq } = await checkInvoiceStatus(
-      req.lnd,
-      req.opennode,
-      invoiceId
-    )
+    const invoice = await checkInvoiceStatus(req.lnd, req.opennode, invoiceId)
+    const { status } = invoice
 
     if (status === 'paid') {
-      // amount is in satoshis which is equal to the amount of seconds paid for
-      const milli = amount * 1000
-      // add 200 milliseconds of "free time" as a buffer
-      const time = new Date(Date.now() + milli + 200)
-      const caveat = `time < ${time}`
+      let caveat: string | undefined
+      if (req.caveatConfig && req.caveatConfig.getCaveat)
+        caveat = req.caveatConfig.getCaveat(req, invoice)
 
       dischargeMacaroon = getDischargeMacaroon(invoiceId, location, caveat)
 
-      console.log(`Invoice has been paid and is valid until ${time}`)
+      console.log(`Invoice ${invoiceId} has been paid`)
 
       // if invoice has been paid
       // then create a discharge macaroon and attach it to a session cookie
       if (req.session) req.session.dischargeMacaroon = dischargeMacaroon
     } else if (status === 'processing' || status === 'unpaid') {
       console.log('still processing invoice %s...', invoiceId)
-      return res.status(202).json({ status, payreq })
+      return res.status(202).json(invoice)
     } else {
       return res
         .status(400)
@@ -83,7 +78,13 @@ export default async function boltwall(
   try {
     // make sure request is authenticated by validating the macaroons
     const exactCaveat = getFirstPartyCaveat(invoiceId)
-    validateMacaroons(rootMacaroon, dischargeMacaroon, exactCaveat)
+
+    // get a verifier if one is attached to the configs
+    const verifier: CaveatVerifier | undefined = req.caveatConfig
+      ? req.caveatConfig.caveatVerifier
+      : undefined
+    validateMacaroons(rootMacaroon, dischargeMacaroon, exactCaveat, verifier)
+
     // if everything validates then simply run `next()`
     console.log(
       `Request from ${req.hostname} authenticated with payment. Sending through paywall`

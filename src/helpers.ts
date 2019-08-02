@@ -1,15 +1,14 @@
-/// <reference path="../node_modules/macaroons.js/lib/Macaroon.d.ts" />
 const {
   MacaroonsBuilder,
   MacaroonsVerifier,
   MacaroonsConstants: { MACAROON_SUGGESTED_SECRET_LENGTH },
-  verifier,
+  verifier: { TimestampCaveatVerifier },
 } = require('macaroons.js')
 import dotenv from 'dotenv'
 import Macaroon from 'macaroons.js/lib/Macaroon'
 const lnService = require('ln-service')
 
-import { LndRequest, InvoiceResponse } from './typings'
+import { LndRequest, InvoiceResponse, CaveatVerifier } from './typings'
 
 export function getEnvVars(): any {
   dotenv.config()
@@ -66,7 +65,7 @@ See README for instructions: https://github.com/bucko13/now-paywall'
   )
 }
 
-/*
+/**
  * Utility to create an invoice based on either an authenticated lnd grpc instance
  * or an opennode connection
  * @params {Object} req - express request object that either contains an lnd or opennode object
@@ -97,7 +96,7 @@ export async function createInvoice({
       tokens: amount,
     } = await lnService.createInvoice({
       lnd: lnd,
-      _description,
+      description: _description,
       expires_at: expiresAt,
       tokens,
     })
@@ -110,7 +109,7 @@ export async function createInvoice({
       created_at: createdAt,
       amount,
     } = await opennode.createCharge({
-      _description,
+      description: _description,
       amount: tokens,
       auto_settle: false,
     })
@@ -124,7 +123,7 @@ export async function createInvoice({
   return invoice
 }
 
-/*
+/**
  * Given an invoice object and a request
  * we want to create a root macaroon with a third party caveat, which both need to be
  * satisfied in order to authenticate the macaroon
@@ -163,7 +162,7 @@ export async function createRootMacaroon(invoiceId: string, location: string) {
   return macaroon.serialize()
 }
 
-/*
+/**
  * Checks the status of an invoice given an id
  * @params {express.request} - request object from expressjs
  * @params {req.query.id} invoiceId - id of invoice to check status of
@@ -176,10 +175,10 @@ export async function checkInvoiceStatus(
   lnd: any,
   opennode: any,
   invoiceId: string
-) {
+): Promise<InvoiceResponse> {
   if (!invoiceId) throw new Error('Missing invoice id.')
 
-  let status, amount, payreq
+  let status, amount, payreq, createdAt
   if (lnd) {
     const invoiceDetails = await lnService.getInvoice({
       id: invoiceId,
@@ -188,21 +187,23 @@ export async function checkInvoiceStatus(
     status = invoiceDetails['is_confirmed'] ? 'paid' : 'unpaid'
     amount = invoiceDetails.tokens
     payreq = invoiceDetails.request
+    createdAt = invoiceDetails.created_at
   } else if (opennode) {
     const data = await opennode.chargeInfo(invoiceId)
     amount = data.amount
     status = data.status
     payreq = data['lightning_invoice'].payreq
+    createdAt = data.created_at
   } else {
     throw new Error(
       'No lightning node information configured on request object'
     )
   }
 
-  return { status, amount, payreq }
+  return { status, amount, payreq, id: invoiceId, createdAt }
 }
 
-/*
+/**
  * Validates a macaroon and should indicate reason for failure
  * if possible
  * @params {Macaroon} root - root macaroon
@@ -213,9 +214,9 @@ export async function checkInvoiceStatus(
 export function validateMacaroons(
   root: Macaroon,
   discharge: Macaroon,
-  exactCaveat: FirstPartyCaveat
+  exactCaveat: FirstPartyCaveat,
+  caveatVerifier?: CaveatVerifier
 ) {
-  const TimestampCaveatVerifier = verifier.TimestampCaveatVerifier
   root = MacaroonsBuilder.deserialize(root)
   discharge = MacaroonsBuilder.deserialize(discharge)
 
@@ -224,19 +225,18 @@ export function validateMacaroons(
     .getMacaroon()
 
   const { SESSION_SECRET } = getEnvVars()
+
   // lets verify the macaroon caveats
-  const valid = new MacaroonsVerifier(root)
+  const verifier = new MacaroonsVerifier(root)
     // root macaroon should have a caveat to match the docId
     .satisfyExact(exactCaveat.caveat)
-    // discharge macaroon is expected to have the time caveat
-    .satisfyGeneral(TimestampCaveatVerifier)
     // confirm that the payment node has discharged appropriately
     .satisfy3rdParty(boundMacaroon)
-    // confirm that this macaroon is valid
-    .isValid(SESSION_SECRET)
+
+  if (caveatVerifier) verifier.satisfyGeneral(caveatVerifier)
 
   // if it's valid then we're good to go
-  if (valid) return true
+  if (verifier.isValid(SESSION_SECRET)) return true
 
   // if not valid, let's check if it's because of time or because of docId mismatch
   const TIME_CAVEAT_PREFIX = /time < .*/
@@ -258,7 +258,7 @@ export function validateMacaroons(
   }
 }
 
-/*
+/**
  * Returns serealized discharge macaroon, signed with the server's caveat key
  * and with an attached caveat (if passed)
  * @params {Express.request} - req object
@@ -268,7 +268,7 @@ export function validateMacaroons(
 export function getDischargeMacaroon(
   invoiceId: string,
   location: string,
-  caveat: string
+  caveat?: string
 ): string {
   if (!invoiceId) throw new Error('Missing invoiceId in request')
 
@@ -296,7 +296,7 @@ export function getDischargeMacaroon(
   return macaroon.serialize()
 }
 
-/*
+/**
  * Utility to extract first party caveat value from a serialized root macaroon
  * See `getFirstPartyCaveat` for what this value represents
  */
@@ -315,7 +315,7 @@ export function getFirstPartyCaveatFromMacaroon(serialized: Macaroon) {
   }
 }
 
-/*
+/**
  * Utility function to get a location string to describe _where_ the server is.
  * useful for setting identifiers in macaroons
  * @params {Express.request} req - expressjs request object

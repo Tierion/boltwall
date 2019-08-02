@@ -1,8 +1,10 @@
+import { Response, NextFunction } from 'express'
 import cookieSession from 'cookie-session'
 import { compose } from 'compose-middleware'
 
-import { node, invoice, parseEnv, boltwall } from './routes'
+import { node, invoice, parseEnv, boltwall as paywall } from './routes'
 import { getEnvVars } from './helpers'
+import { LndRequest, CaveatConfig } from './typings'
 
 const { SESSION_SECRET } = getEnvVars()
 
@@ -28,11 +30,18 @@ const dischargeMacaroon = cookieSession({
   signed: true,
 })
 
-module.exports = compose([
-  parseEnv,
-  rootMacaroon,
-  dischargeMacaroon,
-  node,
-  invoice,
-  boltwall,
-])
+function boltwall(config: CaveatConfig): Function {
+  return (req: LndRequest, res: Response, next: NextFunction) => {
+    req.caveatConfig = config
+    return compose([
+      parseEnv,
+      rootMacaroon,
+      dischargeMacaroon,
+      node,
+      invoice,
+      paywall,
+    ])(req, res, next)
+  }
+}
+
+module.exports = boltwall

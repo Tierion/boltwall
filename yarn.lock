@@ -610,6 +610,11 @@ boxen@^1.2.1:
     term-size "^1.2.0"
     widest-line "^2.0.0"
 
+bpkg@^0.6.0:
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/bpkg/-/bpkg-0.6.0.tgz#88ecb7e3392ad491a4f4d233f75ffab12df685d5"
+  integrity sha512-GegdmXsSBwMN3yBiO4WC8FmsDsqCRDwOim0IZSEa3EMZoMDYPdTaV9NlNNAV6YkOBFvlnfbAHhdrUEaNQI8nKg==
+
 brace-expansion@^1.1.7:
   version "1.1.11"
   resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.11.tgz#3c7fcbf529d87226f3d2f52b966ff5271eb441dd"
