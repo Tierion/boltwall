@@ -1,8 +1,10 @@
-import { CaveatGetter, CaveatVerifier } from '.'
+import { CaveatGetter, CaveatVerifier, LndRequest } from '.'
 
-export type DescriptionGetter = (req: LndRequest) => string
+export interface DescriptionGetter {
+  (req: LndRequest): string
+}
 
-export type BoltwallConfig = {
+export interface BoltwallConfig {
   getCaveat?: CaveatGetter
   caveatVerifier?: CaveatVerifier
   getInvoiceDescription?: DescriptionGetter

@@ -1,4 +1,4 @@
-export type InvoiceResponse = {
+export interface InvoiceResponse {
   payreq: string
   id: string
   description?: string
