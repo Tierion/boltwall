@@ -11,7 +11,7 @@
     "build": "tsc --project src/tsconfig.json --outDir dist/",
     "lint": "eslint ./src/**/*.ts",
     "prePublish": "npm run build",
-    "docs": "typedoc --out docs --tsconfig src/tsconfig.json src/"
+    "docs": "typedoc --out docs --tsconfig src/tsconfig.json src/ && touch docs/.nojekyll"
   },
   "husky": {
     "hooks": {
