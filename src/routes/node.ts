@@ -7,11 +7,11 @@ const router: Router = express.Router()
 
 router.get('/node', async (req: LndRequest, res: Response) => {
   if (req.lnd) {
-    const { public_key, alias } = await lnService.getWalletInfo({
+    const { public_key: pubKey, alias } = await lnService.getWalletInfo({
       lnd: req.lnd,
     })
     return res.status(200).json({
-      pubKey: public_key,
+      pubKey,
       alias,
     })
   } else if (req.opennode)
