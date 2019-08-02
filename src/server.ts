@@ -101,7 +101,10 @@ payment
 ******/
 
 app.get('/protected', (_req, res: express.Response) =>
-  res.json({ message: 'I should not be seen unless the invoice has been paid' })
+  res.json({
+    message:
+      'Protected route! This message will only be returned if an invoice has been paid',
+  })
 )
 
 app.listen(5000, () => console.log('listening on port 5000!'))

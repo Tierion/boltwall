@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>boltwall</title>
+	<title>typescript</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="assets/css/main.css">
@@ -22,7 +22,7 @@
 						<li class="state loading">Preparing search index...</li>
 						<li class="state failure">The search index is not available</li>
 					</ul>
-					<a href="index.html" class="title">boltwall</a>
+					<a href="index.html" class="title">typescript</a>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -56,7 +56,7 @@
 					<a href="globals.html">Globals</a>
 				</li>
 			</ul>
-			<h1> boltwall</h1>
+			<h1> typescript</h1>
 		</div>
 	</div>
 </header>
@@ -64,56 +64,12 @@
 	<div class="row">
 		<div class="col-8 col-content">
 			<div class="tsd-panel tsd-typography">
-				<a href="#⚡️-boltwall-⚡️" id="⚡️-boltwall-⚡️" style="color: inherit; text-decoration: none;">
-					<h1>⚡️ Boltwall ⚡️</h1>
+				<a href="#read-this" id="read-this" style="color: inherit; text-decoration: none;">
+					<h1>Read This!</h1>
 				</a>
-				<p>A lightning-based paywall middlware for Nodejs + Expressjs API services. Built with Typescript.</p>
-				<p>To run the test server, clone the repo, and from the directory run:</p>
-				<pre><code class="language-bash">$ yarn install
-$ yarn start</code></pre>
-				<a href="#system-requirements" id="system-requirements" style="color: inherit; text-decoration: none;">
-					<h2>System Requirements</h2>
-				</a>
-				<ul>
-					<li>Node &gt; 11.10.0</li>
-					<li>npm &gt; 6.9.0</li>
-				</ul>
-				<p>Your project must also use <code>Expressjs</code> 4.x as well as the <code>cors</code> and <code>body-parser</code> middleware.</p>
-				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
-					<h2>Usage</h2>
-				</a>
-				<p>To use as a middleware in an existing server, just install from npm into your project,
-				and use before all routes that you want protected.</p>
-				<p>An example project can be seen in <code>src/server.ts</code>. This is what is run when running <code>yarn start</code>.</p>
-				<a href="#configuration" id="configuration" style="color: inherit; text-decoration: none;">
-					<h2>Configuration</h2>
-				</a>
-				<p>Several configurations are required when running <code>boltwall</code>. These serve the purpose of connecting to your
-				lightning node and managing/signing macaroons for authentication/authorization.</p>
-				<a href="#lightning-configs" id="lightning-configs" style="color: inherit; text-decoration: none;">
-					<h3>Lightning Configs</h3>
-				</a>
-				<p><strong>IMPORTANT</strong>: Boltwall will not work without these configs.</p>
-				<p>If you are connecting to a lightning node you will need the following in your project&#39;s <code>.env</code> file
-				or in <code>process.env</code></p>
-				<p>Learn how to find these values <a href="https://medium.com/@wbobeirne/making-a-lightning-web-app-part-1-4a13c82f3f78">in this article</a>
-				by Will O&#39;Beirne. You can also try this tool by <a href="https://lightningjoule.com/tools/node-info">lightning joule</a></p>
-				<pre><code><span class="hljs-attr">LND_TLS_CERT</span>=[BASE64 encoded cert here]
-<span class="hljs-attr">LND_MACAROON</span>=[hex encoded cert here]
-<span class="hljs-attr">LND_SOCKET</span>=[address of node here, e.g. localhost:<span class="hljs-number">10006</span>]</code></pre><p>If you are using OpenNode for managing payments, <a href="https://dev.opennode.co">create an OpenNode account</a>,
-				generate an API key and save it as:</p>
-				<pre><code><span class="hljs-attr">OPEN_NODE_KEY</span>=[API KEY HERE]</code></pre><p>If you have both the lnd configs and open node, lnd will take precedence.</p>
-				<p>Finally, you will need a caveat key for enabling authorization with compatible 3rd party applications
-				(such as <a href="https://github.com/bucko13/prism">Prism</a>) and a SESSION_SECRET for securing macaroons.</p>
-				<pre><code><span class="hljs-attr">CAVEAT_KEY</span>=[ENTER PASSWORD]
-<span class="hljs-attr">SESSION_SECRET</span>=[RANDOM STRING MINIMUM <span class="hljs-number">32</span> BYTES IN LENGTH]</code></pre>
-				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
-					<h2>API Documentation</h2>
-				</a>
-				<p>Check out the Swagger Docs for detailed API information:</p>
-				<a href="#a-hrefhttpsappswaggerhubcomapis-docsprism8boltwall100swagger-apia" id="a-hrefhttpsappswaggerhubcomapis-docsprism8boltwall100swagger-apia" style="color: inherit; text-decoration: none;">
-					<h3><a href="https://app.swaggerhub.com/apis-docs/prism8/boltwall/1.0.0">Swagger API</a></h3>
-				</a>
+				<p><strong>These files are not meant to be edited by hand.</strong>
+					If you need to make modifications, the respective files should be changed within the repository&#39;s top-level <code>src</code> directory.
+				Running <code>gulp LKG</code> will then appropriately update the files in this directory.</p>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -122,32 +78,326 @@ $ yarn start</code></pre>
 					<li class="globals  ">
 						<a href="globals.html"><em>Globals</em></a>
 					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_helpers_.html">"helpers"</a>
+					<li class="label tsd-is-external">
+						<span>Internals</span>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_index_.html">"index"</a>
+						<a href="modules/_src_helpers_.html">"src/helpers"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_routes_boltwall_.html">"routes/boltwall"</a>
+						<a href="modules/_src_index_.html">"src/index"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_routes_index_.html">"routes/index"</a>
+						<a href="modules/_src_routes_boltwall_.html">"src/routes/boltwall"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_routes_invoice_.html">"routes/invoice"</a>
+						<a href="modules/_src_routes_index_.html">"src/routes/index"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_routes_node_.html">"routes/node"</a>
+						<a href="modules/_src_routes_invoice_.html">"src/routes/invoice"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_routes_parseenv_.html">"routes/parse<wbr>Env"</a>
+						<a href="modules/_src_routes_node_.html">"src/routes/node"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_server_.html">"server"</a>
+						<a href="modules/_src_routes_parseenv_.html">"src/routes/parse<wbr>Env"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_typings_index_.html">"typings/index"</a>
+						<a href="modules/_src_server_.html">"src/server"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_caveat_d_.html">"src/typings/caveat.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_configs_d_.html">"src/typings/configs.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_index_.html">"src/typings/index"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_invoice_d_.html">"src/typings/invoice.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_modules_d_.html">"src/typings/modules.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_request_d_.html">"src/typings/request.d"</a>
+					</li>
+					<li class="label tsd-is-external">
+						<span>Externals</span>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_body_parser_index_d_.html">"node_<wbr>modules/@types/body-<wbr>parser/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_connect_index_d_.html">"node_<wbr>modules/@types/connect/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_cookie_session_index_d_.html">"node_<wbr>modules/@types/cookie-<wbr>session/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_cors_index_d_.html">"node_<wbr>modules/@types/cors/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_debug_index_d_.html">"node_<wbr>modules/@types/debug/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_dotenv_index_d_.html">"node_<wbr>modules/@types/dotenv/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_eslint_visitor_keys_index_d_.html">"node_<wbr>modules/@types/eslint-<wbr>visitor-<wbr>keys/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_express_serve_static_core_index_d_.html">"node_<wbr>modules/@types/express-<wbr>serve-<wbr>static-<wbr>core/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_express_index_d_.html">"node_<wbr>modules/@types/express/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_json_schema_index_d_.html">"node_<wbr>modules/@types/json-<wbr>schema/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_keygrip_index_d_.html">"node_<wbr>modules/@types/keygrip/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_long_index_d_.html">"node_<wbr>modules/@types/long/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_mime_index_d_.html">"node_<wbr>modules/@types/mime/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_minimatch_index_d_.html">"node_<wbr>modules/@types/minimatch/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_assert_d_.html">"node_<wbr>modules/@types/node/assert.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_async_hooks_d_.html">"node_<wbr>modules/@types/node/async_<wbr>hooks.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_base_d_.html">"node_<wbr>modules/@types/node/base.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_buffer_d_.html">"node_<wbr>modules/@types/node/buffer.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_child_process_d_.html">"node_<wbr>modules/@types/node/child_<wbr>process.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_cluster_d_.html">"node_<wbr>modules/@types/node/cluster.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_console_d_.html">"node_<wbr>modules/@types/node/console.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_constants_d_.html">"node_<wbr>modules/@types/node/constants.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_crypto_d_.html">"node_<wbr>modules/@types/node/crypto.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_dgram_d_.html">"node_<wbr>modules/@types/node/dgram.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_dns_d_.html">"node_<wbr>modules/@types/node/dns.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_domain_d_.html">"node_<wbr>modules/@types/node/domain.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_events_d_.html">"node_<wbr>modules/@types/node/events.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_fs_d_.html">"node_<wbr>modules/@types/node/fs.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_globals_d_.html">"node_<wbr>modules/@types/node/globals.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_http_d_.html">"node_<wbr>modules/@types/node/http.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_http2_d_.html">"node_<wbr>modules/@types/node/http2.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_https_d_.html">"node_<wbr>modules/@types/node/https.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_inspector_d_.html">"node_<wbr>modules/@types/node/inspector.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_module_d_.html">"node_<wbr>modules/@types/node/module.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_net_d_.html">"node_<wbr>modules/@types/node/net.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_os_d_.html">"node_<wbr>modules/@types/node/os.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_path_d_.html">"node_<wbr>modules/@types/node/path.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_perf_hooks_d_.html">"node_<wbr>modules/@types/node/perf_<wbr>hooks.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_process_d_.html">"node_<wbr>modules/@types/node/process.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_punycode_d_.html">"node_<wbr>modules/@types/node/punycode.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_querystring_d_.html">"node_<wbr>modules/@types/node/querystring.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_readline_d_.html">"node_<wbr>modules/@types/node/readline.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_repl_d_.html">"node_<wbr>modules/@types/node/repl.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_stream_d_.html">"node_<wbr>modules/@types/node/stream.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_string_decoder_d_.html">"node_<wbr>modules/@types/node/string_<wbr>decoder.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_timers_d_.html">"node_<wbr>modules/@types/node/timers.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_tls_d_.html">"node_<wbr>modules/@types/node/tls.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_trace_events_d_.html">"node_<wbr>modules/@types/node/trace_<wbr>events.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_ts3_2_globals_d_.html">"node_<wbr>modules/@types/node/ts3.2/globals.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_ts3_2_index_d_.html">"node_<wbr>modules/@types/node/ts3.2/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_ts3_2_util_d_.html">"node_<wbr>modules/@types/node/ts3.2/util.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_tty_d_.html">"node_<wbr>modules/@types/node/tty.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_url_d_.html">"node_<wbr>modules/@types/node/url.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_util_d_.html">"node_<wbr>modules/@types/node/util.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_v8_d_.html">"node_<wbr>modules/@types/node/v8.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_vm_d_.html">"node_<wbr>modules/@types/node/vm.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_worker_threads_d_.html">"node_<wbr>modules/@types/node/worker_<wbr>threads.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_node_zlib_d_.html">"node_<wbr>modules/@types/node/zlib.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_range_parser_index_d_.html">"node_<wbr>modules/@types/range-<wbr>parser/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules__types_serve_static_index_d_.html">"node_<wbr>modules/@types/serve-<wbr>static/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_compose_middleware_lib_index_d_.html">"node_<wbr>modules/compose-<wbr>middleware/lib/index.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_compose_middleware_node_modules_array_flatten_array_flatten_d_.html">"node_<wbr>modules/compose-<wbr>middleware/node_<wbr>modules/array-<wbr>flatten/array-<wbr>flatten.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_macaroons_js_lib_caveatpacket_d_.html">"node_<wbr>modules/macaroons.js/lib/<wbr>Caveat<wbr>Packet.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_macaroons_js_lib_caveatpackettype_d_.html">"node_<wbr>modules/macaroons.js/lib/<wbr>Caveat<wbr>Packet<wbr>Type.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_macaroons_js_lib_macaroon_d_.html">"node_<wbr>modules/macaroons.js/lib/<wbr>Macaroon.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_collection_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.collection.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_core_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.core.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_generator_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.generator.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_iterable_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.iterable.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_promise_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.promise.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_proxy_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.proxy.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_reflect_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.reflect.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.symbol.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_wellknown_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.symbol.wellknown.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2016_array_include_d_.html">"node_<wbr>modules/typescript/lib/lib.es2016.array.include.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2016_d_.html">"node_<wbr>modules/typescript/lib/lib.es2016.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_intl_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.intl.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_object_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.object.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_sharedmemory_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.sharedmemory.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_string_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.string.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_typedarrays_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.typedarrays.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_asynciterable_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.asynciterable.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_intl_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.intl.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_promise_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.promise.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_regexp_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.regexp.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es5_d_.html">"node_<wbr>modules/typescript/lib/lib.es5.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_esnext_bigint_d_.html">"node_<wbr>modules/typescript/lib/lib.esnext.bigint.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_esnext_intl_d_.html">"node_<wbr>modules/typescript/lib/lib.esnext.intl.d"</a>
 					</li>
 				</ul>
 			</nav>

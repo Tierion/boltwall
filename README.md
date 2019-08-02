@@ -2,6 +2,12 @@
 
 A lightning-based paywall middlware for Nodejs + Expressjs API services. Built with Typescript.
 
+### Supported Features
+
+- Protect routes in your own API by using as a middleware
+- Custom attenuation via macaroons
+- oAuth-like authorization for compatible 3rd party services
+
 To run the test server, clone the repo, and from the directory run:
 
 ```bash
@@ -23,9 +29,44 @@ and use before all routes that you want protected.
 
 An example project can be seen in `src/server.ts`. This is what is run when running `yarn start`.
 
-## Configuration
+A very simple server file, with no special configurations, could look like this:
 
-Several configurations are required when running `boltwall`. These serve the purpose of connecting to your
+```javascript
+const express = require('express')
+const cors = require('cors')
+const bodyParser = require('body-parser')
+
+const boltwall = require('boltwall')
+
+const app = express()
+
+// middleware
+app.use(cors())
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+// parse application/json
+app.use(bodyParser.json())
+
+app.get('/', (_req, res) => {
+  return res.json({
+    message: 'Home route comes before boltwall and so is unprotected.',
+  })
+})
+
+app.use(boltwall())
+app.get('/protected', (_req, res) =>
+  res.json({
+    message:
+      'Protected route! This message will only be returned if an invoice has been paid',
+  })
+)
+
+app.listen(5000, () => console.log('listening on port 5000!'))
+```
+
+## Required Environment Variables
+
+Several environment variables are required when running `boltwall`. These serve the purpose of connecting to your
 lightning node and managing/signing macaroons for authentication/authorization.
 
 ### Lightning Configs
@@ -61,8 +102,47 @@ CAVEAT_KEY=[ENTER PASSWORD]
 SESSION_SECRET=[RANDOM STRING MINIMUM 32 BYTES IN LENGTH]
 ```
 
+## Custom Authorization w/ Macaroons
+
+Boltwall allows for flexible authorization schemes. Effectively, this means that a server
+that is implementing Boltwall to protect content can dictate factors such as how long
+authorization is valid for based off of a payment or restrict access to only the originating IP.
+
+As an example, the configuration in the example file `src/server.ts`, sets up authorization that
+is valid for a time where for each satoshi paid in the lightning invoice is equivalent to 1 second.
+So if a user pays a 30 satoshi invoice, then access is allowed for 30 seconds.
+
+The config object should be passed to `boltwall` on initialization. e.g. `app.use(boltwall(myConfig))`, where `myConfig` provides the relevant properties. Currently, the config supports
+three properties: `caveatVerifier`(func), `getCaveat` (func), and `getInvoiceDescription`.
+
+More information on the configs can be found in the
+[API Documentation](https://boltwall-org.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html).
+
+## 3rd Party Caveats and Discharge Macaroons
+
+The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
+in the section above covering the configurations, `boltwall`'s API also enables authorization schemes with 3rd parties
+or as a 3rd party.
+
+**Think of it like running your own oAuth service.**
+
+In the same way where Google's oAuth allows a 3rd party service to sign you in to their platform by verifying
+your Google account, with Boltwall, your API can act like Google, where instead of verifying your account, the
+service verifies payment. An example of how this can be implemented is in the [Prism Reader](https://prismreader.app) app.
+Prism Reader hosts documents provided by users. Authors of content can optionally require payment to view that content. Rather
+than Prism acting as a custodian for the funds and issuing payouts, an author can run a boltwall instance, give Prism
+the url of your API and a shared secret key (caveat key), and users will then **only be able to read your content once _your
+server_ has acknowledged payment**!
+
 ## API Documentation
 
-Check out the Swagger Docs for detailed API information:
+### REST API
 
-### [Swagger API](https://app.swaggerhub.com/apis-docs/prism8/boltwall/1.0.0)
+Check out the Swagger Docs for detailed API information. This details what to expect
+at the various routes provided for by `Boltwall`.
+
+#### [REST API](https://app.swaggerhub.com/apis-docs/prism8/boltwall/1.0.0)
+
+### API Documentation
+
+API documentation, with details on the code and API can be found at the [documentation website](https://boltwall-org.github.io/boltwall/).
