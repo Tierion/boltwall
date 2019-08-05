@@ -98,8 +98,8 @@ OPEN_NODE_KEY=[API KEY HERE]
 
 If you have both the lnd configs and open node, lnd will take precedence.
 
-Finally, you will need a caveat key for enabling authorization with compatible 3rd party applications
-(such as [Prism](https://github.com/bucko13/prism)) and a SESSION_SECRET for securing macaroons.
+Finally, you will need a caveat key for enabling custom authorization schemes such as time-based auth
+and a SESSION_SECRET for securing macaroons.
 
 ```
 CAVEAT_KEY=[ENTER PASSWORD]
