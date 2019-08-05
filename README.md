@@ -7,6 +7,7 @@ A lightning-based paywall middlware for Nodejs + Expressjs API services. Built w
 - Protect routes in your own API by using as a middleware
 - Custom attenuation via macaroons
 - oAuth-like authorization for compatible 3rd party services
+- Optional time-based access restrictions supported out of the box
 
 To run the test server, clone the repo, and from the directory run:
 
@@ -36,7 +37,7 @@ const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 
-const boltwall = require('boltwall')
+const { boltwall } = require('boltwall')
 
 const app = express()
 
@@ -52,7 +53,9 @@ app.get('/', (_req, res) => {
     message: 'Home route comes before boltwall and so is unprotected.',
   })
 })
+
 app.use(boltwall())
+
 app.get('/protected', (_req, res) =>
   res.json({
     message:
@@ -137,6 +140,28 @@ Prism Reader hosts documents provided by users. Authors of content can optionall
 than Prism acting as a custodian for the funds and issuing payouts, an author can run a boltwall instance, give Prism
 the url of your API and a shared secret key (caveat key), and users will then **only be able to read your content once _your
 server_ has acknowledged payment**!
+
+### Pre-built Configs
+
+Boltwall exposes some default configs you can use in your own server. Simply import
+them from the module and then pass them into boltwall when `use`ing it in your express
+server.
+
+```javascript
+import { boltwall, TIME_CAVEAT_CONFIGS } from 'boltwall'
+
+// ...  rest of your server code
+
+app.use(boltwall(TIME_CAVEAT_CONFIGS))
+
+// ... protected routes and any other server code
+```
+
+#### TIME_CAVEAT_CONFIGS
+
+Currently this is the only available default config. It creates a restriction
+that any authorization is only valid for a number of seconds equal to the number
+of satoshis paid.
 
 ## API Documentation
 

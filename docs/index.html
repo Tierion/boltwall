@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>typescript</title>
+	<title>⚡️Boltwall⚡️</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="assets/css/main.css">
@@ -22,7 +22,7 @@
 						<li class="state loading">Preparing search index...</li>
 						<li class="state failure">The search index is not available</li>
 					</ul>
-					<a href="index.html" class="title">typescript</a>
+					<a href="index.html" class="title">⚡️Boltwall⚡️</a>
 				</div>
 				<div class="table-cell" id="tsd-widgets">
 					<div id="tsd-filter">
@@ -56,7 +56,7 @@
 					<a href="globals.html">Globals</a>
 				</li>
 			</ul>
-			<h1> typescript</h1>
+			<h1> ⚡️Boltwall⚡️</h1>
 		</div>
 	</div>
 </header>
@@ -64,12 +64,157 @@
 	<div class="row">
 		<div class="col-8 col-content">
 			<div class="tsd-panel tsd-typography">
-				<a href="#read-this" id="read-this" style="color: inherit; text-decoration: none;">
-					<h1>Read This!</h1>
+				<a href="#⚡️-boltwall-⚡️" id="⚡️-boltwall-⚡️" style="color: inherit; text-decoration: none;">
+					<h1>⚡️ Boltwall ⚡️</h1>
 				</a>
-				<p><strong>These files are not meant to be edited by hand.</strong>
-					If you need to make modifications, the respective files should be changed within the repository&#39;s top-level <code>src</code> directory.
-				Running <code>gulp LKG</code> will then appropriately update the files in this directory.</p>
+				<p>A lightning-based paywall middlware for Nodejs + Expressjs API services. Built with Typescript.</p>
+				<a href="#supported-features" id="supported-features" style="color: inherit; text-decoration: none;">
+					<h3>Supported Features</h3>
+				</a>
+				<ul>
+					<li>Protect routes in your own API by using as a middleware</li>
+					<li>Custom attenuation via macaroons</li>
+					<li>oAuth-like authorization for compatible 3rd party services</li>
+					<li>Optional time-based access restrictions supported out of the box</li>
+				</ul>
+				<p>To run the test server, clone the repo, and from the directory run:</p>
+				<pre><code class="language-bash">$ yarn install
+$ yarn start</code></pre>
+				<a href="#system-requirements" id="system-requirements" style="color: inherit; text-decoration: none;">
+					<h2>System Requirements</h2>
+				</a>
+				<ul>
+					<li>Node &gt; 11.10.0</li>
+					<li>npm &gt; 6.9.0</li>
+				</ul>
+				<p>Your project must also use <code>Expressjs</code> 4.x as well as the <code>cors</code> and <code>body-parser</code> middleware.</p>
+				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+					<h2>Usage</h2>
+				</a>
+				<p>To use as a middleware in an existing server, just install from npm into your project,
+				and use before all routes that you want protected.</p>
+				<p>An example project can be seen in <code>src/server.ts</code>. This is what is run when running <code>yarn start</code>.</p>
+				<p>A very simple server file, with no special configurations, could look like this:</p>
+				<pre><code class="language-javascript"><span class="hljs-keyword">const</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>)
+<span class="hljs-keyword">const</span> cors = <span class="hljs-built_in">require</span>(<span class="hljs-string">'cors'</span>)
+<span class="hljs-keyword">const</span> bodyParser = <span class="hljs-built_in">require</span>(<span class="hljs-string">'body-parser'</span>)
+
+<span class="hljs-keyword">const</span> { boltwall } = <span class="hljs-built_in">require</span>(<span class="hljs-string">'boltwall'</span>)
+
+<span class="hljs-keyword">const</span> app = express()
+
+<span class="hljs-comment">// middleware</span>
+app.use(cors())
+<span class="hljs-comment">// parse application/x-www-form-urlencoded</span>
+app.use(bodyParser.urlencoded({ <span class="hljs-attr">extended</span>: <span class="hljs-literal">false</span> }))
+<span class="hljs-comment">// parse application/json</span>
+app.use(bodyParser.json())
+
+app.get(<span class="hljs-string">'/'</span>, (_req, res) =&gt; {
+  <span class="hljs-keyword">return</span> res.json({
+    <span class="hljs-attr">message</span>: <span class="hljs-string">'Home route comes before boltwall and so is unprotected.'</span>,
+  })
+})
+
+app.use(boltwall())
+
+app.get(<span class="hljs-string">'/protected'</span>, (_req, res) =&gt;
+  res.json({
+    <span class="hljs-attr">message</span>:
+      <span class="hljs-string">'Protected route! This message will only be returned if an invoice has been paid'</span>,
+  })
+)
+
+app.listen(<span class="hljs-number">5000</span>, () =&gt; <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'listening on port 5000!'</span>))</code></pre>
+				<a href="#required-environment-variables" id="required-environment-variables" style="color: inherit; text-decoration: none;">
+					<h2>Required Environment Variables</h2>
+				</a>
+				<p>Several environment variables are required when running <code>boltwall</code>. These serve the purpose of connecting to your
+				lightning node and managing/signing macaroons for authentication/authorization.</p>
+				<p><strong>The required environment variables are:</strong></p>
+				<ul>
+					<li>Lightning configs (either lnd connection info or OpenNode API key based on connection type)</li>
+					<li>Session secret- For signing of all macaroons originating from your server.</li>
+					<li>Caveat key- this is used for authenticating macaroons in custom authorization schemes.
+					Only required if using a custom caveats (such as time based restrictions)</li>
+				</ul>
+				<a href="#lightning-configs" id="lightning-configs" style="color: inherit; text-decoration: none;">
+					<h3>Lightning Configs</h3>
+				</a>
+				<p>If you are connecting to a lightning node you will need the following in your project&#39;s <code>.env</code> file
+				or in <code>process.env</code></p>
+				<p>Learn how to find these values <a href="https://medium.com/@wbobeirne/making-a-lightning-web-app-part-1-4a13c82f3f78">in this article</a>
+				by Will O&#39;Beirne. You can also try this tool by <a href="https://lightningjoule.com/tools/node-info">lightning joule</a></p>
+				<pre><code><span class="hljs-attr">LND_TLS_CERT=</span>[BASE64 <span class="hljs-keyword">or</span> HEX encoded cert here]
+<span class="hljs-attr">LND_MACAROON=</span>[BASE64 <span class="hljs-keyword">or</span> HEX encoded cert here]
+<span class="hljs-attr">LND_SOCKET=</span>[address of <span class="hljs-keyword">node</span> <span class="hljs-title">here</span>, e.g. localhost:<span class="hljs-number">10006</span>]</code></pre><p>If you are using OpenNode for managing payments, <a href="https://dev.opennode.co">create an OpenNode account</a>,
+				generate an API key and save it as:</p>
+				<pre><code><span class="hljs-attr">OPEN_NODE_KEY</span>=[API KEY HERE]</code></pre><p>If you have both the lnd configs and open node, lnd will take precedence.</p>
+				<p>Finally, you will need a caveat key for enabling custom authorization schemes such as time-based auth
+				and a SESSION_SECRET for securing macaroons.</p>
+				<pre><code><span class="hljs-attr">CAVEAT_KEY</span>=[ENTER PASSWORD]
+<span class="hljs-attr">SESSION_SECRET</span>=[RANDOM STRING MINIMUM <span class="hljs-number">32</span> BYTES IN LENGTH]</code></pre>
+				<a href="#custom-authorization-w-macaroons" id="custom-authorization-w-macaroons" style="color: inherit; text-decoration: none;">
+					<h2>Custom Authorization w/ Macaroons</h2>
+				</a>
+				<p>Boltwall allows for flexible authorization schemes. Effectively, this means that a server
+					that is implementing Boltwall to protect content can dictate factors such as how long
+				authorization is valid for based off of a payment or restrict access to only the originating IP.</p>
+				<p>As an example, the configuration in the example file <code>src/server.ts</code>, sets up authorization that
+					is valid for a time where for each satoshi paid in the lightning invoice is equivalent to 1 second.
+				So if a user pays a 30 satoshi invoice, then access is allowed for 30 seconds.</p>
+				<p>The config object should be passed to <code>boltwall</code> on initialization. e.g. <code>app.use(boltwall(myConfig))</code>, where <code>myConfig</code> provides the relevant properties. Currently, the config supports
+				three properties: <code>caveatVerifier</code>(func), <code>getCaveat</code> (func), and <code>getInvoiceDescription</code>.</p>
+				<p>More information on the configs can be found in the
+				<a href="https://boltwall-org.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html">API Documentation</a>.</p>
+				<a href="#3rd-party-caveats-and-discharge-macaroons" id="3rd-party-caveats-and-discharge-macaroons" style="color: inherit; text-decoration: none;">
+					<h2>3rd Party Caveats and Discharge Macaroons</h2>
+				</a>
+				<p>The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
+					in the section above covering the configurations, <code>boltwall</code>&#39;s API also enables authorization schemes with 3rd parties
+				or as a 3rd party.</p>
+				<p><strong>Think of it like running your own oAuth service.</strong></p>
+				<p>In the same way where Google&#39;s oAuth allows a 3rd party service to sign you in to their platform by verifying
+					your Google account, with Boltwall, your API can act like Google, where instead of verifying your account, the
+					service verifies payment. An example of how this can be implemented is in the <a href="https://prismreader.app">Prism Reader</a> app.
+					Prism Reader hosts documents provided by users. Authors of content can optionally require payment to view that content. Rather
+					than Prism acting as a custodian for the funds and issuing payouts, an author can run a boltwall instance, give Prism
+					the url of your API and a shared secret key (caveat key), and users will then <strong>only be able to read your content once <em>your
+				server</em> has acknowledged payment</strong>!</p>
+				<a href="#pre-built-configs" id="pre-built-configs" style="color: inherit; text-decoration: none;">
+					<h3>Pre-built Configs</h3>
+				</a>
+				<p>Boltwall exposes some default configs you can use in your own server. Simply import
+					them from the module and then pass them into boltwall when <code>use</code>ing it in your express
+				server.</p>
+				<pre><code class="language-javascript"><span class="hljs-keyword">import</span> { boltwall, TIME_CAVEAT_CONFIGS } <span class="hljs-keyword">from</span> <span class="hljs-string">'boltwall'</span>
+
+<span class="hljs-comment">// ...  rest of your server code</span>
+
+app.use(boltwall(TIME_CAVEAT_CONFIGS))
+
+<span class="hljs-comment">// ... protected routes and any other server code</span></code></pre>
+				<a href="#time_caveat_configs" id="time_caveat_configs" style="color: inherit; text-decoration: none;">
+					<h4>TIME_CAVEAT_CONFIGS</h4>
+				</a>
+				<p>Currently this is the only available default config. It creates a restriction
+					that any authorization is only valid for a number of seconds equal to the number
+				of satoshis paid.</p>
+				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
+					<h2>API Documentation</h2>
+				</a>
+				<a href="#rest-api" id="rest-api" style="color: inherit; text-decoration: none;">
+					<h3>REST API</h3>
+				</a>
+				<p>Check out the Swagger Docs for detailed API information. This details what to expect
+				at the various routes provided for by <code>Boltwall</code>.</p>
+				<a href="#a-hrefhttpsappswaggerhubcomapis-docsprism8boltwall100rest-apia" id="a-hrefhttpsappswaggerhubcomapis-docsprism8boltwall100rest-apia" style="color: inherit; text-decoration: none;">
+					<h4><a href="https://app.swaggerhub.com/apis-docs/prism8/boltwall/1.0.0">REST API</a></h4>
+				</a>
+				<a href="#api-documentation-1" id="api-documentation-1" style="color: inherit; text-decoration: none;">
+					<h3>API Documentation</h3>
+				</a>
+				<p>API documentation, with details on the code and API can be found at the <a href="https://boltwall-org.github.io/boltwall/">documentation website</a>.</p>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -80,6 +225,9 @@
 					</li>
 					<li class="label tsd-is-external">
 						<span>Internals</span>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_configs_.html">"src/configs"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="modules/_src_helpers_.html">"src/helpers"</a>
@@ -119,6 +267,9 @@
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="modules/_src_typings_modules_d_.html">"src/typings/modules.d"</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_node_d_.html">"src/typings/node.d"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="modules/_src_typings_request_d_.html">"src/typings/request.d"</a>

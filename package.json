@@ -10,8 +10,8 @@
     "start": "nodemon",
     "build": "tsc --project src/tsconfig.json --outDir dist/",
     "lint": "eslint ./src/**/*.ts --quiet",
-    "prePublish": "npm run docs && npm run build",
-    "docs": "typedoc --includeDeclarations --out docs --tsconfig src/tsconfig.json src/ && touch docs/.nojekyll"
+    "prePublish": "npm run build",
+    "docs": "typedoc --name ⚡️Boltwall⚡️ --readme ./README.md --includeDeclarations --out docs --tsconfig src/tsconfig.json src/ && touch docs/.nojekyll"
   },
   "dependencies": {
     "compose-middleware": "5.0.1",
