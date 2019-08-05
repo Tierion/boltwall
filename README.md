@@ -52,7 +52,6 @@ app.get('/', (_req, res) => {
     message: 'Home route comes before boltwall and so is unprotected.',
   })
 })
-
 app.use(boltwall())
 app.get('/protected', (_req, res) =>
   res.json({
@@ -69,9 +68,14 @@ app.listen(5000, () => console.log('listening on port 5000!'))
 Several environment variables are required when running `boltwall`. These serve the purpose of connecting to your
 lightning node and managing/signing macaroons for authentication/authorization.
 
-### Lightning Configs
+**The required environment variables are:**
 
-**IMPORTANT**: Boltwall will not work without these configs.
+- Lightning configs (either lnd connection info or OpenNode API key based on connection type)
+- Session secret- For signing of all macaroons originating from your server.
+- Caveat key- this is used for authenticating macaroons in custom authorization schemes.
+  Only required if using a custom caveats (such as time based restrictions)
+
+### Lightning Configs
 
 If you are connecting to a lightning node you will need the following in your project's `.env` file
 or in `process.env`
@@ -80,8 +84,8 @@ Learn how to find these values [in this article](https://medium.com/@wbobeirne/m
 by Will O'Beirne. You can also try this tool by [lightning joule](https://lightningjoule.com/tools/node-info)
 
 ```
-LND_TLS_CERT=[BASE64 encoded cert here]
-LND_MACAROON=[hex encoded cert here]
+LND_TLS_CERT=[BASE64 or HEX encoded cert here]
+LND_MACAROON=[BASE64 or HEX encoded cert here]
 LND_SOCKET=[address of node here, e.g. localhost:10006]
 ```
 

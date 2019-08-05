@@ -83,7 +83,16 @@ async function postNewInvoice(req: LndRequest, res: Response) {
     // NOTE: Root macaroon does not authenticate access
     // it only indicates that the payment process has been initiated
     // and associates the given invoice with the current session
-    const macaroon = await createRootMacaroon(invoice.id, location)
+
+    // check if we need to also add a third party caveat to macaroon
+    let has3rdPartyCaveat =
+      req.boltwallConfig && req.boltwallConfig.getCaveat ? true : false
+
+    const macaroon = await createRootMacaroon(
+      invoice.id,
+      location,
+      has3rdPartyCaveat
+    )
 
     // and send back macaroon and invoice info back in response
     if (req.session) req.session.macaroon = macaroon

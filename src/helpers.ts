@@ -6,12 +6,23 @@ const {
 } = require('macaroons.js')
 import dotenv from 'dotenv'
 import Macaroon from 'macaroons.js/lib/Macaroon'
+import crypto from 'crypto'
 const lnService = require('ln-service')
 
 import { LndRequest, InvoiceResponse, CaveatVerifier } from './typings'
 
 export function getEnvVars(): any {
   dotenv.config()
+
+  if (!process.env.SESSION_SECRET) {
+    console.log(
+      `No session secret set. Generating random ${MACAROON_SUGGESTED_SECRET_LENGTH} byte value for signing macaroons.`
+    )
+    process.env.SESSION_SECRET = crypto
+      .randomBytes(MACAROON_SUGGESTED_SECRET_LENGTH)
+      .toString('hex')
+  }
+
   return {
     PORT: process.env.PORT as string,
     OPEN_NODE_KEY: process.env.OPEN_NODE_KEY as string,
@@ -127,10 +138,15 @@ export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
  * @params {invoice.id} - invoice must at least have an id for creating the 3rd party caveat
  * @params {Object} req - request object is needed for identification of the macaroon, in particular
  * the headers and the originating ip
+ * @params {Boolean} has3rdPartyCaveat
  * @returns {Macaroon} - serialized macaroon object
  */
 
-export async function createRootMacaroon(invoiceId: string, location: string) {
+export async function createRootMacaroon(
+  invoiceId: string,
+  location: string,
+  has3rdPartyCaveat: boolean = false
+) {
   if (!invoiceId)
     throw new Error(
       'Missing an invoice object with an id. Cannot create macaroon'
@@ -152,9 +168,18 @@ export async function createRootMacaroon(invoiceId: string, location: string) {
   // caveat is discharged by the current host as well, so location is the same for both.
   // In alternative scenarios, where now-paywall is being used to authenticate access at another source
   // then this will be different. e.g. see Prism Reader as an example
-  const macaroon = builder
-    .add_third_party_caveat(location, caveatKey, invoiceId)
-    .getMacaroon()
+  if (has3rdPartyCaveat && !caveatKey)
+    throw new Error(
+      'Missing caveat key in environment variables necessary for third party macaroon verification'
+    )
+
+  let macaroon
+
+  if (has3rdPartyCaveat)
+    macaroon = builder
+      .add_third_party_caveat(location, caveatKey, invoiceId)
+      .getMacaroon()
+  else macaroon = builder.getMacaroon()
 
   return macaroon.serialize()
 }

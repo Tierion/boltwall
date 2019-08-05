@@ -31,6 +31,14 @@ const dischargeMacaroon = cookieSession({
 })
 
 function boltwall(config: BoltwallConfig): Function {
+  if (config) {
+    const { CAVEAT_KEY } = getEnvVars()
+    if (config.getCaveat && !CAVEAT_KEY)
+      throw new Error(
+        'Missing CAVEAT_KEY environment variable. This is required when creating a custom authorization \
+rule with `getCaveat` config. Read more in the docs: https://github.com/boltwall-org/boltwall#configuration'
+      )
+  }
   return (req: LndRequest, res: Response, next: NextFunction) => {
     req.boltwallConfig = config
     return compose([
