@@ -10,7 +10,7 @@
     "start": "nodemon",
     "build": "tsc --project src/tsconfig.json --outDir dist/",
     "lint": "eslint ./src/**/*.ts --quiet",
-    "prePublish": "npm run build",
+    "prePublish": "npm run docs && npm run build",
     "docs": "typedoc --includeDeclarations --out docs --tsconfig src/tsconfig.json src/ && touch docs/.nojekyll"
   },
   "dependencies": {
