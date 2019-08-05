@@ -6,17 +6,8 @@
 import express from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-const { verifier } = require('macaroons.js')
 
-import {
-  LndRequest,
-  InvoiceResponse,
-  BoltwallConfig,
-  DescriptionGetter,
-  CaveatVerifier,
-  CaveatGetter,
-} from './typings'
-const boltwall = require('./index')
+const { boltwall, TIME_CAVEAT_CONFIGS } = require('./index')
 
 const app: express.Application = express()
 
@@ -32,51 +23,6 @@ app.get('/', (_req: any, res: express.Response) => {
   return res.json({ message: 'success!' })
 })
 
-// These are custom functions passed into the boltwall middleware
-
-/**
- * Creates a general caveat where the macaroon this is attached to
- * will only be valid for a designated amount of time, based on the invoice
- * amount paid
- */
-const getCaveat: CaveatGetter = (
-  _req: LndRequest,
-  invoice: InvoiceResponse
-) => {
-  const amount =
-    typeof invoice.amount === 'string'
-      ? parseInt(invoice.amount, 10)
-      : invoice.amount
-
-  // amount is in satoshis which is equal to the amount of seconds paid for
-  const milli: number = amount * 1000
-
-  // add 200 milliseconds of "free time" as a buffer
-  const time = new Date(Date.now() + milli + 200)
-  return `time < ${time}`
-}
-
-/**
- * This example caveatVerifier method simply implements the
- * built in TimestamCaveatVerifier available in the macaroons.js pacakge
- */
-const caveatVerifier: CaveatVerifier = (_req: LndRequest, caveat: string) =>
-  verifier.TimestampCaveatVerifier(caveat)
-
-/**
- * Generates a descriptive invoice description indicating more information
- * about the circumstances the invoice was created under
- */
-const getInvoiceDescription: DescriptionGetter = (req: LndRequest) => {
-  let { time, title, appName, amount } = req.body // time in seconds
-
-  if (!appName) appName = `[unknown application @ ${req.ip}]`
-  if (!title) title = '[unknown data]'
-  if (!time) time = amount
-
-  return `Access for ${time} seconds in ${appName} for requested data: ${title}`
-}
-
 /**
  * Boltwall accepts a config object as an argument.
  * With this configuration object, the server/api admin
@@ -87,13 +33,8 @@ const getInvoiceDescription: DescriptionGetter = (req: LndRequest) => {
  * getInvoiceDescription allows the admin to generate custom descriptions in the
  * lightning invoice
  */
-const config: BoltwallConfig = {
-  getCaveat,
-  caveatVerifier,
-  getInvoiceDescription,
-}
 
-app.use(boltwall(config))
+app.use(boltwall(TIME_CAVEAT_CONFIGS))
 
 /******
 Any middleware our route passed after this point will be protected and require

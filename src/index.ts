@@ -30,7 +30,7 @@ const dischargeMacaroon = cookieSession({
   signed: true,
 })
 
-function boltwall(config: BoltwallConfig): Function {
+export function boltwall(config: BoltwallConfig): Function {
   if (config) {
     const { CAVEAT_KEY } = getEnvVars()
     if (config.getCaveat && !CAVEAT_KEY)
@@ -52,4 +52,5 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/boltwall
   }
 }
 
-module.exports = boltwall
+// expose common configs
+export { TIME_CAVEAT_CONFIGS } from './configs'
