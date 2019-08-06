@@ -104,7 +104,7 @@ async function postNewInvoice(req: LndRequest, res: Response) {
 }
 
 router
-  .route('/invoice')
+  .route('*/invoice')
   .post(postNewInvoice)
   .get(getInvoiceStatus)
 
