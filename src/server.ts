@@ -34,7 +34,7 @@ app.get('/', (_req: any, res: express.Response) => {
  * lightning invoice
  */
 
-app.use('/api', boltwall(TIME_CAVEAT_CONFIGS))
+app.use(boltwall(TIME_CAVEAT_CONFIGS))
 
 /******
 Any middleware our route passed after this point will be protected and require

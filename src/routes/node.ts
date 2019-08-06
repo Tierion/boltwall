@@ -58,6 +58,6 @@ const getNodeInfo = async (
   }
 }
 
-router.get('*/node', getNodeInfo)
+router.route('/node').get(getNodeInfo)
 
 export default router
