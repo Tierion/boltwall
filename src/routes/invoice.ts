@@ -103,8 +103,8 @@ async function postNewInvoice(req: LndRequest, res: Response) {
   }
 }
 
-router.post('/invoice', postNewInvoice)
+router.post('*/invoice', postNewInvoice)
 
-router.get('/invoice', getInvoiceStatus)
+router.get('*/invoice', getInvoiceStatus)
 
 export default router
