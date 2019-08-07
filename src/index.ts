@@ -36,7 +36,7 @@ export function boltwall(config: BoltwallConfig): Function {
     if (config.getCaveat && !CAVEAT_KEY)
       throw new Error(
         'Missing CAVEAT_KEY environment variable. This is required when creating a custom authorization \
-rule with `getCaveat` config. Read more in the docs: https://github.com/boltwall-org/boltwall#configuration'
+rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/boltwall#configuration'
       )
   }
   return (req: LndRequest, res: Response, next: NextFunction) => {

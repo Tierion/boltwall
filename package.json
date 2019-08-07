@@ -3,7 +3,7 @@
   "version": "2.0.7",
   "description": "A Nodejs + Express middleware for adding a lightning-based paywall to API routes w/ macaroons for flexible delegation.",
   "main": "dist/index.js",
-  "repository": "git@github.com:boltwall-org/boltwall.git",
+  "repository": "git@github.com:Tierion/boltwall.git",
   "author": "Buck Perley <bucko.perley@gmail.com>",
   "license": "MIT",
   "scripts": {

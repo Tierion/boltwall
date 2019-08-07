@@ -165,7 +165,7 @@ The config object should be passed to `boltwall` on initialization. e.g. `app.us
 four properties: `caveatVerifier`(func), `getCaveat` (func), `getInvoiceDescription`, and `minAmount`.
 
 More information on the configs can be found in the
-[API Documentation](https://boltwall-org.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html).
+[API Documentation](https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html).
 
 ## 3rd Party Caveats and Discharge Macaroons
 
@@ -187,7 +187,7 @@ server_ has acknowledged payment**!
 
 The below image should give an idea of the authentication flow between the boltwall api, a lightning node,
 a 3rd party app requiring authorization, and the client paying for access.
-![ln builder diagram](https://raw.githubusercontent.com/boltwall-org/boltwall/master/boltwall-diagram.png 'diagram')
+![ln builder diagram](https://raw.githubusercontent.com/Tierion/boltwall/master/boltwall-diagram.png 'diagram')
 
 ### Pre-built Configs
 
@@ -222,7 +222,7 @@ Boltwall also supports custom configs. The properties that can be passed to bolt
 - getInvoiceDescription (function)
 - minAmount (number)
 
-More indepth documentation for these properties can be found in the [docs](https://boltwall-org.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html)
+More indepth documentation for these properties can be found in the [docs](https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html)
 
 ## Documentation
 
@@ -235,4 +235,4 @@ at the various routes provided for by `Boltwall`.
 
 ### API Documentation
 
-API documentation, with details on the code and API can be found at the [documentation website](https://boltwall-org.github.io/boltwall/).
+API documentation, with details on the code and API can be found at the [documentation website](https://Tierion.github.io/boltwall/).

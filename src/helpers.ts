@@ -72,7 +72,7 @@ export function testEnvVars() {
   // throw that there are no ln configs
   throw new Error(
     'No configs set in environment to connect to a lightning node. \
-See README for instructions: https://github.com/boltwall-org/boltwall'
+See README for instructions: https://github.com/Tierion/boltwall'
   )
 }
 
