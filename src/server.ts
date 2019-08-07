@@ -47,5 +47,5 @@ app.get('/protected', (_req, res: express.Response) =>
       'Protected route! This message will only be returned if an invoice has been paid',
   })
 )
-
-app.listen(5000, () => console.log('listening on port 5000!'))
+const port = process.env.PORT || 5000
+app.listen(port, () => console.log(`listening on port ${port}!`))
