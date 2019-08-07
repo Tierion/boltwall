@@ -203,6 +203,26 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
 					<h2>API Documentation</h2>
 				</a>
+				<a href="#custom-configs" id="custom-configs" style="color: inherit; text-decoration: none;">
+					<h4>Custom Configs</h4>
+				</a>
+				<p>Boltwall also supports custom configs. The properties that can be passed to boltwall are:</p>
+				<ul>
+					<li>getCaveat (function)</li>
+					<li>caveatVerifier (function)</li>
+					<li>getInvoiceDescription (function)</li>
+					<li>minAmount (number)</li>
+				</ul>
+				<p>More indepth documentation for these properties can be found in the <a href="https://boltwall-org.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html">docs</a></p>
+				<a href="#architecture" id="architecture" style="color: inherit; text-decoration: none;">
+					<h2>Architecture</h2>
+				</a>
+				<p>The below image should give an idea of the authentication flow between the ln-builder api, lightning node,
+					3rd party App requesting the authentication, and the client being authenticated.
+				<img src="https://raw.githubusercontent.com/boltwall-org/boltwall/master/boltwall-diagram.jpg" alt="ln builder diagram" title="diagram"></p>
+				<a href="#documentation" id="documentation" style="color: inherit; text-decoration: none;">
+					<h2>Documentation</h2>
+				</a>
 				<a href="#rest-api" id="rest-api" style="color: inherit; text-decoration: none;">
 					<h3>REST API</h3>
 				</a>
