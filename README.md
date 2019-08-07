@@ -176,6 +176,14 @@ Boltwall also supports custom configs. The properties that can be passed to bolt
 
 More indepth documentation for these properties can be found in the [docs](https://boltwall-org.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html)
 
+## Architecture
+
+The below image should give an idea of the authentication flow between the ln-builder api, lightning node,
+3rd party App requesting the authentication, and the client being authenticated.
+![ln builder diagram](https://raw.githubusercontent.com/boltwall-org/boltwall/master/boltwall-diagram.jpg 'diagram')
+
+## Documentation
+
 ### REST API
 
 Check out the Swagger Docs for detailed API information. This details what to expect
