@@ -165,6 +165,17 @@ of satoshis paid.
 
 ## API Documentation
 
+#### Custom Configs
+
+Boltwall also supports custom configs. The properties that can be passed to boltwall are:
+
+- getCaveat (function)
+- caveatVerifier (function)
+- getInvoiceDescription (function)
+- minAmount (number)
+
+More indepth documentation for these properties can be found in the [docs](https://boltwall-org.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html)
+
 ### REST API
 
 Check out the Swagger Docs for detailed API information. This details what to expect

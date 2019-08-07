@@ -14,4 +14,5 @@ export interface BoltwallConfig {
   getCaveat?: CaveatGetter
   caveatVerifier?: CaveatVerifier
   getInvoiceDescription?: DescriptionGetter
+  minAmount?: string | number
 }

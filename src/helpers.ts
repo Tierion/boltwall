@@ -86,14 +86,32 @@ export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
   const { lnd, opennode, body, boltwallConfig } = req
   let { time, expiresAt, amount } = body // time in seconds
 
+  const tokens = time || amount
+
+  // need to check if the invoice request does not meet payment threshold in config
+  if (
+    boltwallConfig &&
+    boltwallConfig.minAmount &&
+    (tokens < boltwallConfig.minAmount || !tokens)
+  )
+    throw new Error(
+      'Amount set in invoice request is below minimum amount for payment.'
+    )
+
+  // helpful to warn that we're creating a free invoice
+  // though this could be useful in donation scenarios
+  if (!amount || !time)
+    console.warn(
+      'Create invoice request has no amount set. \
+This means payer can pay whatever they want for access.'
+    )
+
   let _description
 
   if (boltwallConfig && boltwallConfig.getInvoiceDescription)
     _description = boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
-
-  const tokens = time || amount
 
   if (lnd) {
     const {

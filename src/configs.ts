@@ -60,4 +60,5 @@ export const TIME_CAVEAT_CONFIGS: BoltwallConfig = {
   getCaveat: getTimeCaveat,
   caveatVerifier: verifyTimeCaveat,
   getInvoiceDescription: getTimedInvoiceDescription,
+  minAmount: 1, // want this to make sure at least some amount is paid to create invoice
 }
