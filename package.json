@@ -1,6 +1,6 @@
 {
   "name": "boltwall",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "A Nodejs + Express middleware for adding a lightning-based paywall to API routes w/ macaroons for flexible delegation.",
   "main": "dist/index.js",
   "repository": "git@github.com:Tierion/boltwall.git",
