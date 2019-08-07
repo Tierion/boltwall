@@ -11,7 +11,8 @@
     "build": "tsc --project src/tsconfig.json --outDir dist/",
     "lint": "eslint ./src/**/*.ts --quiet",
     "prepare": "npm run build",
-    "docs": "./docs.sh"
+    "docs": "./docs.sh",
+    "prepublishOnly": "npm run docs"
   },
   "dependencies": {
     "compose-middleware": "5.0.1",
