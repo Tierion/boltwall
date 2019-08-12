@@ -28,7 +28,7 @@ export function getEnvVars(): any {
     OPEN_NODE_KEY: process.env.OPEN_NODE_KEY as string,
     LND_TLS_CERT: process.env.LND_TLS_CERT as string,
     LND_MACAROON: process.env.LND_MACAROON as string,
-    SESSION_SECRET: process.env.LND_MACAROON as string,
+    SESSION_SECRET: process.env.SESSION_SECRET as string,
     CAVEAT_KEY: process.env.CAVEAT_KEY as string,
     LND_SOCKET: process.env.LND_SOCKET as string,
   }
@@ -100,7 +100,7 @@ export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
 
   // helpful to warn that we're creating a free invoice
   // though this could be useful in donation scenarios
-  if (!amount || !time)
+  if (!tokens)
     console.warn(
       'Create invoice request has no amount set. \
 This means payer can pay whatever they want for access.'
