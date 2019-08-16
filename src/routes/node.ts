@@ -1,7 +1,6 @@
 import express, { Response, Router } from 'express'
 const lnService = require('ln-service')
 
-import { getEnvVars } from '../helpers'
 import { LndRequest, NodeInfo } from '../typings'
 
 const router: Router = express.Router()
@@ -19,19 +18,19 @@ const getNodeInfo = async (
   try {
     let nodeInfo: NodeInfo
     if (req.lnd) {
-      const { LND_SOCKET } = getEnvVars()
       const {
         public_key: pubKey,
         alias,
         active_channels_count: activeChannelsCount,
         peers_count: peersCount,
+        uris,
       } = await lnService.getWalletInfo({
         lnd: req.lnd,
       })
       nodeInfo = {
         pubKey,
         alias,
-        socket: LND_SOCKET,
+        uris,
         activeChannelsCount,
         peersCount,
       }
@@ -42,7 +41,9 @@ const getNodeInfo = async (
       nodeInfo = {
         pubKey:
           '02eadbd9e7557375161df8b646776a547c5cbc2e95b3071ec81553f8ec2cea3b8c',
-        socket: '18.191.253.246:9735',
+        uris: [
+          '02eadbd9e7557375161df8b646776a547c5cbc2e95b3071ec81553f8ec2cea3b8c@18.191.253.246:9735',
+        ],
         alias: 'OpenNode',
       }
     else

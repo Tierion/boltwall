@@ -23,9 +23,16 @@ export function getEnvVars(): any {
       .toString('hex')
   }
 
+  const { LND_TLS_CERT, LND_MACAROON, LND_SOCKET } = process.env
+
+  const hasLndConfigs = LND_TLS_CERT || LND_MACAROON || LND_SOCKET
+
   return {
     PORT: process.env.PORT as string,
-    OPEN_NODE_KEY: process.env.OPEN_NODE_KEY as string,
+    // only pass open node key if we don't have any lnd configs
+    OPEN_NODE_KEY: !hasLndConfigs
+      ? (process.env.OPEN_NODE_KEY as string)
+      : undefined,
     LND_TLS_CERT: process.env.LND_TLS_CERT as string,
     LND_MACAROON: process.env.LND_MACAROON as string,
     SESSION_SECRET: process.env.SESSION_SECRET as string,

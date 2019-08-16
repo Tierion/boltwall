@@ -1,6 +1,6 @@
 export interface NodeInfo {
   pubKey: string
-  socket: string
+  uris?: string[]
   alias?: string
   activeChannelsCount?: string | number
   peersCount?: string | number
