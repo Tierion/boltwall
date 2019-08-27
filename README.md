@@ -9,6 +9,7 @@ A lightning-based paywall middlware for Nodejs + Expressjs API services. Built w
 - oAuth-like authorization for compatible 3rd party services
 - Optional [time-based access restrictions](#3rd-party-caveats-and-discharge-macaroons)
   supported out of the box
+- [HODL Invoices](#hodl-invoices)
 
 ## System Requirements
 
@@ -210,6 +211,55 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 Currently this is the only available pre-built config. It creates a restriction
 that any authorization is only valid for a number of seconds equal to the number
 of satoshis paid.
+
+## HODL Invoices
+
+HODL invoices are a unique payment construction in lightning that allow a payee
+to simulate escrow-type situations or fidelity bonds in a lightning payment.
+
+In a nutshell, a HODL invoice allows you to create a payment that does not
+automatically settle, but instead is "held" until someone (either the owner of the node
+or, more likely, some other party that is prepared to release the payment based
+on some conditions) reveals the preimage that the invoice is locked to. If
+this secret is never revealed, the `held` payment is eventually refunded back to the
+original payer.
+You can read more about how they are constructed and examples of potential use-cases
+[here](https://github.com/lightningnetwork/lnd/pull/2022).
+
+**NOTE:** Your lightning node MUST have the `invoicesrpc` flag enabled in order
+to support hodl invoices.
+
+Boltwall includes basic support for creating and settling hodl invoices (cancelling
+must be done directly by the owner of the node and is not exposed via the Boltwall
+API at this time to avoid exposing potential [double-spend](https://en.wikipedia.org/wiki/Double-spending)-like risks).
+
+#### Example Walk-thru
+
+1. `POST /hodl` with a 256-bit `paymentHash` in the request body will return an invoice
+   locked to the preimage used to generate the hash.
+1. Pay the invoice's payment request with another lightning node
+1. `GET /invoice?id=[PAYMENT_HASH]` should return information about the invoice. If
+   you paid the invoice it should return status `held`. If not it should return `unpaid`.
+1. `PUT /hodl` with the preimage used to generate the `paymentHash` from step 1 sent
+   in the request body: `{ secret: [PREIMAGE] }`
+1. `GET /invoice?id=[PAYMENT_HASH]` to confirm that the invoice is `paid` and no longer
+   `held`
+
+The source of the pre-image and payment hash can be whatever you want. One common
+construction is for the pair to be tied to another invoice, which make it so that the HODL invoice can't settle until another invoice settles and reveals its own preimage.
+
+All authorization mechanisms (i.e. via macaroons) are preserved when using HODL invoices.
+The root macaroon is created and added to the session when creating the invoice as normal
+and the discharge macaroon is attached to the session and returned when checking the
+status of a _settled_ HODL invoice. If time caveats are enabled, then this will timeout
+based on the amount paid. Custom configurations can be devised and passed in to
+boltwall upon initialization.
+
+Note, when making the payment with your lightning client, it may look like the payment
+is stuck or is hanging. This is normal and is the result of a client having no way
+to know that an invoice is normal or HODL so it is waiting for the invoice to settle.
+This won't happen for a HODL invoice until you settle it with the preimage (via
+`PUT /hodl` above).
 
 ## API Documentation
 

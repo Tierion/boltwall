@@ -1,5 +1,5 @@
 import { InvoiceResponse } from './invoice'
-import { LndRequest } from './request'
+import { LndRequest, InvoiceBody } from './request'
 import { CaveatGetter, CaveatVerifier } from './caveat'
 import { BoltwallConfig, DescriptionGetter } from './configs'
 import { NodeInfo } from './node'
@@ -11,4 +11,5 @@ export {
   CaveatVerifier,
   DescriptionGetter,
   NodeInfo,
+  InvoiceBody,
 }

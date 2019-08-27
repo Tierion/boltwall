@@ -7,8 +7,8 @@ const router: Router = express.Router()
 
 /**
  * Retrieve relevant connection info about lightning node
- * @params {LndRequest} req - expressjs request object decorated for middleware
- * @params {Response} res - expressjs response object
+ * @param {LndRequest} req - expressjs request object decorated for middleware
+ * @param {Response} res - expressjs response object
  * @returns {Promise<NodeInfo>} returns an express response with the node information
  */
 const getNodeInfo = async (

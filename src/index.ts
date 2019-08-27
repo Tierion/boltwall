@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express'
 import cookieSession from 'cookie-session'
 import { compose } from 'compose-middleware'
 
-import { node, invoice, parseEnv, boltwall as paywall } from './routes'
+import { node, invoice, parseEnv, boltwall as paywall, hodl } from './routes'
 import { getEnvVars } from './helpers'
 import { LndRequest, BoltwallConfig } from './typings'
 
@@ -47,6 +47,7 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/
       dischargeMacaroon,
       node,
       invoice,
+      hodl,
       paywall,
     ])(req, res, next)
   }

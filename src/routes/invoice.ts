@@ -32,6 +32,7 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
 
   try {
     console.log('checking status of invoice:', invoiceId)
+    console.log(req.session)
     const { lnd, opennode } = req
     const invoice = await checkInvoiceStatus(lnd, opennode, invoiceId)
     const { status } = invoice
@@ -53,14 +54,20 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
     } else if (status === 'processing' || status === 'unpaid') {
       console.log('still processing invoice %s...', invoiceId)
       return res.status(202).json(invoice)
+    } else if (status === 'held') {
+      console.log(
+        `invoice ${invoiceId} is a hodl invoice and is still being held...`
+      )
+      return res.status(202).json(invoice)
     } else {
+      console.log('unknown status?', status)
       return res
         .status(400)
         .json({ message: `unknown invoice status ${status}` })
     }
   } catch (error) {
     console.error('error getting invoice:', error)
-    return res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error })
   }
 }
 
