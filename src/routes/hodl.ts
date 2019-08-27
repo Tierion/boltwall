@@ -12,6 +12,13 @@ const router: Router = Router()
  * a payment hash to lock to.
  * IMPORTANT: lnd node being interacted with MUST have `invoicesrpc` tag set
  * when building otherwise hodl invoices won't be supported and this will return an error
+ * @param {string} req.body.paymentHash - required, 256-bit hash to lock invoice to.
+ * The corresponding preimage will be required to settle this invoice.
+ * @param {string|number} [req.body.amount]
+ * @param {string} [req.body.description] - custom invoice description
+ * @param {string|number} [req.body.cltvDelta] - useful for policing good behavior.
+ * If coordinating with other parties, this SHOULD be greater than any other dependent invoices.
+ * Otherwise, counterparty could wait out the hodl invoice and cost the node its funds
  */
 async function postNewHodl(req: LndRequest, res: Response, next: NextFunction) {
   const location: string = getLocation(req)
@@ -66,7 +73,8 @@ async function postNewHodl(req: LndRequest, res: Response, next: NextFunction) {
  * ## ROUTE: PUT /hodl
  * Endpoint for settling a hodl invoice. Invoice status can
  * be retrieved with the normal GET /invoice endpoint
- * @param {Express.request.body.secret} secret -
+ * @param {string} req.body.secret - payment hash preimage to settle invoice
+ * @returns {Promise<boolean>} res.json.success - true if settled successfully
  */
 async function settleHodl(req: LndRequest, res: Response) {
   const { secret } = req.body
@@ -77,8 +85,7 @@ async function settleHodl(req: LndRequest, res: Response) {
     })
 
   try {
-    const status = await lnService.settleHodlInvoice({ lnd: req.lnd, secret })
-    console.log('status:', status)
+    await lnService.settleHodlInvoice({ lnd: req.lnd, secret })
 
     return res.status(200).json({ success: true })
   } catch (e) {
