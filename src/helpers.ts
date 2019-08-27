@@ -231,7 +231,13 @@ export async function checkInvoiceStatus(
       id: invoiceId,
       lnd: lnd,
     })
-    status = invoiceDetails['is_confirmed'] ? 'paid' : 'unpaid'
+
+    // for hodl invoices, status might be "is_held"
+    status = invoiceDetails['is_confirmed']
+      ? 'paid'
+      : invoiceDetails['is_held']
+      ? 'held'
+      : 'unpaid'
     amount = invoiceDetails.tokens
     payreq = invoiceDetails.request
     createdAt = invoiceDetails.created_at

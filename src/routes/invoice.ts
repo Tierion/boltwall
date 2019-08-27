@@ -53,6 +53,11 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
     } else if (status === 'processing' || status === 'unpaid') {
       console.log('still processing invoice %s...', invoiceId)
       return res.status(202).json(invoice)
+    } else if (status === 'held') {
+      console.log(
+        `invoice ${invoiceId} is a hodl invoice and is still being held...`
+      )
+      return res.status(202).json(invoice)
     } else {
       return res
         .status(400)
@@ -60,7 +65,7 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
     }
   } catch (error) {
     console.error('error getting invoice:', error)
-    return res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error })
   }
 }
 
