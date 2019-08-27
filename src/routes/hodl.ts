@@ -1,8 +1,8 @@
-import { Response, Router, NextFunction } from 'express'
+import { Response, Router } from 'express'
 const lnService = require('ln-service')
 
 import { LndRequest, InvoiceBody, InvoiceResponse } from '../typings'
-import { getLocation } from '../helpers'
+import { getLocation, createRootMacaroon } from '../helpers'
 
 const router: Router = Router()
 
@@ -20,7 +20,8 @@ const router: Router = Router()
  * If coordinating with other parties, this SHOULD be greater than any other dependent invoices.
  * Otherwise, counterparty could wait out the hodl invoice and cost the node its funds
  */
-async function postNewHodl(req: LndRequest, res: Response, next: NextFunction) {
+async function postNewHodl(req: LndRequest, res: Response) {
+  console.log('Request to create new hodl invoice')
   const location: string = getLocation(req)
   const body: InvoiceBody = req.body
 
@@ -63,9 +64,35 @@ async function postNewHodl(req: LndRequest, res: Response, next: NextFunction) {
       createdAt: created_at,
       amount: tokens,
     }
+
+    // create a root macaroon with the associated id
+    // NOTE: Root macaroon does not authenticate access
+    // it only indicates that the payment process has been initiated
+    // and associates the given invoice with the current session
+
+    // check if we need to also add a third party caveat to macaroon
+    let has3rdPartyCaveat =
+      req.boltwallConfig && req.boltwallConfig.getCaveat ? true : false
+
+    const macaroon = await createRootMacaroon(
+      invoice.id,
+      location,
+      has3rdPartyCaveat
+    )
+
+    // and send back macaroon and invoice info back in response
+    if (req.session) req.session.macaroon = macaroon
+    console.log('req.session:', req.session)
     return res.status(200).json(invoice)
   } catch (e) {
-    return next(e.message)
+    console.log('there was a problem creating hodl invoice:', e)
+    // lnService returns errors as array
+    if (Array.isArray(e))
+      return res.status(e[0]).json({ message: e[1], details: e[2].err.details })
+
+    return res
+      .status(500)
+      .json({ message: 'Problem processing new hodl invoice' })
   }
 }
 

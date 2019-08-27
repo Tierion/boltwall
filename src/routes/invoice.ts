@@ -32,6 +32,7 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
 
   try {
     console.log('checking status of invoice:', invoiceId)
+    console.log(req.session)
     const { lnd, opennode } = req
     const invoice = await checkInvoiceStatus(lnd, opennode, invoiceId)
     const { status } = invoice
@@ -59,6 +60,7 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
       )
       return res.status(202).json(invoice)
     } else {
+      console.log('unknown status?', status)
       return res
         .status(400)
         .json({ message: `unknown invoice status ${status}` })
