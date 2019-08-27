@@ -86,7 +86,7 @@ See README for instructions: https://github.com/Tierion/boltwall'
 /**
  * Utility to create an invoice based on either an authenticated lnd grpc instance
  * or an opennode connection
- * @params {Object} req - express request object that either contains an lnd or opennode object
+ * @param {Object} req - express request object that either contains an lnd or opennode object
  * @returns {Object} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
 export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
@@ -160,10 +160,10 @@ This means payer can pay whatever they want for access.'
  * Given an invoice object and a request
  * we want to create a root macaroon with a third party caveat, which both need to be
  * satisfied in order to authenticate the macaroon
- * @params {invoice.id} - invoice must at least have an id for creating the 3rd party caveat
- * @params {Object} req - request object is needed for identification of the macaroon, in particular
+ * @param {invoice.id} - invoice must at least have an id for creating the 3rd party caveat
+ * @param {Object} req - request object is needed for identification of the macaroon, in particular
  * the headers and the originating ip
- * @params {Boolean} has3rdPartyCaveat
+ * @param {Boolean} has3rdPartyCaveat
  * @returns {Macaroon} - serialized macaroon object
  */
 
@@ -211,10 +211,10 @@ export async function createRootMacaroon(
 
 /**
  * Checks the status of an invoice given an id
- * @params {express.request} - request object from expressjs
- * @params {req.query.id} invoiceId - id of invoice to check status of
- * @params {req.lnd} [lnd] - ln-service authenticated grpc object
- * @params {req.opennode} [opennode] - authenticated opennode object for communicating with OpenNode API
+ * @param {express.request} - request object from expressjs
+ * @param {req.query.id} invoiceId - id of invoice to check status of
+ * @param {req.lnd} [lnd] - ln-service authenticated grpc object
+ * @param {req.opennode} [opennode] - authenticated opennode object for communicating with OpenNode API
  * @returns {Object} - status - Object with status, amount, and payment request
  */
 
@@ -253,9 +253,9 @@ export async function checkInvoiceStatus(
 /**
  * Validates a macaroon and should indicate reason for failure
  * if possible
- * @params {Macaroon} root - root macaroon
- * @params {Macaroon} discharge - discharge macaroon from 3rd party validation
- * @params {String} exactCaveat - a first party, exact caveat to test on root macaroon
+ * @param {Macaroon} root - root macaroon
+ * @param {Macaroon} discharge - discharge macaroon from 3rd party validation
+ * @param {String} exactCaveat - a first party, exact caveat to test on root macaroon
  * @returns {Boolean|Exception} will return true if passed or throw with failure
  */
 export function validateMacaroons(
@@ -311,8 +311,8 @@ export function validateMacaroons(
 /**
  * Returns serealized discharge macaroon, signed with the server's caveat key
  * and with an attached caveat (if passed)
- * @params {Express.request} - req object
- * @params {String} caveat - first party caveat such as `time < ${now + 1000 seconds}`
+ * @param {Express.request} - req object
+ * @param {String} caveat - first party caveat such as `time < ${now + 1000 seconds}`
  * @returns {Macaroon} discharge macaroon
  */
 export function getDischargeMacaroon(
@@ -368,13 +368,13 @@ export function getFirstPartyCaveatFromMacaroon(serialized: Macaroon) {
 /**
  * Utility function to get a location string to describe _where_ the server is.
  * useful for setting identifiers in macaroons
- * @params {Express.request} req - expressjs request object
- * @params {Express.request.headers} [headers] - optional headers property added by zeit's now
- * @params {Express.request.hostname} - fallback if not in a now lambda
+ * @param {Express.request} req - expressjs request object
+ * @param {Express.request.headers} [headers] - optional headers property added by zeit's now
+ * @param {Express.request.hostname} - fallback if not in a now lambda
  * @returns {String} - location string
  */
 export function getLocation({ headers, hostname }: LndRequest) {
-  return headers
+  return headers && headers['x-now-deployment-url']
     ? headers['x-forwarded-proto'] + '://' + headers['x-now-deployment-url']
     : hostname || 'self'
 }
