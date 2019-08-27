@@ -233,7 +233,7 @@ Boltwall includes basic support for creating and settling hodl invoices (cancell
 must be done directly by the owner of the node and is not exposed via the Boltwall
 API at this time to avoid exposing potential [double-spend](https://en.wikipedia.org/wiki/Double-spending)-like risks).
 
-#### Example Walkthru
+#### Example Walk-thru
 
 1. `POST /hodl` with a 256-bit `paymentHash` in the request body will return an invoice
    locked to the preimage used to generate the hash.
@@ -244,6 +244,9 @@ API at this time to avoid exposing potential [double-spend](https://en.wikipedia
    in the request body: `{ secret: [PREIMAGE] }`
 1. `GET /invoice?id=[PAYMENT_HASH]` to confirm that the invoice is `paid` and no longer
    `held`
+
+The source of the pre-image and payment hash can be whatever you want. One common
+construction is for the pair to be tied to another invoice, which make it so that the HODL invoice can't settle until another invoice settles and reveals its own preimage.
 
 All authorization mechanisms (i.e. via macaroons) are preserved when using HODL invoices.
 The root macaroon is created and added to the session when creating the invoice as normal
