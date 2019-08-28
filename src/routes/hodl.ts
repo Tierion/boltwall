@@ -82,7 +82,7 @@ async function postNewHodl(req: LndRequest, res: Response) {
 
     // and send back macaroon and invoice info back in response
     if (req.session) req.session.macaroon = macaroon
-    console.log('req.session:', req.session)
+
     return res.status(200).json(invoice)
   } catch (e) {
     console.log('there was a problem creating hodl invoice:', e)

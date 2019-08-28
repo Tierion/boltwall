@@ -52,7 +52,7 @@ export default async function boltwall(
     const invoice = await checkInvoiceStatus(req.lnd, req.opennode, invoiceId)
     const { status } = invoice
 
-    if (status === 'paid') {
+    if (status === 'paid' || status === 'held') {
       let caveat: string | undefined
       if (req.boltwallConfig && req.boltwallConfig.getCaveat)
         caveat = req.boltwallConfig.getCaveat(req, invoice)
@@ -64,14 +64,12 @@ export default async function boltwall(
       // if invoice has been paid
       // then create a discharge macaroon and attach it to a session cookie
       if (req.session) req.session.dischargeMacaroon = dischargeMacaroon
-    } else if (status === 'processing' || status === 'unpaid') {
+    } else if (status === 'processing') {
       console.log('still processing invoice %s...', invoiceId)
       return res.status(202).json(invoice)
-    } else if (status === 'held') {
-      console.log(
-        `invoice ${invoiceId} is a hodl invoice and is still being held...`
-      )
-      return res.status(202).json(invoice)
+    } else if (status === 'unpaid') {
+      console.log('still waiting for payment %s...', invoiceId)
+      return res.status(402).json(invoice)
     } else {
       return res
         .status(400)

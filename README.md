@@ -261,6 +261,16 @@ to know that an invoice is normal or HODL so it is waiting for the invoice to se
 This won't happen for a HODL invoice until you settle it with the preimage (via
 `PUT /hodl` above).
 
+#### A `held` invoice is a paid invoice
+
+What this means is that the paywall considers the invoice paid and "unlocks"
+the protected content, by providing the discharge macaroon even though your node
+technically may not have settled the payment yet and so doesn't have access to the funds.
+
+Since this is a middleware, **it is up to the api implementer to process the payment** if required
+before moving on to any other routes. The reason for this is that how a hodl invoice
+is settled is very application specific and so needs to be flexible.
+
 ## API Documentation
 
 #### Custom Configs
