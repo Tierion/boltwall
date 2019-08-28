@@ -293,6 +293,15 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 					to know that an invoice is normal or HODL so it is waiting for the invoice to settle.
 					This won&#39;t happen for a HODL invoice until you settle it with the preimage (via
 				<code>PUT /hodl</code> above).</p>
+				<a href="#a-codeheldcode-invoice-is-a-paid-invoice" id="a-codeheldcode-invoice-is-a-paid-invoice" style="color: inherit; text-decoration: none;">
+					<h4>A <code>held</code> invoice is a paid invoice</h4>
+				</a>
+				<p>What this means is that the paywall considers the invoice paid and &quot;unlocks&quot;
+					the protected content, by providing the discharge macaroon even though your node
+				technically may not have settled the payment yet and so doesn&#39;t have access to the funds.</p>
+				<p>Since this is a middleware, <strong>it is up to the api implementer to process the payment</strong> if required
+					before moving on to any other routes. The reason for this is that how a hodl invoice
+				is settled is very application specific and so needs to be flexible.</p>
 				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
 					<h2>API Documentation</h2>
 				</a>
