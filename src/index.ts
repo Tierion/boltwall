@@ -55,3 +55,4 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/
 
 // expose common configs
 export { TIME_CAVEAT_CONFIGS } from './configs'
+export { getFirstPartyCaveatFromMacaroon } from './helpers'

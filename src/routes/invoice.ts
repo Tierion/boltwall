@@ -32,11 +32,14 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
 
   try {
     console.log('checking status of invoice:', invoiceId)
-    console.log(req.session)
     const { lnd, opennode } = req
     const invoice = await checkInvoiceStatus(lnd, opennode, invoiceId)
     const { status } = invoice
-    if (status === 'paid') {
+    // a held invoice is technically properly paid
+    // so we can treat it as such to at least pass it through the paywall
+    // it is up to the middleware implementer to decide what to do with a
+    // held invoice, discharge macaroon passed however allowing requests through paywall
+    if (status === 'paid' || status === 'held') {
       const location = getLocation(req)
 
       let caveat: string | undefined
@@ -53,11 +56,6 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
       return res.status(200).json({ status, discharge: macaroon })
     } else if (status === 'processing' || status === 'unpaid') {
       console.log('still processing invoice %s...', invoiceId)
-      return res.status(202).json(invoice)
-    } else if (status === 'held') {
-      console.log(
-        `invoice ${invoiceId} is a hodl invoice and is still being held...`
-      )
       return res.status(202).json(invoice)
     } else {
       console.log('unknown status?', status)
