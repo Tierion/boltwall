@@ -117,6 +117,10 @@ async function settleHodl(req: LndRequest, res: Response) {
     return res.status(200).json({ success: true })
   } catch (e) {
     console.error('There was an error settling a hodl invoice:', e)
+    // lnService returns errors as array
+    if (Array.isArray(e))
+      return res.status(e[0]).json({ message: e[1], details: e[2].err.details })
+
     return res.status(500).json({
       message:
         'The server encountered an error processing the hodl invoice. Please try again later or contact server admin.',
