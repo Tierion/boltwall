@@ -70,6 +70,9 @@ export default async function boltwall(
     } else if (status === 'unpaid') {
       console.log('still waiting for payment %s...', invoiceId)
       return res.status(402).json(invoice)
+    } else if (status === 'canceled') {
+      console.log('Invoice was canceled %s...', invoiceId)
+      return res.status(402).json(invoice)
     } else {
       return res
         .status(400)

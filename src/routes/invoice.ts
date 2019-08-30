@@ -57,6 +57,9 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
     } else if (status === 'processing' || status === 'unpaid') {
       console.log('still processing invoice %s...', invoiceId)
       return res.status(202).json(invoice)
+    } else if (status === 'canceled') {
+      console.log('Invoice was canceled %s...', invoiceId)
+      return res.status(400).json(invoice)
     } else {
       console.log('unknown status?', status)
       return res
