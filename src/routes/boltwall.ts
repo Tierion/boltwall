@@ -112,7 +112,7 @@ export default async function boltwall(
       return res.status(402).json({ message: e.message })
     }
     console.error('There was an error validating the macaroon:', e.message)
-    return res.status(400).json({
+    return res.status(401).json({
       message:
         'Unable to authorize access. Proof of paid invoice required with proper credentials.',
     })
