@@ -53,9 +53,12 @@ Once the server is running, you can test the API:
 4. Make payment using the `payreq` string returned from the above request (this is done w/ your
    own node, NOT the boltwall API, since you are using your node as a client to pay the boltwall node).
 
-5. `GET http://localhost:5000/invoice?id=[INVOICE ID]` to check payment status of invoice.
+5. `PUT http://localhost:5000/invoice?id=[INVOICE ID]` to check payment status of invoice.
    Id is an optional query parameter if requesting from the same session as the `POST /invoice`
    request was made as the id can be inferred from a session cookie that is returned in that response.
+   Your request's session will be updated accordingly if the invoice state has changed.
+   For setups with [custom configs](#custom-configs), this is also a
+   request that may require extra parameters in the body for satisfying a
 
 6. `GET http://localhost:5000/protected` will return a `200` status and a different message.
    Keep trying the request, and after 30 seconds you will get an expiration notice and `402` error.
@@ -188,7 +191,7 @@ server_ has acknowledged payment**!
 
 The below image should give an idea of the authentication flow between the boltwall api, a lightning node,
 a 3rd party app requiring authorization, and the client paying for access.
-![ln builder diagram](https://raw.githubusercontent.com/Tierion/boltwall/master/boltwall-diagram.png 'diagram')
+![boltwal architecture diagram](https://raw.githubusercontent.com/Tierion/boltwall/master/boltwall-diagram.png 'diagram')
 
 ### Pre-built Configs
 
@@ -246,7 +249,7 @@ API at this time to avoid exposing potential [double-spend](https://en.wikipedia
    `held`
 
 The source of the pre-image and payment hash can be whatever you want. One common
-construction is for the pair to be tied to another invoice, which make it so that the HODL invoice can't settle until another invoice settles and reveals its own preimage.
+construction is for the pair to be tied to another invoice, which makes it so that the HODL invoice can't settle until another invoice settles and reveals its own preimage.
 
 All authorization mechanisms (i.e. via macaroons) are preserved when using HODL invoices.
 The root macaroon is created and added to the session when creating the invoice as normal

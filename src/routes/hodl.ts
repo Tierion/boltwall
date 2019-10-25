@@ -99,7 +99,7 @@ async function postNewHodl(req: LndRequest, res: Response) {
 /**
  * ## ROUTE: PUT /hodl
  * Endpoint for settling a hodl invoice. Invoice status can
- * be retrieved with the normal GET /invoice endpoint
+ * be retrieved with the normal GET or PUT /invoice endpoint
  * @param {string} req.body.secret - payment hash preimage to settle invoice
  * @returns {Promise<boolean>} res.json.success - true if settled successfully
  */
@@ -111,14 +111,23 @@ async function settleHodl(req: LndRequest, res: Response) {
       message: 'require secret/preimage in order to settle hodl invoice',
     })
 
+  if (secret.length !== 64)
+    return res
+      .status(400)
+      .json({
+        message:
+          'preimage is of incorrect length. Must be a 246 bit (64 chars) hex string.',
+      })
+
   try {
+    console.log('secret:', secret)
     await lnService.settleHodlInvoice({ lnd: req.lnd, secret })
 
     return res.status(200).json({ success: true })
   } catch (e) {
     console.error('There was an error settling a hodl invoice:', e)
     // lnService returns errors as array
-    if (Array.isArray(e))
+    if (Array.isArray(e) && e[2])
       return res.status(e[0]).json({ message: e[1], details: e[2].err.details })
 
     return res.status(500).json({

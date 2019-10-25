@@ -116,7 +116,7 @@ This means payer can pay whatever they want for access.'
   let _description
 
   if (boltwallConfig && boltwallConfig.getInvoiceDescription)
-    _description = boltwallConfig.getInvoiceDescription(req)
+    _description = await boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
 
@@ -262,7 +262,7 @@ export async function checkInvoiceStatus(
  * @param {Macaroon} root - root macaroon
  * @param {Macaroon} discharge - discharge macaroon from 3rd party validation
  * @param {String} exactCaveat - a first party, exact caveat to test on root macaroon
- * @returns {Boolean|Exception} will return true if passed or throw with failure
+ * @returns {Promise<Boolean|Exception>} will return true if passed or throw with failure
  */
 export function validateMacaroons(
   root: Macaroon,
@@ -312,6 +312,9 @@ export function validateMacaroons(
       throw new Error(`${firstPartyCaveat.key} did not match with macaroon`)
     }
   }
+
+  if (!verifier.isValid(SESSION_SECRET))
+    throw new Error('Unable to verify macaroon.')
 }
 
 /**

@@ -9,7 +9,7 @@ import {
   validateMacaroons,
   getLocation,
 } from '../helpers'
-import { LndRequest, CaveatVerifier } from '../typings'
+import { LndRequest, AsyncCaveatVerifier, CaveatVerifier } from '../typings'
 
 export default async function boltwall(
   req: LndRequest,
@@ -55,7 +55,7 @@ export default async function boltwall(
     if (status === 'paid' || status === 'held') {
       let caveat: string | undefined
       if (req.boltwallConfig && req.boltwallConfig.getCaveat)
-        caveat = req.boltwallConfig.getCaveat(req, invoice)
+        caveat = await req.boltwallConfig.getCaveat(req, invoice)
 
       dischargeMacaroon = getDischargeMacaroon(invoiceId, location, caveat)
 
@@ -83,9 +83,15 @@ export default async function boltwall(
     const exactCaveat = getFirstPartyCaveat(invoiceId)
 
     // get a verifier if one is attached to the configs
-    const verifier: CaveatVerifier | undefined = req.boltwallConfig
+    let verifier:
+      | AsyncCaveatVerifier
+      | undefined
+      | CaveatVerifier = req.boltwallConfig
       ? req.boltwallConfig.caveatVerifier
       : undefined
+
+    if (verifier) verifier = await verifier(req)
+
     validateMacaroons(rootMacaroon, dischargeMacaroon, exactCaveat, verifier)
 
     // if everything validates then simply run `next()`
@@ -105,9 +111,10 @@ export default async function boltwall(
       }
       return res.status(402).json({ message: e.message })
     }
-    console.error('there was an error validating the macaroon:', e.message)
-    return res
-      .status(500)
-      .json({ message: 'Server error. Please contact paywall administrator.' })
+    console.error('There was an error validating the macaroon:', e.message)
+    return res.status(400).json({
+      message:
+        'Unable to authorize access. Proof of paid invoice required with proper credentials.',
+    })
   }
 }

@@ -8,7 +8,7 @@ import {
   LndRequest,
   InvoiceResponse,
   CaveatGetter,
-  CaveatVerifier,
+  AsyncCaveatVerifier,
   DescriptionGetter,
 } from './typings'
 const { verifier } = require('macaroons.js')
@@ -39,8 +39,8 @@ const getTimeCaveat: CaveatGetter = (
  * This example caveatVerifier method simply implements the
  * built in TimestamCaveatVerifier available in the macaroons.js pacakge
  */
-const verifyTimeCaveat: CaveatVerifier = (_req: LndRequest, caveat: string) =>
-  verifier.TimestampCaveatVerifier(caveat)
+const verifyTimeCaveat: AsyncCaveatVerifier = () =>
+  Promise.resolve((caveat: string) => verifier.TimestampCaveatVerifier(caveat))
 
 /**
  * Generates a descriptive invoice description indicating more information
@@ -53,7 +53,9 @@ const getTimedInvoiceDescription: DescriptionGetter = (req: LndRequest) => {
   if (!title) title = '[unknown data]'
   if (!time) time = amount
 
-  return `Access for ${time} seconds in ${appName} for requested data: ${title}`
+  return Promise.resolve(
+    `Access for ${time} seconds in ${appName} for requested data: ${title}`
+  )
 }
 
 export const TIME_CAVEAT_CONFIGS: BoltwallConfig = {
