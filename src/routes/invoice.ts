@@ -13,13 +13,14 @@ import {
 const router: Router = Router()
 
 /**
- * ## Route: GET /invoice
+ * ## Route: PUT /invoice
  * Checks the status of an invoice based on a specific id in the query parameter.
  * If the invoice is paid then a discharge macaroon will be attached to the session.
  * The discharge macaroon can have a custom caveat set on it based on configs passed into
  * Boltwall on initialization of the middleware.
+ * (Formerly GET /invoice which is still supported but PUT is preferred when a body is sent)
  */
-async function getInvoiceStatus(req: LndRequest, res: Response) {
+async function updateInvoiceStatus(req: LndRequest, res: Response) {
   let invoiceId = req.query.id
 
   // if the query doesn't have an id, but we have a root macaroon, we can
@@ -44,7 +45,7 @@ async function getInvoiceStatus(req: LndRequest, res: Response) {
 
       let caveat: string | undefined
       if (req.boltwallConfig && req.boltwallConfig.getCaveat)
-        caveat = req.boltwallConfig.getCaveat(req, invoice)
+        caveat = await req.boltwallConfig.getCaveat(req, invoice)
 
       const macaroon = getDischargeMacaroon(invoiceId, location, caveat)
 
@@ -111,6 +112,7 @@ async function postNewInvoice(req: LndRequest, res: Response) {
 router
   .route('*/invoice')
   .post(postNewInvoice)
-  .get(getInvoiceStatus)
+  .put(updateInvoiceStatus)
+  .get(updateInvoiceStatus)
 
 export default router
