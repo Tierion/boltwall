@@ -118,9 +118,12 @@ $ yarn start</code></pre>
 					<li><p>Make payment using the <code>payreq</code> string returned from the above request (this is done w/ your
 						own node, NOT the boltwall API, since you are using your node as a client to pay the boltwall node).</p>
 					</li>
-					<li><p><code>GET http://localhost:5000/invoice?id=[INVOICE ID]</code> to check payment status of invoice.
+					<li><p><code>PUT http://localhost:5000/invoice?id=[INVOICE ID]</code> to check payment status of invoice.
 							Id is an optional query parameter if requesting from the same session as the <code>POST /invoice</code>
-						request was made as the id can be inferred from a session cookie that is returned in that response.</p>
+							request was made as the id can be inferred from a session cookie that is returned in that response.
+							Your request&#39;s session will be updated accordingly if the invoice state has changed.
+							For setups with <a href="#custom-configs">custom configs</a>, this is also a
+						request that may require extra parameters in the body for satisfying a</p>
 					</li>
 					<li><p><code>GET http://localhost:5000/protected</code> will return a <code>200</code> status and a different message.
 						Keep trying the request, and after 30 seconds you will get an expiration notice and <code>402</code> error.</p>
@@ -228,7 +231,7 @@ app.listen(<span class="hljs-number">5000</span>, () =&gt; <span class="hljs-bui
 				</a>
 				<p>The below image should give an idea of the authentication flow between the boltwall api, a lightning node,
 					a 3rd party app requiring authorization, and the client paying for access.
-				<img src="https://raw.githubusercontent.com/Tierion/boltwall/master/boltwall-diagram.png" alt="ln builder diagram" title="diagram"></p>
+				<img src="https://raw.githubusercontent.com/Tierion/boltwall/master/boltwall-diagram.png" alt="boltwal architecture diagram" title="diagram"></p>
 				<a href="#pre-built-configs" id="pre-built-configs" style="color: inherit; text-decoration: none;">
 					<h3>Pre-built Configs</h3>
 				</a>
@@ -281,7 +284,7 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 					<code>held</code></li>
 				</ol>
 				<p>The source of the pre-image and payment hash can be whatever you want. One common
-				construction is for the pair to be tied to another invoice, which make it so that the HODL invoice can&#39;t settle until another invoice settles and reveals its own preimage.</p>
+				construction is for the pair to be tied to another invoice, which makes it so that the HODL invoice can&#39;t settle until another invoice settles and reveals its own preimage.</p>
 				<p>All authorization mechanisms (i.e. via macaroons) are preserved when using HODL invoices.
 					The root macaroon is created and added to the session when creating the invoice as normal
 					and the discharge macaroon is attached to the session and returned when checking the
@@ -371,9 +374,6 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="modules/_src_server_.html">"src/server"</a>
-					</li>
-					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_caveat_d_.html">"src/typings/caveat.d"</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="modules/_src_typings_configs_d_.html">"src/typings/configs.d"</a>
