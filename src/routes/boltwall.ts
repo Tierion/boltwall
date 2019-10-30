@@ -27,10 +27,10 @@ export default async function boltwall(
 
   // if there is no macaroon at all
   // then just return a 402: Payment Required
-  if (!rootMacaroon)
-    return res
-      .status(402)
-      .json({ message: 'Payment required to access content.' })
+  if (!rootMacaroon) {
+    res.status(402)
+    return res.json({ message: 'Payment required to access content.' })
+  }
 
   // if there is a root macaroon
   // check that we also have the discharge macaroon passed either in request query or a session cookie
@@ -66,14 +66,15 @@ export default async function boltwall(
       if (req.session) req.session.dischargeMacaroon = dischargeMacaroon
     } else if (status === 'processing') {
       console.log('still processing invoice %s...', invoiceId)
-      return res.status(202).json(invoice)
+      res.status(202)
+      return res.json(invoice)
     } else if (status === 'unpaid') {
       console.log('still waiting for payment %s...', invoiceId)
-      return res.status(402).json(invoice)
+      res.status(402)
+      return res.json(invoice)
     } else {
-      return res
-        .status(400)
-        .json({ message: `unknown invoice status ${status}` })
+      res.status(400)
+      return res.json({ message: `unknown invoice status ${status}` })
     }
   }
 
@@ -109,10 +110,12 @@ export default async function boltwall(
         req.session.macaroon = null
         req.session.dischargeMacaroon = null
       }
-      return res.status(402).json({ message: e.message })
+      res.status(402)
+      return res.json({ message: e.message })
     }
     console.error('There was an error validating the macaroon:', e.message)
-    return res.status(401).json({
+    res.status(401)
+    return res.json({
       message:
         'Unable to authorize access. Proof of paid invoice required with proper credentials.',
     })

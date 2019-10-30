@@ -28,7 +28,8 @@ async function updateInvoiceStatus(req: LndRequest, res: Response) {
   if (!invoiceId && req.session && req.session.macaroon) {
     invoiceId = getFirstPartyCaveatFromMacaroon(req.session.macaroon)
   } else if (!invoiceId) {
-    return res.status(404).json({ message: 'Missing invoiceId in request' })
+    res.status(404)
+    return res.json({ message: 'Missing invoiceId in request' })
   }
 
   try {
@@ -54,19 +55,21 @@ async function updateInvoiceStatus(req: LndRequest, res: Response) {
 
       console.log(`Invoice ${invoiceId} has been paid`)
 
-      return res.status(200).json({ status, discharge: macaroon })
+      res.status(200)
+      res.json({ status, discharge: macaroon })
     } else if (status === 'processing' || status === 'unpaid') {
       console.log('still processing invoice %s...', invoiceId)
-      return res.status(202).json(invoice)
+      res.status(202)
+      res.json(invoice)
     } else {
       console.log('unknown status?', status)
-      return res
-        .status(400)
-        .json({ message: `unknown invoice status ${status}` })
+      res.status(400)
+      res.json({ message: `unknown invoice status ${status}` })
     }
   } catch (error) {
     console.error('error getting invoice:', error)
-    return res.status(400).json({ message: error })
+    res.status(400)
+    res.json({ message: error })
   }
 }
 
@@ -102,10 +105,12 @@ async function postNewInvoice(req: LndRequest, res: Response) {
 
     // and send back macaroon and invoice info back in response
     if (req.session) req.session.macaroon = macaroon
-    res.status(200).json(invoice)
+    res.status(200)
+    res.json(invoice)
   } catch (error) {
     console.error('error getting invoice:', error)
-    res.status(400).json({ message: error.message })
+    res.status(400)
+    res.json({ message: error.message })
   }
 }
 

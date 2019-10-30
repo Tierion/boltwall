@@ -20,7 +20,7 @@ const router: Router = Router()
  * If coordinating with other parties, this SHOULD be greater than any other dependent invoices.
  * Otherwise, counterparty could wait out the hodl invoice and cost the node its funds
  */
-async function postNewHodl(req: LndRequest, res: Response) {
+async function postNewHodl(req: LndRequest, res: Response): Promise<Response> {
   console.log('Request to create new hodl invoice')
   const location: string = getLocation(req)
   const body: InvoiceBody = req.body
@@ -29,16 +29,20 @@ async function postNewHodl(req: LndRequest, res: Response) {
 
   // throw error if no payment hash was found on the body,
   // which is necessary to create the hodl invoice
-  if (!paymentHash)
-    return res.status(400).json({
+  if (!paymentHash) {
+    res.status(400)
+    return res.json({
       message:
         'Expected a paymentHash to be included in request body. None was found.',
     })
+  }
 
-  if (paymentHash.length !== 64)
-    return res
-      .status(400)
-      .json({ message: 'Expected a 256 bit string for the payment hash.' })
+  if (paymentHash.length !== 64) {
+    res.status(400)
+    return res.json({
+      message: 'Expected a 256 bit string for the payment hash.',
+    })
+  }
 
   const paymentInfo = {
     lnd: req.lnd,
@@ -83,16 +87,18 @@ async function postNewHodl(req: LndRequest, res: Response) {
     // and send back macaroon and invoice info back in response
     if (req.session) req.session.macaroon = macaroon
 
-    return res.status(200).json(invoice)
+    res.status(200)
+    return res.json(invoice)
   } catch (e) {
     console.log('there was a problem creating hodl invoice:', e)
     // lnService returns errors as array
-    if (Array.isArray(e))
-      return res.status(e[0]).json({ message: e[1], details: e[2].err.details })
+    if (Array.isArray(e)) {
+      res.status(e[0])
+      return res.json({ message: e[1], details: e[2].err.details })
+    }
 
-    return res
-      .status(500)
-      .json({ message: 'Problem processing new hodl invoice' })
+    res.status(500)
+    return res.json({ message: 'Problem processing new hodl invoice' })
   }
 }
 
@@ -106,31 +112,37 @@ async function postNewHodl(req: LndRequest, res: Response) {
 async function settleHodl(req: LndRequest, res: Response) {
   const { secret } = req.body
 
-  if (!secret)
-    return res.status(400).json({
+  if (!secret) {
+    res.status(400)
+    return res.json({
       message: 'require secret/preimage in order to settle hodl invoice',
     })
+  }
 
-  if (secret.length !== 64)
-    return res
-      .status(400)
-      .json({
-        message:
-          'preimage is of incorrect length. Must be a 246 bit (64 chars) hex string.',
-      })
+  if (secret.length !== 64) {
+    res.status(400)
+    return res.json({
+      message:
+        'preimage is of incorrect length. Must be a 246 bit (64 chars) hex string.',
+    })
+  }
 
   try {
     console.log('secret:', secret)
     await lnService.settleHodlInvoice({ lnd: req.lnd, secret })
 
-    return res.status(200).json({ success: true })
+    res.status(200)
+    return res.json({ success: true })
   } catch (e) {
     console.error('There was an error settling a hodl invoice:', e)
     // lnService returns errors as array
-    if (Array.isArray(e) && e[2])
-      return res.status(e[0]).json({ message: e[1], details: e[2].err.details })
+    if (Array.isArray(e) && e[2]) {
+      res.status(e[0])
+      return res.json({ message: e[1], details: e[2].err.details })
+    }
 
-    return res.status(500).json({
+    res.status(500)
+    return res.json({
       message:
         'The server encountered an error processing the hodl invoice. Please try again later or contact server admin.',
     })

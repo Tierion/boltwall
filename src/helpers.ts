@@ -72,7 +72,7 @@ export function testEnvVars() {
   // if we have some lnd configs but not all, throw that we're missing some
   if (lndConfigs.some(config => config === undefined))
     throw new Error(
-      'Missing configs to connect to LND node. Need macaroon, socket, and tls cert.'
+      'Missing configs to connect to LND node. Need LND_TLS_CERT, LND_MACAROON, LND_SOCKET.'
     )
 
   // otherwise we have no lnd configs and no OPEN_NODE_KEY

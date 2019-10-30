@@ -46,16 +46,18 @@ const getNodeInfo = async (
         ],
         alias: 'OpenNode',
       }
-    else
-      return res
-        .status(404)
-        .json({ message: 'No public key information found for node' })
-    return res.status(200).json(nodeInfo)
+    else {
+      res.status(404)
+      return res.json({ message: 'No public key information found for node' })
+    }
+    res.status(200)
+    return res.json(nodeInfo)
   } catch (e) {
     console.error('Problem connecting to node:', e)
-    return res
-      .status(500)
-      .json({ message: 'Problem connecting to lightning node provider.' })
+    res.status(500)
+    return res.json({
+      message: 'Problem connecting to lightning node provider.',
+    })
   }
 }
 
