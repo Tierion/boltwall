@@ -97,7 +97,10 @@ export default async function boltwall(
 
     // if everything validates then simply run `next()`
     console.log(
-      `Request from ${req.hostname} authenticated with payment. Sending through paywall`
+      `Request from ${req.hostname ||
+        req.header(
+          'HOST'
+        )} authenticated with payment. Sending through paywall.`
     )
     next()
   } catch (e) {
