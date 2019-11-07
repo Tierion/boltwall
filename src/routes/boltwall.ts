@@ -15,7 +15,7 @@ export default async function boltwall(
   req: LndRequest,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): Promise<void | Response> {
   console.log(
     'Checking if the request has been authorized or still requires payment...'
   )
@@ -29,7 +29,7 @@ export default async function boltwall(
   // then just return a 402: Payment Required
   if (!rootMacaroon) {
     res.status(402)
-    return next({ message: 'Payment required to access content.' })
+    return res.json({ message: 'Payment required to access content.' })
   }
 
   // if there is a root macaroon
@@ -65,18 +65,17 @@ export default async function boltwall(
       // then create a discharge macaroon and attach it to a session cookie
       if (req.session) req.session.dischargeMacaroon = dischargeMacaroon
     } else if (status === 'processing') {
-      console.log('still processing invoice %s...', invoiceId)
+      console.log('Still processing invoice %s...', invoiceId)
       res.status(202)
-      res.json(invoice)
+      return res.json(invoice)
     } else if (status === 'unpaid') {
-      console.log('still waiting for payment %s...', invoiceId)
+      console.log('Still waiting for payment %s...', invoiceId)
       res.status(402)
-      res.json(invoice)
+      return res.json(invoice)
     } else {
       res.status(400)
-      res.json({ message: `unknown invoice status ${status}` })
+      return res.json({ message: `Unknown invoice status: ${status}` })
     }
-    return next()
   }
 
   // With the discharge macaroon, we want to verify the whole macaroon

@@ -35,15 +35,14 @@ function errorHandler(
   _: any,
   res: Response,
   next: NextFunction
-): void {
+): void | Response {
   if (res.headersSent) {
     return next(err)
   }
   if (err.stack) {
-    console.log('got an error:', err.stack)
+    console.error('Error:', err.stack)
   }
-  if (err) res.json({ error: err })
-  next()
+  if (err) return res.json({ error: err })
 }
 
 export function boltwall(config: BoltwallConfig): Function {

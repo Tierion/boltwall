@@ -24,7 +24,7 @@ async function postNewHodl(
   req: LndRequest,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): Promise<void | Response> {
   console.log('Request to create new hodl invoice')
   const location: string = getLocation(req)
   const body: InvoiceBody = req.body
@@ -90,8 +90,7 @@ async function postNewHodl(
     if (req.session) req.session.macaroon = macaroon
 
     res.status(200)
-    res.json(invoice)
-    return next()
+    return res.json(invoice)
   } catch (e) {
     console.log('There was a problem creating hodl invoice:', e)
     // lnService returns errors as array
@@ -121,10 +120,9 @@ async function settleHodl(
 
   if (!secret) {
     res.status(400)
-    res.json({
+    return res.json({
       message: 'require secret/preimage in order to settle hodl invoice',
     })
-    return next()
   }
 
   if (secret.length !== 64) {
@@ -136,11 +134,9 @@ async function settleHodl(
   }
 
   try {
-    console.log('secret:', secret)
     await lnService.settleHodlInvoice({ lnd: req.lnd, secret })
 
     res.status(200)
-    res.json({ success: true })
     return next()
   } catch (e) {
     console.error('There was an error settling a hodl invoice:', e)

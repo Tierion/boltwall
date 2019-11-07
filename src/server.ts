@@ -20,7 +20,8 @@ app.use(bodyParser.json())
 
 // This route is before the boltwall and will not require payment
 app.get('/', (_req: any, res: express.Response) => {
-  return res.json({ message: 'success!' })
+  res.json({ message: 'success!' })
+  return
 })
 
 /**

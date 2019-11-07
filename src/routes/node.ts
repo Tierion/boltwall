@@ -15,7 +15,7 @@ const getNodeInfo = async (
   req: LndRequest,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+): Promise<void | Response> => {
   try {
     let nodeInfo: NodeInfo
     if (req.lnd) {
@@ -52,8 +52,7 @@ const getNodeInfo = async (
       return next({ message: 'No public key information found for node' })
     }
     res.status(200)
-    res.json(nodeInfo)
-    next()
+    return res.json(nodeInfo)
   } catch (e) {
     console.error('Problem connecting to node:', e)
     res.status(500)

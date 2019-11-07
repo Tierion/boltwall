@@ -24,7 +24,7 @@ async function updateInvoiceStatus(
   req: LndRequest,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): Promise<void | Response> {
   let invoiceId = req.query.id
 
   // if the query doesn't have an id, but we have a root macaroon, we can
@@ -60,11 +60,11 @@ async function updateInvoiceStatus(
       console.log(`Invoice ${invoiceId} has been paid`)
 
       res.status(200)
-      res.json({ status, discharge: macaroon })
+      return res.json({ status, discharge: macaroon })
     } else if (status === 'processing' || status === 'unpaid') {
       console.log('Still processing invoice %s...', invoiceId)
       res.status(202)
-      res.json(invoice)
+      return res.json(invoice)
     } else {
       res.status(400)
       return next({ message: `Unknown invoice status ${status}` })
@@ -88,7 +88,7 @@ async function postNewInvoice(
   req: LndRequest,
   res: Response,
   next: NextFunction
-): Promise<void> {
+): Promise<void | Response> {
   console.log('Request to create a new invoice')
   try {
     const location: string = getLocation(req)
@@ -114,8 +114,7 @@ async function postNewInvoice(
     // and send back macaroon and invoice info back in response
     if (req.session) req.session.macaroon = macaroon
     res.status(200)
-    res.json(invoice)
-    return next()
+    return res.json(invoice)
   } catch (error) {
     console.error('Error getting invoice:', error)
     res.status(400)
