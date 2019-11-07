@@ -15,7 +15,7 @@ export default async function boltwall(
   req: LndRequest,
   res: Response,
   next: NextFunction
-): Promise<any> {
+): Promise<void> {
   console.log(
     'Checking if the request has been authorized or still requires payment...'
   )
@@ -29,7 +29,7 @@ export default async function boltwall(
   // then just return a 402: Payment Required
   if (!rootMacaroon) {
     res.status(402)
-    return res.json({ message: 'Payment required to access content.' })
+    return next({ message: 'Payment required to access content.' })
   }
 
   // if there is a root macaroon
@@ -67,15 +67,16 @@ export default async function boltwall(
     } else if (status === 'processing') {
       console.log('still processing invoice %s...', invoiceId)
       res.status(202)
-      return res.json(invoice)
+      res.json(invoice)
     } else if (status === 'unpaid') {
       console.log('still waiting for payment %s...', invoiceId)
       res.status(402)
-      return res.json(invoice)
+      res.json(invoice)
     } else {
       res.status(400)
-      return res.json({ message: `unknown invoice status ${status}` })
+      res.json({ message: `unknown invoice status ${status}` })
     }
+    return next()
   }
 
   // With the discharge macaroon, we want to verify the whole macaroon
@@ -102,7 +103,7 @@ export default async function boltwall(
           'HOST'
         )} authenticated with payment. Sending through paywall.`
     )
-    next()
+    return next()
   } catch (e) {
     // if throws with an error message that includes text "expired"
     // then payment is required again
@@ -114,11 +115,11 @@ export default async function boltwall(
         req.session.dischargeMacaroon = null
       }
       res.status(402)
-      return res.json({ message: e.message })
+      return next({ message: e.message })
     }
     console.error('There was an error validating the macaroon:', e.message)
     res.status(401)
-    return res.json({
+    return next({
       message:
         'Unable to authorize access. Proof of paid invoice required with proper credentials.',
     })
