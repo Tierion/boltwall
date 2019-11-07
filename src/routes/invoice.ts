@@ -1,4 +1,4 @@
-import { Response, Router } from 'express'
+import { Response, Router, NextFunction } from 'express'
 
 import { LndRequest, InvoiceResponse } from '../typings'
 import {
@@ -20,7 +20,11 @@ const router: Router = Router()
  * Boltwall on initialization of the middleware.
  * (Formerly GET /invoice which is still supported but PUT is preferred when a body is sent)
  */
-async function updateInvoiceStatus(req: LndRequest, res: Response) {
+async function updateInvoiceStatus(
+  req: LndRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   let invoiceId = req.query.id
 
   // if the query doesn't have an id, but we have a root macaroon, we can
@@ -29,11 +33,11 @@ async function updateInvoiceStatus(req: LndRequest, res: Response) {
     invoiceId = getFirstPartyCaveatFromMacaroon(req.session.macaroon)
   } else if (!invoiceId) {
     res.status(404)
-    return res.json({ message: 'Missing invoiceId in request' })
+    return next({ message: 'Missing invoiceId in request' })
   }
 
   try {
-    console.log('checking status of invoice:', invoiceId)
+    console.log('Checking status of invoice:', invoiceId)
     const { lnd, opennode } = req
     const invoice = await checkInvoiceStatus(lnd, opennode, invoiceId)
     const { status } = invoice
@@ -58,19 +62,19 @@ async function updateInvoiceStatus(req: LndRequest, res: Response) {
       res.status(200)
       res.json({ status, discharge: macaroon })
     } else if (status === 'processing' || status === 'unpaid') {
-      console.log('still processing invoice %s...', invoiceId)
+      console.log('Still processing invoice %s...', invoiceId)
       res.status(202)
       res.json(invoice)
     } else {
-      console.log('unknown status?', status)
       res.status(400)
-      res.json({ message: `unknown invoice status ${status}` })
+      return next({ message: `Unknown invoice status ${status}` })
     }
   } catch (error) {
-    console.error('error getting invoice:', error)
+    console.error('Error getting invoice:', error)
     res.status(400)
-    res.json({ message: error })
+    return next({ message: error })
   }
+  return next()
 }
 
 /**
@@ -80,7 +84,11 @@ async function updateInvoiceStatus(req: LndRequest, res: Response) {
  * The root macaroon and associated 3rd party caveat must be satisfied
  * before access to the protected route will be granted
  */
-async function postNewInvoice(req: LndRequest, res: Response) {
+async function postNewInvoice(
+  req: LndRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   console.log('Request to create a new invoice')
   try {
     const location: string = getLocation(req)
@@ -107,10 +115,11 @@ async function postNewInvoice(req: LndRequest, res: Response) {
     if (req.session) req.session.macaroon = macaroon
     res.status(200)
     res.json(invoice)
+    return next()
   } catch (error) {
-    console.error('error getting invoice:', error)
+    console.error('Error getting invoice:', error)
     res.status(400)
-    res.json({ message: error.message })
+    return next({ message: error.message })
   }
 }
 

@@ -1,4 +1,4 @@
-import { Response, Router } from 'express'
+import { Response, Router, NextFunction } from 'express'
 const lnService = require('ln-service')
 
 import { LndRequest, InvoiceBody, InvoiceResponse } from '../typings'
@@ -20,7 +20,11 @@ const router: Router = Router()
  * If coordinating with other parties, this SHOULD be greater than any other dependent invoices.
  * Otherwise, counterparty could wait out the hodl invoice and cost the node its funds
  */
-async function postNewHodl(req: LndRequest, res: Response): Promise<Response> {
+async function postNewHodl(
+  req: LndRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   console.log('Request to create new hodl invoice')
   const location: string = getLocation(req)
   const body: InvoiceBody = req.body
@@ -31,7 +35,7 @@ async function postNewHodl(req: LndRequest, res: Response): Promise<Response> {
   // which is necessary to create the hodl invoice
   if (!paymentHash) {
     res.status(400)
-    return res.json({
+    return next({
       message:
         'Expected a paymentHash to be included in request body. None was found.',
     })
@@ -39,9 +43,7 @@ async function postNewHodl(req: LndRequest, res: Response): Promise<Response> {
 
   if (paymentHash.length !== 64) {
     res.status(400)
-    return res.json({
-      message: 'Expected a 256 bit string for the payment hash.',
-    })
+    return next({ message: 'Expected a 256 bit string for the payment hash' })
   }
 
   const paymentInfo = {
@@ -88,17 +90,18 @@ async function postNewHodl(req: LndRequest, res: Response): Promise<Response> {
     if (req.session) req.session.macaroon = macaroon
 
     res.status(200)
-    return res.json(invoice)
+    res.json(invoice)
+    return next()
   } catch (e) {
-    console.log('there was a problem creating hodl invoice:', e)
+    console.log('There was a problem creating hodl invoice:', e)
     // lnService returns errors as array
     if (Array.isArray(e)) {
       res.status(e[0])
-      return res.json({ message: e[1], details: e[2].err.details })
+      return next({ message: e[1], details: e[2].err.details })
     }
 
     res.status(500)
-    return res.json({ message: 'Problem processing new hodl invoice' })
+    return next({ message: 'Problem processing new hodl invoice' })
   }
 }
 
@@ -109,19 +112,24 @@ async function postNewHodl(req: LndRequest, res: Response): Promise<Response> {
  * @param {string} req.body.secret - payment hash preimage to settle invoice
  * @returns {Promise<boolean>} res.json.success - true if settled successfully
  */
-async function settleHodl(req: LndRequest, res: Response) {
+async function settleHodl(
+  req: LndRequest,
+  res: Response,
+  next: NextFunction
+): Promise<any> {
   const { secret } = req.body
 
   if (!secret) {
     res.status(400)
-    return res.json({
+    res.json({
       message: 'require secret/preimage in order to settle hodl invoice',
     })
+    return next()
   }
 
   if (secret.length !== 64) {
     res.status(400)
-    return res.json({
+    return next({
       message:
         'preimage is of incorrect length. Must be a 246 bit (64 chars) hex string.',
     })
@@ -132,17 +140,18 @@ async function settleHodl(req: LndRequest, res: Response) {
     await lnService.settleHodlInvoice({ lnd: req.lnd, secret })
 
     res.status(200)
-    return res.json({ success: true })
+    res.json({ success: true })
+    return next()
   } catch (e) {
     console.error('There was an error settling a hodl invoice:', e)
     // lnService returns errors as array
     if (Array.isArray(e) && e[2]) {
       res.status(e[0])
-      return res.json({ message: e[1], details: e[2].err.details })
+      return next({ message: e[1], details: e[2].err.details })
     }
 
     res.status(500)
-    return res.json({
+    return next({
       message:
         'The server encountered an error processing the hodl invoice. Please try again later or contact server admin.',
     })

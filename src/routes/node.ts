@@ -1,4 +1,4 @@
-import express, { Response, Router } from 'express'
+import express, { Response, Router, NextFunction } from 'express'
 const lnService = require('ln-service')
 
 import { LndRequest, NodeInfo } from '../typings'
@@ -13,8 +13,9 @@ const router: Router = express.Router()
  */
 const getNodeInfo = async (
   req: LndRequest,
-  res: Response
-): Promise<Response> => {
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     let nodeInfo: NodeInfo
     if (req.lnd) {
@@ -48,14 +49,15 @@ const getNodeInfo = async (
       }
     else {
       res.status(404)
-      return res.json({ message: 'No public key information found for node' })
+      return next({ message: 'No public key information found for node' })
     }
     res.status(200)
-    return res.json(nodeInfo)
+    res.json(nodeInfo)
+    next()
   } catch (e) {
     console.error('Problem connecting to node:', e)
     res.status(500)
-    return res.json({
+    return next({
       message: 'Problem connecting to lightning node provider.',
     })
   }

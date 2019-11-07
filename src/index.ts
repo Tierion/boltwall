@@ -30,6 +30,22 @@ const dischargeMacaroon = cookieSession({
   signed: true,
 })
 
+function errorHandler(
+  err: any,
+  _: any,
+  res: Response,
+  next: NextFunction
+): void {
+  if (res.headersSent) {
+    return next(err)
+  }
+  if (err.stack) {
+    console.log('got an error:', err.stack)
+  }
+  if (err) res.json({ error: err })
+  next()
+}
+
 export function boltwall(config: BoltwallConfig): Function {
   if (config) {
     const { CAVEAT_KEY } = getEnvVars()
@@ -49,6 +65,7 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/
       invoice,
       hodl,
       paywall,
+      errorHandler,
     ])(req, res, next)
   }
 }
