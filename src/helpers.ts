@@ -281,7 +281,7 @@ export function validateMacaroons(
 
   // lets verify the macaroon caveats
   const verifier = new MacaroonsVerifier(root)
-    // root macaroon should have a caveat to match the docId
+    // root macaroon should have a caveat to match the invoiceId
     .satisfyExact(firstPartyCaveat.caveat)
     // confirm that the payment node has discharged appropriately
     .satisfy3rdParty(boundMacaroon)

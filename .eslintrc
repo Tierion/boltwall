@@ -17,9 +17,10 @@
     "@typescript-eslint/no-var-requires": 0
   },
   "extends": [
+    "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
     "prettier",
     "prettier/@typescript-eslint",
-    "eslint:recommended",
   ]
 }

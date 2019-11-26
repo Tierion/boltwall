@@ -11,7 +11,7 @@ const router: Router = express.Router()
  * @param {Response} res - expressjs response object
  * @returns {Promise<NodeInfo>} returns an express response with the node information
  */
-const getNodeInfo = async (
+export const getNodeInfo = async (
   req: LndRequest,
   res: Response,
   next: NextFunction

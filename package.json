@@ -10,6 +10,8 @@
     "start": "nodemon",
     "build": "tsc --project src/tsconfig.json --outDir dist/",
     "lint": "eslint ./src/**/*.ts --quiet",
+    "test": "mocha -r ts-node/register tests/**/*-test.ts",
+    "test:watch": "mocha -r ts-node/register --recursive --reporter spec --watch --watch-extensions ts tests/**/*-test.ts",
     "prepare": "npm run build",
     "docs": "./docs.sh",
     "prepublishOnly": "npm run docs"
@@ -21,26 +23,31 @@
     "express": "4.17.1",
     "ln-service": "https://github.com/bucko13/ln-service#path",
     "macaroons.js": "0.3.8",
-    "opennode": "1.1.1",
-    "typescript": "3.5.3"
+    "opennode": "1.1.1"
   },
   "devDependencies": {
     "@now/node": "0.12.1",
+    "@types/chai": "^4.2.5",
     "@types/cookie-session": "2.0.37",
     "@types/cors": "2.8.5",
     "@types/dotenv": "6.1.1",
     "@types/express": "4.17.0",
-    "@typescript-eslint/eslint-plugin": "1.13.0",
-    "@typescript-eslint/parser": "1.13.0",
+    "@types/mocha": "^5.2.7",
+    "@typescript-eslint/eslint-plugin": "^2.9.0",
+    "@typescript-eslint/parser": "^2.9.0",
     "body-parser": "1.19.0",
+    "chai": "^4.2.0",
     "cors": "2.8.5",
     "eslint": "6.1.0",
     "eslint-config-prettier": "6.0.0",
     "eslint-plugin-prettier": "3.1.0",
+    "mocha": "^6.2.2",
     "nodemon": "1.19.1",
     "prettier": "1.18.2",
-    "ts-node": "8.3.0",
-    "typedoc": "^0.15.0"
+    "ts-node": "^8.5.2",
+    "tslint": "^5.20.1",
+    "typedoc": "^0.15.3",
+    "typescript": "^3.7.2"
   },
   "peerDependencies": {
     "body-parser": "^1.19.0",

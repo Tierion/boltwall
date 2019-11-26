@@ -102,7 +102,7 @@ async function postNewInvoice(
     // and associates the given invoice with the current session
 
     // check if we need to also add a third party caveat to macaroon
-    let has3rdPartyCaveat =
+    const has3rdPartyCaveat =
       req.boltwallConfig && req.boltwallConfig.getCaveat ? true : false
 
     const macaroon = await createRootMacaroon(
