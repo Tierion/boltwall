@@ -269,7 +269,7 @@ export function validateMacaroons(
   discharge: Macaroon,
   firstPartyCaveat: FirstPartyCaveat,
   caveatVerifier?: CaveatVerifier
-) {
+): boolean | void {
   root = MacaroonsBuilder.deserialize(root)
   discharge = MacaroonsBuilder.deserialize(discharge)
 
@@ -301,7 +301,7 @@ export function validateMacaroons(
       throw new Error(`Time has expired for accessing content`)
   }
 
-  for (let rawCaveat of root.caveatPackets) {
+  for (const rawCaveat of root.caveatPackets) {
     const caveat = rawCaveat.getValueAsText()
     // TODO: should probably generalize the exact caveat check or export as constant.
     // This would fail even if there is a space missing in the caveat creation
@@ -355,12 +355,27 @@ export function getDischargeMacaroon(
   return macaroon.serialize()
 }
 
+// returns a set of mostly constants that describes the first party caveat
+// this is set on a root macaroon. Supports an empty invoiceId
+// since we can use this for matching the prefix on a populated macaroon caveat
+export function getFirstPartyCaveat(invoiceId = ''): FirstPartyCaveat {
+  return {
+    key: 'invoiceId',
+    value: invoiceId,
+    separator: '=',
+    caveat: `invoiceId = ${invoiceId}`,
+    prefixMatch: (value: string): boolean => /invoiceId = .*/.test(value),
+  }
+}
+
 /**
  * Utility to extract first party caveat value from a serialized root macaroon
  * See `getFirstPartyCaveat` for what this value represents
  */
-export function getFirstPartyCaveatFromMacaroon(serialized: Macaroon) {
-  let macaroon = MacaroonsBuilder.deserialize(serialized)
+export function getFirstPartyCaveatFromMacaroon(
+  serialized: Macaroon
+): string | void {
+  const macaroon = MacaroonsBuilder.deserialize(serialized)
   const firstPartyCaveat = getFirstPartyCaveat()
   for (let caveat of macaroon.caveatPackets) {
     caveat = caveat.getValueAsText()
@@ -382,23 +397,10 @@ export function getFirstPartyCaveatFromMacaroon(serialized: Macaroon) {
  * @param {Express.request.hostname} - fallback if not in a now lambda
  * @returns {String} - location string
  */
-export function getLocation({ headers, hostname }: LndRequest) {
+export function getLocation({ headers, hostname }: LndRequest): string {
   return headers && headers['x-now-deployment-url']
     ? headers['x-forwarded-proto'] + '://' + headers['x-now-deployment-url']
     : hostname || 'self'
-}
-
-// returns a set of mostly constants that describes the first party caveat
-// this is set on a root macaroon. Supports an empty invoiceId
-// since we can use this for matching the prefix on a populated macaroon caveat
-export function getFirstPartyCaveat(invoiceId = ''): FirstPartyCaveat {
-  return {
-    key: 'invoiceId',
-    value: invoiceId,
-    separator: '=',
-    caveat: `invoiceId = ${invoiceId}`,
-    prefixMatch: (value: string) => /invoiceId = .*/.test(value),
-  }
 }
 
 type prefixMatchFn = (value: string) => boolean

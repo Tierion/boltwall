@@ -15,7 +15,7 @@ describe('/node', () => {
     getInfoStub.restore()
   })
   describe('GET /node', () => {
-    it('should return expected information', async () => {
+    it('should return expected information about the node', async () => {
       const response: request.Response = await request.agent(app).get('/node')
 
       const expectedResp = {

@@ -11,7 +11,7 @@
     "build": "tsc --project tsconfig.json --outDir dist/",
     "lint": "eslint ./src/**/*.ts --quiet",
     "test": "mocha -r ts-node/register tests/**/*.spec.ts",
-    "test:watch": "mocha -r ts-node/register --recursive --reporter nyan --watch --watch-extensions ts tests/**/*.spec.ts",
+    "test:watch": "mocha -r ts-node/register --recursive --reporter spec --watch --watch-extensions ts tests/**/*.spec.ts",
     "prepare": "npm run build",
     "docs": "./docs.sh",
     "prepublishOnly": "npm run docs"
