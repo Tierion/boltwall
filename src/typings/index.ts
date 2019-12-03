@@ -8,6 +8,9 @@ import {
   AsyncCaveatVerifier,
 } from './configs'
 import { NodeInfo } from './node'
+
+import { IdentifierOptions } from './identifier'
+
 export {
   InvoiceResponse,
   LndRequest,
@@ -18,4 +21,7 @@ export {
   DescriptionGetter,
   NodeInfo,
   InvoiceBody,
+  LATEST_VERSION,
+  TOKEN_ID_SIZE,
+  IdentifierOptions,
 }
