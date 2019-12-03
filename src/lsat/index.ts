@@ -5,4 +5,13 @@ import {
   ErrUnknownVersion,
 } from './identifier'
 
-export { Identifier, LATEST_VERSION, TOKEN_ID_SIZE, ErrUnknownVersion }
+import { Caveat, ErrInvalidCaveat } from './caveat'
+
+export {
+  Identifier,
+  LATEST_VERSION,
+  TOKEN_ID_SIZE,
+  ErrUnknownVersion,
+  ErrInvalidCaveat,
+  Caveat,
+}

@@ -9,7 +9,7 @@ import {
 } from './configs'
 import { NodeInfo } from './node'
 
-import { IdentifierOptions } from './identifier'
+import { IdentifierOptions, CaveatOptions } from './lsat'
 
 export {
   InvoiceResponse,
@@ -21,7 +21,6 @@ export {
   DescriptionGetter,
   NodeInfo,
   InvoiceBody,
-  LATEST_VERSION,
-  TOKEN_ID_SIZE,
   IdentifierOptions,
+  CaveatOptions,
 }
