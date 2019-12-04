@@ -9,7 +9,7 @@ import {
 } from './configs'
 import { NodeInfo } from './node'
 
-import { IdentifierOptions, CaveatOptions } from './lsat'
+import { IdentifierOptions, CaveatOptions, Satisfier } from './lsat'
 
 export {
   InvoiceResponse,
@@ -23,4 +23,5 @@ export {
   InvoiceBody,
   IdentifierOptions,
   CaveatOptions,
+  Satisfier,
 }

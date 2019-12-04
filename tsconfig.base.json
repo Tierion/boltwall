@@ -10,7 +10,6 @@
     "resolveJsonModule": true,
     "noUnusedParameters": true,
     "noUnusedLocals": true,
-    "allowJs": true,
-    "typeRoots": ["./node_modules/@types", "./src/typings"]
+    "allowJs": true
   }
 }

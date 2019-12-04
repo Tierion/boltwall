@@ -41,7 +41,7 @@ export function getEnvVars(): any {
   }
 }
 
-export function testEnvVars() {
+export function testEnvVars(): boolean | Error {
   const {
     OPEN_NODE_KEY,
     LND_TLS_CERT,

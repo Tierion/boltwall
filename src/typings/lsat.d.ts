@@ -1,3 +1,6 @@
+import { Macaroon, CaveatPacket } from 'macaroons.js'
+import { Caveat } from '../lsat/caveat'
+
 /**
  * Describes the shape of the options for creating a new identifier struct
  * which represents the constant, unique identifiers associated with a macaroon
@@ -14,6 +17,20 @@ export interface IdentifierOptions {
  */
 export interface CaveatOptions {
   condition: string
-  value: string
+  value: string | number
   comp?: string
 }
+
+/**
+ * Satisfier provides a generic interface to satisfy a caveat based on its
+ * condition.
+ */
+
+export interface Satisfier {
+  condition: string
+  satisfyPrevious: (prev: Caveat, curr: Caveat) => boolean
+  satisfyFinal: (caveat: Caveat) => boolean
+}
+
+declare class MacaroonClass extends Macaroon {}
+declare class CaveatPacketClass extends CaveatPacket {}

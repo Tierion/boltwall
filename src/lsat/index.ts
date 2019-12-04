@@ -5,7 +5,7 @@ import {
   ErrUnknownVersion,
 } from './identifier'
 
-import { Caveat, ErrInvalidCaveat } from './caveat'
+import { Caveat, ErrInvalidCaveat, hasCaveat, verifyCaveats } from './caveat'
 
 export {
   Identifier,
@@ -14,4 +14,6 @@ export {
   ErrUnknownVersion,
   ErrInvalidCaveat,
   Caveat,
+  hasCaveat,
+  verifyCaveats,
 }
