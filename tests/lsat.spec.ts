@@ -1,6 +1,9 @@
-import { randomBytes } from 'crypto'
+import { randomBytes, createHash } from 'crypto'
 import { expect } from 'chai'
 const { MacaroonsBuilder } = require('macaroons.js')
+import { parsePaymentRequest } from 'ln-service'
+
+import { invoice } from './data'
 
 import {
   Caveat,
@@ -11,6 +14,7 @@ import {
   LATEST_VERSION,
   TOKEN_ID_SIZE,
   ErrUnknownVersion,
+  Lsat,
 } from '../src/lsat'
 import { Satisfier } from '../src/typings'
 
@@ -179,6 +183,95 @@ describe('LSAT utils', () => {
         expect(invalidateFinal()).to.be.false
         expect(invalidatePrev()).to.be.false
       })
+    })
+  })
+
+  describe.only('LSAT Token', () => {
+    let macaroon: string,
+      paymentHash: string,
+      expiration: number,
+      challenge: string
+    beforeEach(() => {
+      expiration = Date.now() + 100
+      const caveat = new Caveat({ condition: 'expiration', value: expiration })
+      macaroon = new MacaroonsBuilder('location', 'secret', 'id')
+        .add_first_party_caveat(caveat.encode())
+        .getMacaroon()
+        .serialize()
+
+      const request = parsePaymentRequest({ request: invoice })
+      paymentHash = request.id
+      challenge = `macaroon=${macaroon}, invoice=${invoice}`
+    })
+
+    it('should be able to decode from challenge and from header', () => {
+      const header = `LSAT ${challenge}`
+
+      const fromChallenge = (): Lsat => Lsat.fromChallenge(challenge)
+      const fromHeader = (): Lsat => Lsat.fromheader(header)
+
+      const tests = [
+        {
+          name: 'fromChallenge',
+          test: fromChallenge,
+        },
+        {
+          name: 'fromHeader',
+          test: fromHeader,
+        },
+      ]
+      for (const { name, test } of tests) {
+        expect(test, `${name} should not have thrown`).to.not.throw()
+        const lsat = test()
+        expect(lsat.baseMacaroon).to.equal(
+          macaroon,
+          `macaroon from ${name} LSAT did not match`
+        )
+        expect(lsat.paymentHash).to.equal(
+          paymentHash,
+          `paymentHash from ${name} LSAT did not match`
+        )
+        expect(lsat.validUntil).to.equal(
+          expiration,
+          `expiration from ${name} LSAT did not match`
+        )
+      }
+    })
+
+    it('should be able to check expiration to see if expired', () => {
+      const lsat = Lsat.fromChallenge(challenge)
+
+      expect(lsat.isExpired()).to.be.false
+    })
+
+    it('should check if payment is pending', () => {
+      const lsat = Lsat.fromChallenge(challenge)
+
+      expect(lsat).to.have.property('isPending')
+      expect(lsat.isPending()).to.be.true
+    })
+
+    it('should be able to add valid preimage', () => {
+      const lsat = Lsat.fromChallenge(challenge)
+
+      const addWrongPreimage = (): void =>
+        lsat.addPreimage(Buffer.alloc(32, 'a').toString('hex'))
+      const addIncorrectLength = (): void => lsat.addPreimage('abcde12345')
+      const addNonHex = (): void => lsat.addPreimage('xyzNMOP')
+      expect(addWrongPreimage).to.throw('did not match')
+      expect(addIncorrectLength).to.throw('32-byte hash')
+      expect(addNonHex).to.throw('32-byte hash')
+
+      const secret = randomBytes(32)
+      const paymentHash = createHash('sha256')
+        .update(secret)
+        .digest('hex')
+
+      lsat.paymentHash = paymentHash
+
+      const addSecret = (): void => lsat.addPreimage(secret.toString('hex'))
+      expect(addSecret).to.not.throw()
+      expect(lsat.paymentPreimage).to.equal(secret.toString('hex'))
     })
   })
 })

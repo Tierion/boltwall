@@ -6,6 +6,7 @@ import {
 } from './identifier'
 
 import { Caveat, ErrInvalidCaveat, hasCaveat, verifyCaveats } from './caveat'
+import { Lsat } from './lsat'
 
 export {
   Identifier,
@@ -16,4 +17,5 @@ export {
   Caveat,
   hasCaveat,
   verifyCaveats,
+  Lsat,
 }

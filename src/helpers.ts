@@ -389,6 +389,10 @@ export function getFirstPartyCaveatFromMacaroon(
   }
 }
 
+export function isHex(h: string): boolean {
+  return Buffer.from(h, 'hex').toString('hex') === h
+}
+
 /**
  * Utility function to get a location string to describe _where_ the server is.
  * useful for setting identifiers in macaroons
