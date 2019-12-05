@@ -9,7 +9,12 @@ import {
 } from './configs'
 import { NodeInfo } from './node'
 
-import { IdentifierOptions, CaveatOptions, Satisfier } from './lsat'
+import {
+  IdentifierOptions,
+  CaveatOptions,
+  Satisfier,
+  LsatOptions,
+} from './lsat'
 
 export {
   InvoiceResponse,
@@ -24,4 +29,5 @@ export {
   IdentifierOptions,
   CaveatOptions,
   Satisfier,
+  LsatOptions,
 }

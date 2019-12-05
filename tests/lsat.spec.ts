@@ -186,13 +186,13 @@ describe('LSAT utils', () => {
     })
   })
 
-  describe.only('LSAT Token', () => {
+  describe('LSAT Token', () => {
     let macaroon: string,
       paymentHash: string,
       expiration: number,
       challenge: string
     beforeEach(() => {
-      expiration = Date.now() + 100
+      expiration = Date.now() + 1000
       const caveat = new Caveat({ condition: 'expiration', value: expiration })
       macaroon = new MacaroonsBuilder('location', 'secret', 'id')
         .add_first_party_caveat(caveat.encode())
@@ -202,13 +202,14 @@ describe('LSAT utils', () => {
       const request = parsePaymentRequest({ request: invoice })
       paymentHash = request.id
       challenge = `macaroon=${macaroon}, invoice=${invoice}`
+      challenge = Buffer.from(challenge, 'utf8').toString('base64')
     })
 
     it('should be able to decode from challenge and from header', () => {
       const header = `LSAT ${challenge}`
 
       const fromChallenge = (): Lsat => Lsat.fromChallenge(challenge)
-      const fromHeader = (): Lsat => Lsat.fromheader(header)
+      const fromHeader = (): Lsat => Lsat.fromHeader(header)
 
       const tests = [
         {
@@ -236,11 +237,24 @@ describe('LSAT utils', () => {
           `expiration from ${name} LSAT did not match`
         )
       }
+
+      const missingInvoice = (): Lsat =>
+        Lsat.fromChallenge(`macaroon=${macaroon}`)
+      const missingMacaroon = (): Lsat =>
+        Lsat.fromChallenge(`invoice=${invoice}`)
+
+      expect(
+        missingInvoice,
+        'Should throw when challenge is missing invoice'
+      ).to.throw()
+      expect(
+        missingMacaroon,
+        'Should throw when challenge is missing macaroon'
+      ).to.throw()
     })
 
     it('should be able to check expiration to see if expired', () => {
       const lsat = Lsat.fromChallenge(challenge)
-
       expect(lsat.isExpired()).to.be.false
     })
 

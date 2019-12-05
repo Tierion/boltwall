@@ -22,6 +22,19 @@ export interface CaveatOptions {
 }
 
 /**
+ * Describes options to create an LSAT token.
+ */
+export interface LsatOptions {
+  id: string
+  baseMacaroon: string
+  paymentHash: string
+  timeCreated?: number
+  paymentPreimage?: string
+  amountPaid?: number
+  routingFeePaid?: number
+}
+
+/**
  * Satisfier provides a generic interface to satisfy a caveat based on its
  * condition.
  */
