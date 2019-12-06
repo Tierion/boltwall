@@ -6,13 +6,16 @@ import { nodeInfo } from './data'
 import { getStub } from './utilities'
 
 describe('/node', () => {
-  let getInfoStub: sinon.SinonStub
+  let getInfoStub: sinon.SinonStub, lndGrpcStub: sinon.SinonStub
 
   before(() => {
     getInfoStub = getStub('getWalletInfo', nodeInfo)
+    // stub authentication to speed up tests
+    lndGrpcStub = getStub('authenticatedLndGrpc', { lnd: {} })
   })
   after(() => {
     getInfoStub.restore()
+    lndGrpcStub.restore()
   })
   describe('GET /node', () => {
     it('should return expected information about the node', async () => {

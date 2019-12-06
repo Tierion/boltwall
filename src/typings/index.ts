@@ -1,4 +1,4 @@
-import { InvoiceResponse } from './invoice'
+import { InvoiceResponse, LnServiceInvoiceResponse } from './invoice'
 import { LndRequest, InvoiceBody } from './request'
 import {
   BoltwallConfig,
@@ -18,6 +18,7 @@ import {
 
 export {
   InvoiceResponse,
+  LnServiceInvoiceResponse,
   LndRequest,
   CaveatGetter,
   BoltwallConfig,

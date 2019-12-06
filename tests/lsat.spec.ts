@@ -282,7 +282,6 @@ describe('LSAT utils', () => {
         .digest('hex')
 
       lsat.paymentHash = paymentHash
-
       const addSecret = (): void => lsat.addPreimage(secret.toString('hex'))
       expect(addSecret).to.not.throw()
       expect(lsat.paymentPreimage).to.equal(secret.toString('hex'))

@@ -11,7 +11,12 @@ export default function parseEnv(
 ): void {
   try {
     testEnvVars()
-    let { OPEN_NODE_KEY, LND_TLS_CERT, LND_MACAROON, LND_SOCKET } = getEnvVars()
+    const {
+      OPEN_NODE_KEY,
+      LND_TLS_CERT,
+      LND_MACAROON,
+      LND_SOCKET,
+    } = getEnvVars()
     // if the tests pass above and we don't have a
     // OPEN_NODE_KEY then we need to setup the lnd service
     if (!OPEN_NODE_KEY) {
