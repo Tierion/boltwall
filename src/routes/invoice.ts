@@ -12,6 +12,11 @@ import {
 
 const router: Router = Router()
 
+async function updateInvoiceStatus(
+  req: LndRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void | Response> {}
 /**
  * ## Route: PUT /invoice
  * Checks the status of an invoice based on a specific id in the query parameter.
@@ -26,7 +31,6 @@ async function updateInvoiceStatus(
   next: NextFunction
 ): Promise<void | Response> {
   let invoiceId = req.query.id
-
   // if the query doesn't have an id, but we have a root macaroon, we can
   // get the id from that
   if (!invoiceId && req.session && req.session.macaroon) {
@@ -125,7 +129,7 @@ async function postNewInvoice(
 router
   .route('*/invoice')
   .post(postNewInvoice)
-  .put(updateInvoiceStatus)
   .get(updateInvoiceStatus)
+  .put(updateInvoiceStatus)
 
 export default router

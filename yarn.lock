@@ -692,6 +692,13 @@ bitcoinjs-lib@5.1.4:
     varuint-bitcoin "^1.0.4"
     wif "^2.0.1"
 
+blgr@^0.1.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/blgr/-/blgr-0.1.7.tgz#69ed054282e5d3be7b6b19b03962a397227ab498"
+  integrity sha512-+jSaU2jnYqF+ec9e8nzjfjU7QhZIntkDNG8/AEwoxW7J3mmwvmUfAI5lm9BFYs1OzT+1UgIZTFHa2qWjTBURfw==
+  dependencies:
+    bsert "~0.0.10"
+
 bn.js@5.0.0:
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-5.0.0.tgz#5c3d398021b3ddb548c1296a16f857e908f35c70"
@@ -799,6 +806,11 @@ bs58check@<3.0.0, bs58check@^2.0.0, bs58check@^2.1.1:
     bs58 "^4.0.0"
     create-hash "^1.1.0"
     safe-buffer "^5.1.2"
+
+bsert@~0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/bsert/-/bsert-0.0.10.tgz#231ac82873a1418c6ade301ab5cd9ae385895597"
+  integrity sha512-NHNwlac+WPy4t2LoNh8pXk8uaIGH3NSaIUbTTRXGpE2WEbq0te/tDykYHkFK57YKLPjv/aGHmbqvnGeVWDz57Q==
 
 buffer-alloc-unsafe@^1.1.0:
   version "1.1.0"

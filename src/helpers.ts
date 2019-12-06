@@ -11,7 +11,17 @@ const lnService = require('ln-service')
 
 import { LndRequest, InvoiceResponse, CaveatVerifier } from './typings'
 
-export function getEnvVars(): any {
+interface EnvVars {
+  PORT?: string
+  OPEN_NODE_KEY?: string | undefined
+  LND_TLS_CERT?: string
+  LND_MACAROON?: string
+  SESSION_SECRET?: string
+  CAVEAT_KEY?: string
+  LND_SOCKET?: string
+}
+
+export function getEnvVars(): EnvVars {
   dotenv.config()
 
   if (!process.env.SESSION_SECRET) {
@@ -25,7 +35,8 @@ export function getEnvVars(): any {
 
   const { LND_TLS_CERT, LND_MACAROON, LND_SOCKET } = process.env
 
-  const hasLndConfigs = LND_TLS_CERT || LND_MACAROON || LND_SOCKET
+  const hasLndConfigs: boolean =
+    LND_TLS_CERT || LND_MACAROON || LND_SOCKET ? true : false
 
   return {
     PORT: process.env.PORT as string,

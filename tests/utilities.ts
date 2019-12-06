@@ -2,7 +2,7 @@ import * as sinon from 'sinon'
 const lnService = require('ln-service')
 
 // getStub is a utility for generating a sinon stub for an lnService method
-export function getStub(
+export function getLnStub(
   method: string,
   returnValue?: object | string
 ): sinon.SinonStub {

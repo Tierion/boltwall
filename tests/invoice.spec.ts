@@ -2,20 +2,27 @@ import * as request from 'supertest'
 import { expect } from 'chai'
 import * as sinon from 'sinon'
 import { parsePaymentRequest } from 'ln-service'
-import { MacaroonsBuilder, Macaroon } from 'macaroons.js'
+import { MacaroonsBuilder } from 'macaroons.js'
 
 import app from '../src/app'
 import { Lsat, Caveat } from '../src/lsat'
-import { getStub } from './utilities'
+import { getLnStub } from './utilities'
 import { invoice } from './data'
 import * as helpers from '../src/helpers'
-import { InvoiceResponse } from '../typings'
+
+import { InvoiceResponse } from '../src/typings'
 
 interface InvoiceResponseStub {
   request: string
   is_confirmed: boolean
-  paymentHash: string
+  id: string
+  secret: string
+  tokens: number
+  created_at: string
+  description: string
 }
+
+class BuilderInterface extends MacaroonsBuilder {}
 
 const getExpirationCaveat = (): Caveat =>
   new Caveat({ condition: 'expiration', value: Date.now() - 100 })
@@ -24,23 +31,26 @@ const getInvoiceCaveat = (id: string): Caveat =>
     condition: 'invoice',
     value: id,
   })
-describe('/invoice', () => {
+
+describe.only('/invoice', () => {
   let getInvStub: sinon.SinonStub,
     createInvStub: sinon.SinonStub,
-    envStub: sinon.SinonStub,
+    envStub: object | sinon.SinonStub, // hack b/c getEnvVars didn't play nice with SinonStub type
     lndGrpcStub: sinon.SinonStub,
     invoiceResponse: InvoiceResponseStub,
     sessionSecret: string,
-    builder: MacaroonsBuilder
+    builder: BuilderInterface
 
   beforeEach(() => {
     // boltwall sets up authenticated client when it boots up
     // need to stub this to avoid connection errors and speed up tests
-    lndGrpcStub = getStub('authenticatedLndGrpc', { lnd: {} })
-    sessionSecret = 'secret'
-    envStub = sinon.stub(helpers, 'getEnvVars')
+    lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     // keep known session secret so we can decode macaroons
-    envStub.returns({ SESSION_SECRET: sessionSecret })
+    sessionSecret = 'secret'
+
+    envStub = sinon
+      .stub(helpers, 'getEnvVars')
+      .returns({ SESSION_SECRET: sessionSecret })
 
     const request = parsePaymentRequest({ request: invoice })
 
@@ -57,8 +67,8 @@ describe('/invoice', () => {
 
     builder = new MacaroonsBuilder('location', sessionSecret, 'identifier')
 
-    getInvStub = getStub('getInvoice', invoiceResponse)
-    createInvStub = getStub('createInvoice', {
+    getInvStub = getLnStub('getInvoice', invoiceResponse)
+    createInvStub = getLnStub('createInvoice', {
       ...invoiceResponse,
       is_confirmed: false,
       secret: undefined,
@@ -73,7 +83,7 @@ describe('/invoice', () => {
   })
 
   describe('GET /invoice', () => {
-    xit('should return 401 with www-authenticate header if no macaroon present', async () => {
+    it.only('should return 401 with www-authenticate header if no macaroon present', async () => {
       const response: request.Response = await request
         .agent(app)
         .get('/invoice')
@@ -166,7 +176,7 @@ describe('/invoice', () => {
       getInvStub.restore()
 
       // TODO: confirm the error message and code when no invoice with that id is available
-      getInvStub = getStub('getInvoice', [
+      getInvStub = getLnStub('getInvoice', [
         503,
         'UnexpectedLookupInvoiceErr',
         { err: 'no invoice with that id' },

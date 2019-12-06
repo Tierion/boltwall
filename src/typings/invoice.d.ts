@@ -5,6 +5,7 @@ export interface InvoiceResponse {
   createdAt: string
   amount: string | number
   status?: string
+  secret?: string
 }
 
 export interface LnServiceInvoiceResponse {
