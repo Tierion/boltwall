@@ -27,7 +27,7 @@ export class Identifier extends Struct {
   constructor(options: IdentifierOptions) {
     super(options)
 
-    this.version = 0
+    this.version = LATEST_VERSION
     this.paymentHash = null
     this.tokenId = null
 
@@ -35,13 +35,14 @@ export class Identifier extends Struct {
   }
 
   fromOptions(options: IdentifierOptions): this {
+    if (options.version && options.version > LATEST_VERSION)
+      throw new ErrUnknownVersion(options.version)
+    else if (options.version) this.version = options.version
+
     assert(
-      typeof options.version === 'number',
+      typeof this.version === 'number',
       'Identifier version must be a number'
     )
-    if (options.version > LATEST_VERSION)
-      throw new ErrUnknownVersion(options.version)
-    this.version = options.version
 
     assert(
       options.paymentHash.length === 32,
@@ -56,6 +57,14 @@ export class Identifier extends Struct {
     this.tokenId = options.tokenId
 
     return this
+  }
+
+  toString(): string {
+    return this.toHex()
+  }
+
+  static fromString(str: string): Identifier {
+    return new this().fromHex(str)
   }
 
   write(bw: any): this {

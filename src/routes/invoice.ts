@@ -1,6 +1,8 @@
 import { Response, Router, NextFunction } from 'express'
+import assert from 'assert'
 
 import { LndRequest, InvoiceResponse } from '../typings'
+import { Lsat } from '../lsat'
 import {
   createInvoice,
   checkInvoiceStatus,
@@ -12,11 +14,52 @@ import {
 
 const router: Router = Router()
 
-async function updateInvoiceStatus(
+/**
+ * ## Route: GET /invoice
+ * Get information about an invoice including status and secret. Request must be
+ * authenticated with a macaroon
+ */
+async function getInvoice(
   req: LndRequest,
   res: Response,
   next: NextFunction
-): Promise<void | Response> {}
+): Promise<void | Response> {
+  const { headers } = req
+
+  if (!headers.authorization || !headers.authorization.includes('LSAT')) {
+    req.logger.info(
+      `Unauthorized request made without macaroon for ${req.originalUrl} from ${req.hostname}`
+    )
+    res.status(400)
+    return next({
+      message: 'Bad Request: Missing LSAT authorization header',
+    })
+  }
+
+  let lsat: Lsat
+  try {
+    lsat = Lsat.fromToken(headers.authorization)
+    assert(lsat, 'Could not decode lsat from authorization header')
+  } catch (e) {
+    req.logger.debug(
+      `Received malformed LSAT authorization header from ${req.hostname}: ${headers.authorization}`
+    )
+    req.logger.error(e)
+    res.status(400)
+    return next({ message: `Bad Request: malformed LSAT header`, details: e })
+  }
+
+  if (lsat.isExpired()) {
+    req.logger.debug(
+      `Request made with expired macaroon for ${req.originalUrl} from ${req.hostname}`
+    )
+    res.status(401)
+    return next({
+      message: 'Unauthorized: LSAT expired',
+    })
+  }
+}
+
 /**
  * ## Route: PUT /invoice
  * Checks the status of an invoice based on a specific id in the query parameter.
@@ -41,7 +84,7 @@ async function updateInvoiceStatus(
   }
 
   try {
-    console.log('Checking status of invoice:', invoiceId)
+    req.logger.info('Checking status of invoice:', invoiceId)
     const { lnd, opennode } = req
     const invoice = await checkInvoiceStatus(lnd, opennode, invoiceId)
     const { status } = invoice
@@ -61,12 +104,12 @@ async function updateInvoiceStatus(
       // save discharge macaroon in a cookie. Request should have two macaroons now
       if (req.session) req.session.dischargeMacaroon = macaroon // tslint-disable-line
 
-      console.log(`Invoice ${invoiceId} has been paid`)
+      req.logger.info(`Invoice ${invoiceId} has been paid`)
 
       res.status(200)
       return res.json({ status, discharge: macaroon })
     } else if (status === 'processing' || status === 'unpaid') {
-      console.log('Still processing invoice %s...', invoiceId)
+      req.logger.info('Still processing invoice %s...', invoiceId)
       res.status(202)
       return res.json(invoice)
     } else {
@@ -74,7 +117,7 @@ async function updateInvoiceStatus(
       return next({ message: `Unknown invoice status ${status}` })
     }
   } catch (error) {
-    console.error('Error getting invoice:', error)
+    req.logger.error('Error getting invoice:', error)
     res.status(400)
     return next({ message: error })
   }
@@ -93,7 +136,7 @@ async function postNewInvoice(
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
-  console.log('Request to create a new invoice')
+  req.logger.info('Request to create a new invoice')
   try {
     const location: string = getLocation(req)
 
@@ -129,7 +172,7 @@ async function postNewInvoice(
 router
   .route('*/invoice')
   .post(postNewInvoice)
-  .get(updateInvoiceStatus)
+  .get(getInvoice)
   .put(updateInvoiceStatus)
 
 export default router

@@ -16,6 +16,8 @@ import {
   LsatOptions,
 } from './lsat'
 
+import { LoggerInterface } from './logger'
+
 export {
   InvoiceResponse,
   LnServiceInvoiceResponse,
@@ -31,4 +33,5 @@ export {
   CaveatOptions,
   Satisfier,
   LsatOptions,
+  LoggerInterface,
 }

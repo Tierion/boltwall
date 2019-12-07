@@ -2,11 +2,13 @@ import assert from 'assert'
 import crypto from 'crypto'
 import { Struct } from 'bufio'
 import { parsePaymentRequest } from 'ln-service'
-import { MacaroonsBuilder } from 'macaroons.js'
+import { MacaroonsBuilder, Macaroon } from 'macaroons.js'
 
-import { Caveat } from '.'
+import { Caveat, Identifier } from '.'
 import { LsatOptions } from '../typings'
 import { isHex } from '../helpers'
+
+class MacaroonInterface extends Macaroon {}
 
 export class Lsat extends Struct {
   id: string
@@ -17,6 +19,8 @@ export class Lsat extends Struct {
   paymentPreimage: string | null
   amountPaid: number | null
   routingFeePaid: number | null
+
+  static type = 'LSAT'
 
   constructor(options: LsatOptions) {
     super(options)
@@ -39,8 +43,11 @@ export class Lsat extends Struct {
     assert(typeof options.baseMacaroon === 'string', 'Require encoded macaroon')
     this.baseMacaroon = options.baseMacaroon
 
-    assert(typeof options.paymentHash === 'string', 'Require paymentHash')
-    this.paymentHash = options.paymentHash
+    if (options.paymentHash) this.paymentHash = options.paymentHash
+    else {
+      // if no paymentHash passed in, then we read it from the macaroon id
+      this.paymentHash = this.paymentHashFromMacaroon(this.baseMacaroon)
+    }
 
     const expiration = this.getExpirationFromMacaroon(options.baseMacaroon)
     if (expiration) this.validUntil = expiration
@@ -57,11 +64,16 @@ export class Lsat extends Struct {
   }
 
   isExpired(): boolean {
+    if (this.validUntil === 0) return false
     return this.validUntil < Date.now()
   }
 
   isPending(): boolean {
     return this.paymentPreimage ? false : true
+  }
+
+  getMacaroon(): MacaroonInterface {
+    return MacaroonsBuilder.deserialize(this.baseMacaroon)
   }
 
   getExpirationFromMacaroon(macaroon?: string): number {
@@ -102,6 +114,36 @@ export class Lsat extends Struct {
     this.paymentPreimage = preimage
   }
 
+  toToken(): string {
+    return `LSAT ${this.baseMacaroon}:${this.paymentPreimage || ''}`
+  }
+
+  static paymentHashFromMacaroon(macaroon: string): string {
+    const { identifier } = MacaroonsBuilder.deserialize(macaroon)
+    let id: Identifier
+    try {
+      id = Identifier.fromString(identifier)
+    } catch (e) {
+      throw new Error('Unexpected encoding for macaroon identifier.')
+    }
+    return id.paymentHash.toString('hex')
+  }
+
+  static fromToken(token: string): Lsat {
+    assert(token.includes(this.type), 'Token must include LSAT prefix')
+    token = token.slice(this.type.length).trim()
+    const [macaroon, preimage] = token.split(':')
+
+    const { identifier } = MacaroonsBuilder.deserialize(macaroon)
+
+    return new this({
+      baseMacaroon: macaroon,
+      id: identifier,
+      paymentHash: this.paymentHashFromMacaroon(macaroon),
+      paymentPreimage: preimage,
+    })
+  }
+
   static fromChallenge(challenge: string): Lsat {
     // challenge should be in base64 encoding, so we need to convert it to utf8 first
     challenge = Buffer.from(challenge, 'base64').toString('utf8')
@@ -112,7 +154,7 @@ export class Lsat extends Struct {
 
     assert(
       challenges.length >= 2,
-      'Expected at least two challenges in the LSAT'
+      'Expected at least two challenges in the LSAT: invoice and macaroon'
     )
 
     let macaroon = '',
@@ -156,9 +198,8 @@ export class Lsat extends Struct {
   }
 
   static fromHeader(header: string): Lsat {
-    const type = 'LSAT'
     // remove the token type prefix to get the challenge
-    const challenge = header.slice(type.length).trim()
+    const challenge = header.slice(this.type.length).trim()
 
     assert(
       header.length !== challenge.length,

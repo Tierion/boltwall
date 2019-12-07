@@ -6,7 +6,7 @@ import { Caveat } from '../lsat/caveat'
  * which represents the constant, unique identifiers associated with a macaroon
  */
 export interface IdentifierOptions {
-  version: number
+  version?: number
   paymentHash: Buffer
   tokenId: Buffer
 }
@@ -27,7 +27,7 @@ export interface CaveatOptions {
 export interface LsatOptions {
   id: string
   baseMacaroon: string
-  paymentHash: string
+  paymentHash?: string
   timeCreated?: number
   paymentPreimage?: string
   amountPaid?: number

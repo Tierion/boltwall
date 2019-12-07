@@ -54,7 +54,7 @@ export const getNodeInfo = async (
     res.status(200)
     return res.json(nodeInfo)
   } catch (e) {
-    console.error('Problem connecting to node:', e)
+    req.logger.error('Problem connecting to node:', e)
     res.status(500)
     return next({
       message: 'Problem connecting to lightning node provider.',

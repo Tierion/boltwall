@@ -1,10 +1,10 @@
-import { Response, NextFunction } from 'express'
+import { Response, NextFunction, Request } from 'express'
 import cookieSession from 'cookie-session'
 import { compose } from 'compose-middleware'
-
+import Logger from 'blgr'
 import { node, invoice, parseEnv, boltwall as paywall, hodl } from './routes'
 import { getEnvVars } from './helpers'
-import { LndRequest, BoltwallConfig } from './typings'
+import { LndRequest, BoltwallConfig, LoggerInterface } from './typings'
 
 const { SESSION_SECRET } = getEnvVars()
 
@@ -32,7 +32,7 @@ const dischargeMacaroon = cookieSession({
 
 function errorHandler(
   err: any,
-  _: any,
+  _: Request,
   res: Response,
   next: NextFunction
 ): void | Response {
@@ -45,7 +45,16 @@ function errorHandler(
   if (err) return res.json({ error: err })
 }
 
-export function boltwall(config: BoltwallConfig): Function {
+async function getLogger(level = 'none'): Promise<LoggerInterface> {
+  const logger = new Logger({ level })
+  await logger.open()
+  return logger
+}
+
+export function boltwall(
+  config: BoltwallConfig,
+  logger: LoggerInterface
+): Function {
   if (config) {
     const { CAVEAT_KEY } = getEnvVars()
     if (config.getCaveat && !CAVEAT_KEY)
@@ -54,7 +63,14 @@ export function boltwall(config: BoltwallConfig): Function {
 rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/boltwall#configuration'
       )
   }
-  return (req: LndRequest, res: Response, next: NextFunction) => {
+
+  return async (
+    req: LndRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void | Response> => {
+    // if logger was not passed in then we use default blgr
+    if (!logger) req.logger = await getLogger(process.env.LOG_LEVEL)
     req.boltwallConfig = config
     return compose([
       parseEnv,

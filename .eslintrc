@@ -15,7 +15,8 @@
     "import/no-named-as-default": 0,
     "require-atomic-updates": "warn",
     "@typescript-eslint/no-var-requires": 0,
-    "@typescript-eslint/camelcase": ["error", { "properties": "never" }]
+    "@typescript-eslint/camelcase": ["error", { "properties": "never" }],
+    "no-console": 2 
   },
   "extends": [
     "eslint:recommended",

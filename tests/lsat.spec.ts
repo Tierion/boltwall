@@ -1,4 +1,4 @@
-import { randomBytes, createHash } from 'crypto'
+import { randomBytes } from 'crypto'
 import { expect } from 'chai'
 const { MacaroonsBuilder } = require('macaroons.js')
 import { parsePaymentRequest } from 'ln-service'
@@ -17,6 +17,7 @@ import {
   Lsat,
 } from '../src/lsat'
 import { Satisfier } from '../src/typings'
+import { getTestBuilder } from './utilities'
 
 describe('LSAT utils', () => {
   describe('Macaroon Identifier', () => {
@@ -189,19 +190,25 @@ describe('LSAT utils', () => {
   describe('LSAT Token', () => {
     let macaroon: string,
       paymentHash: string,
+      paymentPreimage: string,
       expiration: number,
       challenge: string
+
     beforeEach(() => {
       expiration = Date.now() + 1000
       const caveat = new Caveat({ condition: 'expiration', value: expiration })
-      macaroon = new MacaroonsBuilder('location', 'secret', 'id')
+      const request = parsePaymentRequest({ request: invoice.payreq })
+
+      paymentHash = request.id
+      paymentPreimage = invoice.secret
+
+      const builder = getTestBuilder()
+      macaroon = builder
         .add_first_party_caveat(caveat.encode())
         .getMacaroon()
         .serialize()
 
-      const request = parsePaymentRequest({ request: invoice })
-      paymentHash = request.id
-      challenge = `macaroon=${macaroon}, invoice=${invoice}`
+      challenge = `macaroon=${macaroon}, invoice=${invoice.payreq}`
       challenge = Buffer.from(challenge, 'utf8').toString('base64')
     })
 
@@ -276,15 +283,35 @@ describe('LSAT utils', () => {
       expect(addIncorrectLength).to.throw('32-byte hash')
       expect(addNonHex).to.throw('32-byte hash')
 
-      const secret = randomBytes(32)
-      const paymentHash = createHash('sha256')
-        .update(secret)
-        .digest('hex')
-
-      lsat.paymentHash = paymentHash
-      const addSecret = (): void => lsat.addPreimage(secret.toString('hex'))
+      const addSecret = (): void => lsat.addPreimage(paymentPreimage)
       expect(addSecret).to.not.throw()
-      expect(lsat.paymentPreimage).to.equal(secret.toString('hex'))
+      expect(lsat.paymentPreimage).to.equal(paymentPreimage)
+    })
+
+    it('should be able to return an LSAT token string', () => {
+      const lsat = Lsat.fromChallenge(challenge)
+
+      lsat.addPreimage(paymentPreimage)
+
+      const expectedToken = `LSAT ${macaroon}:${paymentPreimage}`
+      const token = lsat.toToken()
+
+      expect(token).to.equal(expectedToken)
+    })
+
+    it('should be able to decode from token', () => {
+      let token = `LSAT ${macaroon}:${paymentPreimage}`
+      let lsat = Lsat.fromToken(token)
+      expect(lsat.baseMacaroon).to.equal(macaroon)
+      expect(lsat.paymentPreimage).to.equal(paymentPreimage)
+      expect(lsat.toToken()).to.equal(token)
+
+      // test with no secret
+      token = `LSAT ${macaroon}:`
+      lsat = Lsat.fromToken(token)
+      expect(lsat.baseMacaroon).to.equal(macaroon)
+      expect(!lsat.paymentPreimage).to.be.true
+      expect(lsat.toToken()).to.equal(token)
     })
   })
 })

@@ -16,9 +16,11 @@ export const nodeInfo = {
 
 nodeInfo.uris = [`${nodeInfo.public_key}@127.0.0.1:19735`]
 
-export const invoice =
-  'lntb20m1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqc' +
-  'yq5rqwzqfqypqhp58yjmdan79s6qqdhdzgynm4zwqd5d7xmw5fk98klysy04' +
-  '3l2ahrqsfpp3x9et2e20v6pu37c5d9vax37wxq72un98k6vcx9fz94w0qf23' +
-  '7cm2rqv9pmn5lnexfvf5579slr4zq3u8kmczecytdx0xg9rwzngp7e6guwqp' +
-  'qlhssu04sucpnz4axcv2dstmknqq6jsk2l'
+export const invoice = {
+  payreq:
+    'lntb10u1pw7kfm8pp50nhe8uk9r2n9yz97c9z8lsu0ckxehnsnwkjn9mdsmnf' +
+    'fpgkrxzhqdq5w3jhxapqd9h8vmmfvdjscqzpgllq2qvdlgkllc27kpd87lz8p' +
+    'dfsfmtteyc3kwq734jpwnvqt96e4nuy0yauzdrtkumxsvawgda8dlljxu3nnj' +
+    'lhs6w75390wy7ukj6cpfmygah',
+  secret: '2ca931a1c36b48f54948b898a271a53ed91ff7d0081939a5fa511249e81cba5c',
+}

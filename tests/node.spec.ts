@@ -3,15 +3,15 @@ import { expect } from 'chai'
 
 import app from '../src/app'
 import { nodeInfo } from './data'
-import { getStub } from './utilities'
+import { getLnStub } from './utilities'
 
 describe('/node', () => {
   let getInfoStub: sinon.SinonStub, lndGrpcStub: sinon.SinonStub
 
   before(() => {
-    getInfoStub = getStub('getWalletInfo', nodeInfo)
+    getInfoStub = getLnStub('getWalletInfo', nodeInfo)
     // stub authentication to speed up tests
-    lndGrpcStub = getStub('authenticatedLndGrpc', { lnd: {} })
+    lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
   })
   after(() => {
     getInfoStub.restore()

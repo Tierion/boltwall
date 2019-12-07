@@ -1,11 +1,13 @@
 import { Request } from 'express'
 import { BoltwallConfig } from '.'
+import { LoggerInterface } from '.'
 
 export interface LndRequest extends Request {
   lnd?: any
   opennode?: any
   hostname: string
   boltwallConfig?: BoltwallConfig
+  logger: LoggerInterface
 }
 
 /**
