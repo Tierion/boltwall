@@ -71,6 +71,7 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/
   ): Promise<void | Response> => {
     // if logger was not passed in then we use default blgr
     if (!logger) req.logger = await getLogger(process.env.LOG_LEVEL)
+    else req.logger = logger
     req.boltwallConfig = config
     return compose([
       parseEnv,

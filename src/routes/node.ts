@@ -1,4 +1,4 @@
-import express, { Response, Router, NextFunction } from 'express'
+import express, { Response, Request, Router, NextFunction } from 'express'
 const lnService = require('ln-service')
 
 import { LndRequest, NodeInfo } from '../typings'
@@ -7,12 +7,12 @@ const router: Router = express.Router()
 
 /**
  * Retrieve relevant connection info about lightning node
- * @param {LndRequest} req - expressjs request object decorated for middleware
+ * @param {Request} req - expressjs request object decorated for middleware
  * @param {Response} res - expressjs response object
  * @returns {Promise<NodeInfo>} returns an express response with the node information
  */
 export const getNodeInfo = async (
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> => {
