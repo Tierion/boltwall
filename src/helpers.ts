@@ -16,7 +16,7 @@ interface EnvVars {
   OPEN_NODE_KEY?: string | undefined
   LND_TLS_CERT?: string
   LND_MACAROON?: string
-  SESSION_SECRET?: string
+  SESSION_SECRET: string
   CAVEAT_KEY?: string
   LND_SOCKET?: string
 }
@@ -232,11 +232,12 @@ export async function createRootMacaroon(
 export async function checkInvoiceStatus(
   lnd: any,
   opennode: any,
-  invoiceId: string
+  invoiceId: string,
+  returnSecret = false
 ): Promise<InvoiceResponse> {
   if (!invoiceId) throw new Error('Missing invoice id.')
 
-  let status, amount, payreq, createdAt
+  let status, amount, payreq, createdAt, secret, description
   if (lnd) {
     const invoiceDetails = await lnService.getInvoice({
       id: invoiceId,
@@ -252,6 +253,8 @@ export async function checkInvoiceStatus(
     amount = invoiceDetails.tokens
     payreq = invoiceDetails.request
     createdAt = invoiceDetails.created_at
+    secret = invoiceDetails.secret
+    description = invoiceDetails.description
   } else if (opennode) {
     const data = await opennode.chargeInfo(invoiceId)
     amount = data.amount
@@ -263,8 +266,16 @@ export async function checkInvoiceStatus(
       'No lightning node information configured on request object'
     )
   }
-
-  return { status, amount, payreq, id: invoiceId, createdAt }
+  const invoice: InvoiceResponse = {
+    status,
+    amount,
+    payreq,
+    id: invoiceId,
+    createdAt,
+    description,
+  }
+  if (returnSecret && secret && status === 'paid') invoice.secret = secret
+  return invoice
 }
 
 /**

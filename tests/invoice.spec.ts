@@ -5,7 +5,7 @@ import { parsePaymentRequest } from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'
 
 import app from '../src/app'
-import { Lsat, Caveat } from '../src/lsat'
+import { Caveat } from '../src/lsat'
 import { getLnStub, getTestBuilder } from './utilities'
 import { invoice } from './data'
 import * as helpers from '../src/helpers'
@@ -54,10 +54,10 @@ describe('/invoice', () => {
       request: invoice.payreq,
       is_confirmed: true,
       id: request.id,
-      secret: Buffer.alloc(32).toString('hex'),
+      secret: invoice.secret,
       tokens: 30,
       created_at: '2016-08-29T09:12:33.001Z',
-      description: 'worlds best invoice',
+      description: request.description,
     }
 
     builder = getTestBuilder(sessionSecret)
@@ -114,7 +114,7 @@ describe('/invoice', () => {
       expect(response.body.error.message).to.match(/expired/g)
     })
 
-    xit('should return 401 if macaroon has invalid signature', async () => {
+    it('should return 401 if macaroon has invalid signature', async () => {
       const macaroon = getTestBuilder('another secret')
         .getMacaroon()
         .serialize()
@@ -143,19 +143,20 @@ describe('/invoice', () => {
       expect(response.body.error.message).to.match(/malformed/g)
     })
 
-    xit('should return 404 if requested invoice does not exist', async () => {
+    it('should return 404 if requested invoice does not exist', async () => {
       // create a macaroon that has an invoice attached to it but our getInvoice request
       // should return a fake error that the invoice wasn't found
       const macaroon = builder.getMacaroon().serialize()
 
-      // Setup response from getInvoice that it could not be found
+      // Setup response from getInvoice with response that it could not be found
       getInvStub.restore()
 
       // TODO: confirm the error message and code when no invoice with that id is available
-      getInvStub = getLnStub('getInvoice', [
+      getInvStub = getLnStub('getInvoice')
+      getInvStub.throws(() => [
         503,
         'UnexpectedLookupInvoiceErr',
-        { err: 'no invoice with that id' },
+        { details: 'unable to locate invoice' },
       ])
 
       const response: request.Response = await request
@@ -166,10 +167,10 @@ describe('/invoice', () => {
       expect(response).to.have.nested.property('body.error.message')
 
       // expect some kind of message that tells us the invoice is missing
-      expect(response.body.error.message).to.match(/invoice.*no|no.*invoice/g)
+      expect(response.body.error.message).to.match(/invoice/g)
     })
 
-    xit('should return return invoice information w/ status for request w/ valid LSAT macaroon', async () => {
+    it('should return return invoice information w/ status for request w/ valid LSAT macaroon', async () => {
       const response: InvoiceResponse = {
         id: invoiceResponse.id,
         payreq: invoiceResponse.request,
@@ -189,7 +190,25 @@ describe('/invoice', () => {
         .get('/invoice')
         .set('Authorization', `LSAT ${macaroon}:`)
 
-      expect(supertestResp.body).to.equal(response)
+      expect(supertestResp.body).to.eql(response)
+    })
+    it('should not return the secret if invoice is unpaid', async () => {
+      const macaroon = builder.getMacaroon().serialize()
+      // Setup response from getInvoice that it could not be found
+      getInvStub.restore()
+
+      // TODO: confirm the error message and code when no invoice with that id is available
+      getInvStub = getLnStub('getInvoice', {
+        ...invoiceResponse,
+        is_confirmed: false,
+      })
+
+      const response: request.Response = await request
+        .agent(app)
+        .get('/invoice')
+        .set('Authorization', `LSAT ${macaroon}:`)
+
+      expect(response.body).to.not.have.property('secret')
     })
   })
 

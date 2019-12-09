@@ -2,7 +2,7 @@ import { Response, Router, NextFunction } from 'express'
 import assert from 'assert'
 
 import { LndRequest, InvoiceResponse } from '../typings'
-import { Lsat } from '../lsat'
+import { Lsat, verifyFirstPartyMacaroon, satisfiers } from '../lsat'
 import {
   createInvoice,
   checkInvoiceStatus,
@@ -10,6 +10,7 @@ import {
   getLocation,
   getFirstPartyCaveatFromMacaroon,
   createRootMacaroon,
+  getEnvVars,
 } from '../helpers'
 
 const router: Router = Router()
@@ -36,6 +37,7 @@ async function getInvoice(
     })
   }
 
+  // next make sure the lsat is properly encoded
   let lsat: Lsat
   try {
     lsat = Lsat.fromToken(headers.authorization)
@@ -58,6 +60,49 @@ async function getInvoice(
       message: 'Unauthorized: LSAT expired',
     })
   }
+
+  // verify macaroon
+  const { SESSION_SECRET } = getEnvVars()
+  const isValid = verifyFirstPartyMacaroon(
+    lsat.getMacaroon(),
+    SESSION_SECRET,
+    satisfiers.expirationSatisfier
+  )
+  if (!isValid) {
+    res.status(401)
+    return next({
+      message: 'Unauthorized: LSAT invalid',
+    })
+  }
+  // if everything looks good, we can get the invoice and return
+  let invoice
+  try {
+    invoice = await checkInvoiceStatus(
+      req.lnd,
+      req.opennode,
+      lsat.paymentHash,
+      true
+    )
+  } catch (e) {
+    // handle ln-service errors
+    if (Array.isArray(e)) {
+      req.logger.error(`Problem looking up invoice:`, ...e)
+      if (e[0] === 503) {
+        res.status(404)
+        return res.send({
+          error: { message: 'Unable to find invoice with that id' },
+        })
+      } else {
+        res.status(500)
+        return res.send({
+          error: { message: 'Unknown error when looking up invoice' },
+        })
+      }
+    }
+  }
+
+  res.status(200)
+  return res.send(invoice)
 }
 
 /**

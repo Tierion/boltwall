@@ -5,9 +5,15 @@ import {
   ErrUnknownVersion,
 } from './identifier'
 
-import { Caveat, ErrInvalidCaveat, hasCaveat, verifyCaveats } from './caveat'
+import {
+  verifyFirstPartyMacaroon,
+  Caveat,
+  ErrInvalidCaveat,
+  hasCaveat,
+  verifyCaveats,
+} from './caveat'
 import { Lsat } from './lsat'
-
+import * as satisfiers from './satisfiers'
 export {
   Identifier,
   LATEST_VERSION,
@@ -18,4 +24,6 @@ export {
   hasCaveat,
   verifyCaveats,
   Lsat,
+  verifyFirstPartyMacaroon,
+  satisfiers,
 }

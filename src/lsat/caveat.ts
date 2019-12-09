@@ -1,5 +1,5 @@
 import assert from 'assert'
-const { Macaroon } = require('macaroons.js')
+const { Macaroon, MacaroonsVerifier } = require('macaroons.js')
 import { CaveatPacketClass, MacaroonClass } from '../typings/lsat'
 import { CaveatOptions, Satisfier } from '../typings'
 
@@ -104,6 +104,36 @@ export function hasCaveat(
   return false
 }
 
+/**
+ * @description verifyFirstPartyMacaroon will check if a macaroon is valid or
+ * not based on a set of satisfiers to pass as general caveat verifiers.
+ * @param macaroon A macaroon class to run a verifier against
+ * @param satisfiers satisfiers to pass through as general caveat checkers
+ */
+export function verifyFirstPartyMacaroon(
+  macaroon: MacaroonClass,
+  secret: string,
+  ...satisfiers: Satisfier[]
+): boolean {
+  const verifier = new MacaroonsVerifier(macaroon)
+
+  for (const satisfier of satisfiers) {
+    // first convert the caveat string that satisfy general gives us
+    // into a caveat object and pass that to our satisfier functions
+    verifier.satisfyGeneral((rawCaveat: string) => {
+      const caveat = Caveat.decode(rawCaveat)
+      satisfier.satisfyFinal(caveat)
+    })
+  }
+
+  return verifier.isValid(secret)
+}
+
+/**
+ * @description A function that mimics functionality from loop's lsat utilities
+ * @param caveats a list of caveats to verify
+ * @param satisfiers a list of satisfiers to check the caveats against
+ */
 export function verifyCaveats(
   caveats: Caveat[],
   ...satisfiers: Satisfier[]

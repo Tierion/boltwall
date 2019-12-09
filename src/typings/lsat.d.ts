@@ -41,7 +41,7 @@ export interface LsatOptions {
 
 export interface Satisfier {
   condition: string
-  satisfyPrevious: (prev: Caveat, curr: Caveat) => boolean
+  satisfyPrevious?: (prev: Caveat, curr: Caveat) => boolean
   satisfyFinal: (caveat: Caveat) => boolean
 }
 
