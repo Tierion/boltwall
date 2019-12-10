@@ -16,7 +16,7 @@ export default async function boltwall(
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
-  console.log(
+  req.logger.debug(
     'Checking if the request has been authorized or still requires payment...'
   )
 

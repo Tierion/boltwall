@@ -181,8 +181,9 @@ describe('/invoice', () => {
         description: invoiceResponse.description,
       }
 
-      // caveat that has an invoice id to match our invoice response's payreq
-
+      // add two expiration caveats. it should pass if newer is more restrictive
+      builder.add_first_party_caveat(`expiration=${Date.now() + 1000}`)
+      builder.add_first_party_caveat(`expiration=${Date.now() + 500}`)
       const macaroon = builder.getMacaroon().serialize()
 
       const supertestResp: request.Response = await request

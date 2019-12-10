@@ -105,31 +105,6 @@ export function hasCaveat(
 }
 
 /**
- * @description verifyFirstPartyMacaroon will check if a macaroon is valid or
- * not based on a set of satisfiers to pass as general caveat verifiers.
- * @param macaroon A macaroon class to run a verifier against
- * @param satisfiers satisfiers to pass through as general caveat checkers
- */
-export function verifyFirstPartyMacaroon(
-  macaroon: MacaroonClass,
-  secret: string,
-  ...satisfiers: Satisfier[]
-): boolean {
-  const verifier = new MacaroonsVerifier(macaroon)
-
-  for (const satisfier of satisfiers) {
-    // first convert the caveat string that satisfy general gives us
-    // into a caveat object and pass that to our satisfier functions
-    verifier.satisfyGeneral((rawCaveat: string) => {
-      const caveat = Caveat.decode(rawCaveat)
-      satisfier.satisfyFinal(caveat)
-    })
-  }
-
-  return verifier.isValid(secret)
-}
-
-/**
  * @description A function that mimics functionality from loop's lsat utilities
  * @param caveats a list of caveats to verify
  * @param satisfiers a list of satisfiers to check the caveats against
@@ -178,4 +153,37 @@ export function verifyCaveats(
       return false
   }
   return true
+}
+
+/**
+ * @description verifyFirstPartyMacaroon will check if a macaroon is valid or
+ * not based on a set of satisfiers to pass as general caveat verifiers.
+ * @param macaroon A macaroon class to run a verifier against
+ * @param satisfiers satisfiers to pass through as general caveat checkers
+ */
+export function verifyFirstPartyMacaroon(
+  macaroon: MacaroonClass,
+  secret: string,
+  ...satisfiers: Satisfier[]
+): boolean {
+  const verifier = new MacaroonsVerifier(macaroon)
+
+  for (const satisfier of satisfiers) {
+    // first convert the caveat string that satisfy general gives us
+    // into a caveat object and pass that to our satisfier functions
+    verifier.satisfyGeneral((rawCaveat: string) => {
+      const caveat = Caveat.decode(rawCaveat)
+      return satisfier.satisfyFinal(caveat)
+    })
+  }
+
+  // want to also do previous caveat check
+  const caveats = []
+  for (const { rawValue } of macaroon.caveatPackets) {
+    const caveat = Caveat.decode(rawValue.toString())
+    caveats.push(caveat)
+  }
+
+  if (!verifyCaveats(caveats, ...satisfiers)) return false
+  return verifier.isValid(secret)
 }

@@ -5,8 +5,9 @@ export const expirationSatisfier: Satisfier = {
   satisfyPrevious: (prev, curr) => {
     if (prev.condition !== 'expiration' || curr.condition !== 'expiration')
       return false
-    else if (prev.value > curr.value) return false
-    // confirm that the newer caveat is more restrictive
+    // fails if current expiration is later than previous
+    // (i.e. newer caveats should be more restrictive)
+    else if (prev.value < curr.value) return false
     else return true
   },
   satisfyFinal: caveat => {
