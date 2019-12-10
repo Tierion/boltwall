@@ -1,8 +1,8 @@
 import { Response, Router, NextFunction } from 'express'
-import assert from 'assert'
+// import assert from 'assert'
 
-import { LndRequest, InvoiceResponse } from '../typings'
-import { Lsat, verifyFirstPartyMacaroon, satisfiers } from '../lsat'
+import { InvoiceResponse, LndRequest } from '../typings'
+import { Lsat } from '../lsat'
 import {
   createInvoice,
   checkInvoiceStatus,
@@ -10,9 +10,8 @@ import {
   getLocation,
   getFirstPartyCaveatFromMacaroon,
   createRootMacaroon,
-  getEnvVars,
 } from '../helpers'
-
+import { validateLsat } from '.'
 const router: Router = Router()
 
 /**
@@ -22,59 +21,15 @@ const router: Router = Router()
  */
 async function getInvoice(
   req: LndRequest,
-  res: Response,
-  next: NextFunction
+  res: Response
 ): Promise<void | Response> {
   const { headers } = req
 
-  if (!headers.authorization || !headers.authorization.includes('LSAT')) {
-    req.logger.info(
-      `Unauthorized request made without macaroon for ${req.originalUrl} from ${req.hostname}`
-    )
-    res.status(400)
-    return next({
-      message: 'Bad Request: Missing LSAT authorization header',
-    })
-  }
-
   // next make sure the lsat is properly encoded
-  let lsat: Lsat
-  try {
-    lsat = Lsat.fromToken(headers.authorization)
-    assert(lsat, 'Could not decode lsat from authorization header')
-  } catch (e) {
-    req.logger.debug(
-      `Received malformed LSAT authorization header from ${req.hostname}: ${headers.authorization}`
-    )
-    req.logger.error(e)
-    res.status(400)
-    return next({ message: `Bad Request: malformed LSAT header`, details: e })
-  }
+  const lsat = Lsat.fromToken(headers.authorization)
 
-  if (lsat.isExpired()) {
-    req.logger.debug(
-      `Request made with expired macaroon for ${req.originalUrl} from ${req.hostname}`
-    )
-    res.status(401)
-    return next({
-      message: 'Unauthorized: LSAT expired',
-    })
-  }
-
-  // verify macaroon
-  const { SESSION_SECRET } = getEnvVars()
-  const isValid = verifyFirstPartyMacaroon(
-    lsat.getMacaroon(),
-    SESSION_SECRET,
-    satisfiers.expirationSatisfier
-  )
-  if (!isValid) {
-    res.status(401)
-    return next({
-      message: 'Unauthorized: LSAT invalid',
-    })
-  }
-  // if everything looks good, we can get the invoice and return
+  // validation happens in validateLsat middleware
+  // all this route has to do is confirm that the invoice exists
   let invoice
   try {
     invoice = await checkInvoiceStatus(
@@ -208,7 +163,7 @@ async function postNewInvoice(
     res.status(200)
     return res.json(invoice)
   } catch (error) {
-    console.error('Error getting invoice:', error)
+    req.logger.error('Error getting invoice:', error)
     res.status(400)
     return next({ message: error.message })
   }
@@ -217,6 +172,7 @@ async function postNewInvoice(
 router
   .route('*/invoice')
   .post(postNewInvoice)
+  .all(validateLsat)
   .get(getInvoice)
   .put(updateInvoiceStatus)
 

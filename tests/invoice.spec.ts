@@ -5,10 +5,15 @@ import { parsePaymentRequest } from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'
 
 import app from '../src/app'
-import { Caveat } from '../src/lsat'
-import { getLnStub, getTestBuilder } from './utilities'
+
+import {
+  getLnStub,
+  getTestBuilder,
+  getEnvStub,
+  BuilderInterface,
+  getExpirationCaveat,
+} from './utilities'
 import { invoice } from './data'
-import * as helpers from '../src/helpers'
 
 import { InvoiceResponse } from '../src/typings'
 
@@ -22,15 +27,10 @@ interface InvoiceResponseStub {
   description: string
 }
 
-class BuilderInterface extends MacaroonsBuilder {}
-
-const getExpirationCaveat = (): Caveat =>
-  new Caveat({ condition: 'expiration', value: Date.now() - 100 })
-
 describe('/invoice', () => {
   let getInvStub: sinon.SinonStub,
     createInvStub: sinon.SinonStub,
-    envStub: any, // hack b/c getEnvVars didn't play nice with SinonStub type
+    envStub: sinon.SinonStub,
     lndGrpcStub: sinon.SinonStub,
     invoiceResponse: InvoiceResponseStub,
     sessionSecret: string,
@@ -43,9 +43,7 @@ describe('/invoice', () => {
     // keep known session secret so we can decode macaroons
     sessionSecret = 'my super secret'
 
-    envStub = sinon
-      .stub(helpers, 'getEnvVars')
-      .returns({ SESSION_SECRET: sessionSecret })
+    envStub = getEnvStub(sessionSecret)
 
     const request = parsePaymentRequest({ request: invoice.payreq })
 
@@ -77,7 +75,7 @@ describe('/invoice', () => {
     lndGrpcStub.restore()
   })
 
-  describe('GET /invoice', () => {
+  describe.only('GET /invoice', () => {
     it('should return 400 Bad Request when no macaroon to check', async () => {
       const response1: request.Response = await request
         .agent(app)
@@ -96,7 +94,7 @@ describe('/invoice', () => {
     })
 
     it('should return 401 if macaroon is expired', async () => {
-      const expirationCaveat = getExpirationCaveat()
+      const expirationCaveat = getExpirationCaveat(-100)
 
       const macaroon = builder
         .add_first_party_caveat(expirationCaveat.encode())
@@ -143,7 +141,7 @@ describe('/invoice', () => {
       expect(response.body.error.message).to.match(/malformed/g)
     })
 
-    it('should return 404 if requested invoice does not exist', async () => {
+    it.only('should return 404 if requested invoice does not exist', async () => {
       // create a macaroon that has an invoice attached to it but our getInvoice request
       // should return a fake error that the invoice wasn't found
       const macaroon = builder.getMacaroon().serialize()
@@ -182,7 +180,6 @@ describe('/invoice', () => {
       }
 
       // add two expiration caveats. it should pass if newer is more restrictive
-      builder.add_first_party_caveat(`expiration=${Date.now() + 1000}`)
       builder.add_first_party_caveat(`expiration=${Date.now() + 500}`)
       const macaroon = builder.getMacaroon().serialize()
 
