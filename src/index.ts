@@ -2,7 +2,7 @@ import { Response, NextFunction, Request } from 'express'
 import cookieSession from 'cookie-session'
 import { compose } from 'compose-middleware'
 import Logger from 'blgr'
-import { node, invoice, parseEnv, boltwall as paywall, hodl } from './routes'
+import { node, invoice, parseEnv, paywall, hodl, validateLsat } from './routes'
 import { getEnvVars } from './helpers'
 import { LndRequest, BoltwallConfig, LoggerInterface } from './typings'
 
@@ -32,7 +32,7 @@ const dischargeMacaroon = cookieSession({
 
 function errorHandler(
   err: any,
-  _: Request,
+  req: LndRequest,
   res: Response,
   next: NextFunction
 ): void | Response {
@@ -40,7 +40,7 @@ function errorHandler(
     return next(err)
   }
   if (err.stack) {
-    console.error('Error:', err.stack)
+    req.logger.error('Error:', err.stack)
   }
   if (err) return res.json({ error: err })
 }
@@ -80,6 +80,7 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/
       node,
       invoice,
       hodl,
+      validateLsat,
       paywall,
       errorHandler,
     ])(req, res, next)

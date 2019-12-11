@@ -1,5 +1,4 @@
 import { Response, Router, NextFunction } from 'express'
-// import assert from 'assert'
 
 import { InvoiceResponse, LndRequest } from '../typings'
 import { Lsat } from '../lsat'
@@ -21,12 +20,33 @@ const router: Router = Router()
  */
 async function getInvoice(
   req: LndRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void | Response> {
   const { headers } = req
 
-  // next make sure the lsat is properly encoded
+  if (!headers.authorization || !headers.authorization.includes('LSAT')) {
+    req.logger.info(
+      `Unauthorized request made without macaroon for ${req.originalUrl} from ${req.hostname}`
+    )
+    res.status(400)
+    return next({
+      message: 'Bad Request: Missing LSAT authorization header',
+    })
+  }
+
+  // get the lsat from the auth header
   const lsat = Lsat.fromToken(headers.authorization)
+
+  if (lsat.isExpired()) {
+    req.logger.debug(
+      `Request made with expired macaroon for ${req.originalUrl} from ${req.hostname}`
+    )
+    res.status(401)
+    return next({
+      message: 'Unauthorized: LSAT expired',
+    })
+  }
 
   // validation happens in validateLsat middleware
   // all this route has to do is confirm that the invoice exists

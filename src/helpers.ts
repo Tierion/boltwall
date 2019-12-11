@@ -10,6 +10,7 @@ import crypto from 'crypto'
 const lnService = require('ln-service')
 
 import { LndRequest, InvoiceResponse, CaveatVerifier } from './typings'
+import boltwall from './routes/paywall'
 
 interface EnvVars {
   PORT?: string
@@ -104,13 +105,17 @@ export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
   const { lnd, opennode, body, boltwallConfig } = req
   let { time, expiresAt, amount } = body // time in seconds
 
-  const tokens = time || amount
+  let tokens = time || amount
+
+  // if no amount is sent in the request then we use the min amount
+  if (boltwallConfig && boltwallConfig.minAmount && !tokens)
+    tokens = boltwallConfig.minAmount
 
   // need to check if the invoice request does not meet payment threshold in config
   if (
     boltwallConfig &&
     boltwallConfig.minAmount &&
-    (tokens < boltwallConfig.minAmount || !tokens)
+    tokens < boltwallConfig.minAmount
   )
     throw new Error(
       'Amount set in invoice request is below minimum amount for payment.'

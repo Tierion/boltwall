@@ -3,10 +3,11 @@ import lnService from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'
 import { randomBytes } from 'crypto'
 
+import * as helpers from '../src/helpers'
 import { invoice } from './data'
-import { Identifier } from '../src/lsat'
+import { Identifier, Caveat } from '../src/lsat'
 
-class MacaroonsBuilderInterface extends MacaroonsBuilder {}
+export class BuilderInterface extends MacaroonsBuilder {}
 
 // getStub is a utility for generating a sinon stub for an lnService method
 export function getLnStub(
@@ -21,12 +22,27 @@ export function getLnStub(
   return sinon.stub(lnService, method)
 }
 
-export function getTestBuilder(secret = 'secret'): MacaroonsBuilderInterface {
+export function getEnvStub(sessionSecret = 'my super secret'): sinon.SinonStub {
+  return sinon
+    .stub(helpers, 'getEnvVars')
+    .returns({ SESSION_SECRET: sessionSecret })
+}
+
+export const getExpirationCaveat = (time = 1000): Caveat =>
+  new Caveat({ condition: 'expiration', value: Date.now() + time })
+
+export function getTestBuilder(secret: string): BuilderInterface {
   const request = lnService.parsePaymentRequest({ request: invoice.payreq })
 
   const identifier = new Identifier({
     paymentHash: Buffer.from(request.id, 'hex'),
     tokenId: randomBytes(32),
   })
-  return new MacaroonsBuilder('location', secret, identifier.toString())
+  const builder = new MacaroonsBuilder(
+    'location',
+    secret,
+    identifier.toString()
+  )
+  const caveat = getExpirationCaveat()
+  return builder.add_first_party_caveat(caveat.encode())
 }

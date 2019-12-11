@@ -26,6 +26,7 @@ export class Lsat extends Struct {
     super(options)
     this.id = ''
     this.validUntil = 0
+    this.invoice = ''
     this.baseMacaroon = ''
     this.paymentHash = Buffer.alloc(32).toString('hex')
     this.timeCreated = Date.now()
@@ -37,20 +38,22 @@ export class Lsat extends Struct {
   }
 
   fromOptions(options: LsatOptions): this {
+    assert(
+      typeof options.baseMacaroon === 'string',
+      'Require serialized macaroon'
+    )
+    this.baseMacaroon = options.baseMacaroon
+
     assert(typeof options.id === 'string', 'Require string id')
     this.id = options.id
 
-    assert(typeof options.baseMacaroon === 'string', 'Require encoded macaroon')
-    this.baseMacaroon = options.baseMacaroon
-
-    if (options.paymentHash) this.paymentHash = options.paymentHash
-    else {
-      // if no paymentHash passed in, then we read it from the macaroon id
-      this.paymentHash = this.paymentHashFromMacaroon(this.baseMacaroon)
-    }
+    assert(typeof options.paymentHash === 'string', 'Require paymentHash')
+    this.paymentHash = options.paymentHash
 
     const expiration = this.getExpirationFromMacaroon(options.baseMacaroon)
     if (expiration) this.validUntil = expiration
+
+    if (options.invoice) this.invoice = options.invoice
 
     if (options.timeCreated) this.timeCreated = options.timeCreated
 
@@ -96,10 +99,10 @@ export class Lsat extends Struct {
     return Number(expirationCaveats[expirationCaveats.length - 1].value)
   }
 
-  addPreimage(preimage: string): void {
+  setPreimage(preimage: string): void {
     assert(
       isHex(preimage) && preimage.length === 64,
-      'Must pass valid 32-byte hash'
+      'Must pass valid 32-byte hash for lsat secret'
     )
 
     const hash = crypto
@@ -118,30 +121,59 @@ export class Lsat extends Struct {
     return `LSAT ${this.baseMacaroon}:${this.paymentPreimage || ''}`
   }
 
-  static paymentHashFromMacaroon(macaroon: string): string {
+  toChallenge(): string {
+    assert(
+      this.invoice,
+      `Can't create a challenge without a payment request/invoice`
+    )
+    const challenge = `macaroon=${this.baseMacaroon}, invoice=${this.invoice}`
+    return `LSAT ${Buffer.from(challenge).toString('base64')}`
+  }
+
+  static fromMacaroon(macaroon: string, invoice?: string): Lsat {
     const { identifier } = MacaroonsBuilder.deserialize(macaroon)
     let id: Identifier
     try {
       id = Identifier.fromString(identifier)
     } catch (e) {
-      throw new Error('Unexpected encoding for macaroon identifier.')
+      throw new Error('Unexpected encoding for macaroon identifier.', e.message)
     }
-    return id.paymentHash.toString('hex')
+
+    const options: LsatOptions = {
+      id: identifier,
+      baseMacaroon: macaroon,
+      paymentHash: id.paymentHash.toString('hex'),
+    }
+
+    if (invoice) {
+      const { id: paymentHash, tokens } = parsePaymentRequest({
+        request: invoice,
+      })
+      assert(
+        paymentHash === id.paymentHash.toString('hex'),
+        'paymentHash from invoice did not match invoice'
+      )
+      options.amountPaid = tokens
+      options.invoice = invoice
+    }
+
+    return new this(options)
   }
 
   static fromToken(token: string): Lsat {
     assert(token.includes(this.type), 'Token must include LSAT prefix')
     token = token.slice(this.type.length).trim()
     const [macaroon, preimage] = token.split(':')
-
     const { identifier } = MacaroonsBuilder.deserialize(macaroon)
-
-    return new this({
+    const id = Identifier.fromString(identifier)
+    const lsat = new this({
       baseMacaroon: macaroon,
       id: identifier,
-      paymentHash: this.paymentHashFromMacaroon(macaroon),
-      paymentPreimage: preimage,
+      paymentHash: id.paymentHash.toString('hex'),
     })
+
+    if (preimage) lsat.setPreimage(preimage)
+    return lsat
   }
 
   static fromChallenge(challenge: string): Lsat {
@@ -151,7 +183,6 @@ export class Lsat extends Struct {
     const invoiceChallenge = 'invoice='
 
     const challenges: string[] = challenge.split(',')
-
     assert(
       challenges.length >= 2,
       'Expected at least two challenges in the LSAT: invoice and macaroon'
@@ -163,7 +194,7 @@ export class Lsat extends Struct {
     // get the indexes of the challenge strings so that we can split them
     // kind of convoluted but accounts for challenges being in the wrong order
     // and for excess challenges that we can ignore
-    for (const c of challenges) {
+    for (let c of challenges) {
       // check if we're looking at the macaroon challenge
       if (!macaroon.length && c.indexOf(macChallenge) > -1) {
         const split = c.split('=')

@@ -8,7 +8,7 @@ import { Caveat } from '../lsat/caveat'
 export interface IdentifierOptions {
   version?: number
   paymentHash: Buffer
-  tokenId: Buffer
+  tokenId?: Buffer
 }
 
 /**
@@ -27,7 +27,8 @@ export interface CaveatOptions {
 export interface LsatOptions {
   id: string
   baseMacaroon: string
-  paymentHash?: string
+  paymentHash: string
+  invoice?: string
   timeCreated?: number
   paymentPreimage?: string
   amountPaid?: number

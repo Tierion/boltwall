@@ -185,5 +185,6 @@ export function verifyFirstPartyMacaroon(
   }
 
   if (!verifyCaveats(caveats, ...satisfiers)) return false
+
   return verifier.isValid(secret)
 }

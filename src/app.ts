@@ -41,8 +41,8 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 Any middleware our route passed after this point will be protected and require
 payment
 ******/
-
-app.get('/protected', (_req, res: express.Response) =>
+export const protectedRoute = '/protected'
+app.get(protectedRoute, (_req, res: express.Response) =>
   res.json({
     message:
       'Protected route! This message will only be returned if an invoice has been paid',

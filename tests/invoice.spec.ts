@@ -4,6 +4,7 @@ import * as sinon from 'sinon'
 import { parsePaymentRequest } from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'
 
+import { Lsat } from '../src/lsat'
 import app from '../src/app'
 
 import {
@@ -75,7 +76,7 @@ describe('/invoice', () => {
     lndGrpcStub.restore()
   })
 
-  describe.only('GET /invoice', () => {
+  describe('GET /invoice', () => {
     it('should return 400 Bad Request when no macaroon to check', async () => {
       const response1: request.Response = await request
         .agent(app)
@@ -101,10 +102,12 @@ describe('/invoice', () => {
         .getMacaroon()
         .serialize()
 
+      const lsat = Lsat.fromMacaroon(macaroon)
+
       const response: request.Response = await request
         .agent(app)
         .get('/invoice')
-        .set('Authorization', `LSAT ${macaroon}:`)
+        .set('Authorization', lsat.toToken())
 
       expect(response.status).to.equal(401)
       expect(response).to.have.nested.property('body.error.message')
@@ -138,10 +141,10 @@ describe('/invoice', () => {
       expect(response.status).to.equal(400)
       expect(response).to.have.nested.property('body.error.message')
       // confirm it gives an error message about a missing invoice
-      expect(response.body.error.message).to.match(/malformed/g)
+      expect(response.body.error.message).to.match(/malformed/i)
     })
 
-    it.only('should return 404 if requested invoice does not exist', async () => {
+    it('should return 404 if requested invoice does not exist', async () => {
       // create a macaroon that has an invoice attached to it but our getInvoice request
       // should return a fake error that the invoice wasn't found
       const macaroon = builder.getMacaroon().serialize()
@@ -179,7 +182,7 @@ describe('/invoice', () => {
         description: invoiceResponse.description,
       }
 
-      // add two expiration caveats. it should pass if newer is more restrictive
+      // add extra expiration caveats. it should pass if newer is more restrictive
       builder.add_first_party_caveat(`expiration=${Date.now() + 500}`)
       const macaroon = builder.getMacaroon().serialize()
 
@@ -190,6 +193,7 @@ describe('/invoice', () => {
 
       expect(supertestResp.body).to.eql(response)
     })
+
     it('should not return the secret if invoice is unpaid', async () => {
       const macaroon = builder.getMacaroon().serialize()
       // Setup response from getInvoice that it could not be found
@@ -229,4 +233,5 @@ describe('/invoice', () => {
       expect(supertestResp.body).to.eqls(response)
     })
   })
+  it('should have an LSAT header? or just cleanup')
 })

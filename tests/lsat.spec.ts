@@ -202,7 +202,7 @@ describe('LSAT utils', () => {
       paymentHash = request.id
       paymentPreimage = invoice.secret
 
-      const builder = getTestBuilder()
+      const builder = getTestBuilder('secret')
       macaroon = builder
         .add_first_party_caveat(caveat.encode())
         .getMacaroon()
@@ -276,14 +276,14 @@ describe('LSAT utils', () => {
       const lsat = Lsat.fromChallenge(challenge)
 
       const addWrongPreimage = (): void =>
-        lsat.addPreimage(Buffer.alloc(32, 'a').toString('hex'))
-      const addIncorrectLength = (): void => lsat.addPreimage('abcde12345')
-      const addNonHex = (): void => lsat.addPreimage('xyzNMOP')
+        lsat.setPreimage(Buffer.alloc(32, 'a').toString('hex'))
+      const addIncorrectLength = (): void => lsat.setPreimage('abcde12345')
+      const addNonHex = (): void => lsat.setPreimage('xyzNMOP')
       expect(addWrongPreimage).to.throw('did not match')
       expect(addIncorrectLength).to.throw('32-byte hash')
       expect(addNonHex).to.throw('32-byte hash')
 
-      const addSecret = (): void => lsat.addPreimage(paymentPreimage)
+      const addSecret = (): void => lsat.setPreimage(paymentPreimage)
       expect(addSecret).to.not.throw()
       expect(lsat.paymentPreimage).to.equal(paymentPreimage)
     })
@@ -291,7 +291,7 @@ describe('LSAT utils', () => {
     it('should be able to return an LSAT token string', () => {
       const lsat = Lsat.fromChallenge(challenge)
 
-      lsat.addPreimage(paymentPreimage)
+      lsat.setPreimage(paymentPreimage)
 
       const expectedToken = `LSAT ${macaroon}:${paymentPreimage}`
       const token = lsat.toToken()

@@ -1,5 +1,9 @@
-import { InvoiceResponse, LnServiceInvoiceResponse } from './invoice'
-import { LndRequest, InvoiceBody } from './request'
+import {
+  InvoiceResponse,
+  LnServiceInvoiceResponse,
+  InvoiceBody,
+} from './invoice'
+
 import {
   BoltwallConfig,
   DescriptionGetter,
@@ -21,7 +25,6 @@ import { LoggerInterface } from './logger'
 export {
   InvoiceResponse,
   LnServiceInvoiceResponse,
-  LndRequest,
   CaveatGetter,
   BoltwallConfig,
   AsyncCaveatVerifier,

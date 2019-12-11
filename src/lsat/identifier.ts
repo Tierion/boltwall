@@ -1,6 +1,7 @@
 import assert from 'assert'
-
 import { Struct } from 'bufio'
+import crypto from 'crypto'
+import uuidv4 from 'uuid/v4'
 
 import { IdentifierOptions } from '../typings'
 
@@ -24,7 +25,7 @@ export class ErrUnknownVersion extends Error {
 }
 
 export class Identifier extends Struct {
-  constructor(options: IdentifierOptions) {
+  constructor(options: IdentifierOptions | void) {
     super(options)
 
     this.version = LATEST_VERSION
@@ -50,11 +51,17 @@ export class Identifier extends Struct {
     )
     this.paymentHash = options.paymentHash
 
-    assert(
-      options.tokenId.length === TOKEN_ID_SIZE,
-      'Token Id of unexpected size'
-    )
-    this.tokenId = options.tokenId
+    // TODO: generate random uuidv4 id (and hash to 32 to match length)
+    if (!options.tokenId) {
+      const id = uuidv4()
+      this.tokenId = crypto
+        .createHash('sha256')
+        .update(Buffer.from(id))
+        .digest()
+    } else {
+      this.tokenId = options.tokenId
+    }
+    assert(this.tokenId.length === TOKEN_ID_SIZE, 'Token Id of unexpected size')
 
     return this
   }

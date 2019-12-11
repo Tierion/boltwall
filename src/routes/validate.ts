@@ -14,18 +14,13 @@ export default async function validateLsat(
   next: NextFunction
 ): Promise<void> {
   const { headers } = req
-
+  // if no LSAT then it depends on the route for how to handle it
   if (!headers.authorization || !headers.authorization.includes('LSAT')) {
-    req.logger.info(
-      `Unauthorized request made without macaroon for ${req.originalUrl} from ${req.hostname}`
-    )
-    res.status(400)
-    return next({
-      message: 'Bad Request: Missing LSAT authorization header',
-    })
+    return next()
   }
 
-  // next make sure the lsat is properly encoded
+  // if we have an lsat header
+  // need  make sure the lsat is properly encoded
   let lsat: Lsat
   try {
     lsat = Lsat.fromToken(headers.authorization)
@@ -36,16 +31,16 @@ export default async function validateLsat(
     )
     req.logger.error(e)
     res.status(400)
-    return next({ message: `Bad Request: malformed LSAT header`, details: e })
+    return next({ message: `Bad Request: Malformed LSAT header.`, details: e })
   }
 
   if (lsat.isExpired()) {
     req.logger.debug(
-      `Request made with expired macaroon for ${req.originalUrl} from ${req.hostname}`
+      `Request made with expired LSAT for ${req.originalUrl} from ${req.hostname}`
     )
     res.status(401)
     return next({
-      message: 'Unauthorized: LSAT expired',
+      message: 'Unauthorized: Request made with expired LSAT',
     })
   }
 
@@ -62,5 +57,6 @@ export default async function validateLsat(
       message: 'Unauthorized: LSAT invalid',
     })
   }
+
   next()
 }

@@ -1,3 +1,6 @@
+import { parsePaymentRequest } from 'ln-service'
+import { parse } from 'path'
+
 export const nodeInfo = {
   alias: 'alice',
   best_header_timestamp: Math.round(Date.now() / 1000),
@@ -23,4 +26,26 @@ export const invoice = {
     'dfsfmtteyc3kwq734jpwnvqt96e4nuy0yauzdrtkumxsvawgda8dlljxu3nnj' +
     'lhs6w75390wy7ukj6cpfmygah',
   secret: '2ca931a1c36b48f54948b898a271a53ed91ff7d0081939a5fa511249e81cba5c',
+}
+
+const request = parsePaymentRequest({ request: invoice.payreq })
+
+export interface InvoiceResponseStub {
+  request: string
+  is_confirmed: boolean
+  id: string
+  secret: string
+  tokens: number
+  created_at: string
+  description: string
+}
+
+export const invoiceResponse: InvoiceResponseStub = {
+  request: invoice.payreq,
+  is_confirmed: true,
+  id: request.id,
+  secret: invoice.secret,
+  tokens: request.tokens,
+  created_at: '2016-08-29T09:12:33.001Z',
+  description: request.description,
 }

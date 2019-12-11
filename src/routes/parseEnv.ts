@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express'
 const lnService = require('ln-service')
 
 import { testEnvVars, getEnvVars } from '../helpers'
-import { LndRequest } from '../typings/request'
+import { LndRequest } from '../typings'
 
 export default function parseEnv(
   req: LndRequest,
