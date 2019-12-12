@@ -1,10 +1,14 @@
 import { Response, NextFunction, Request } from 'express'
-import { MacaroonsBuilder } from 'macaroons.js'
 import { InvoiceResponse } from '../typings'
-import { createInvoice, getEnvVars, checkInvoiceStatus } from '../helpers'
-import { Identifier, Lsat } from '../lsat'
+import {
+  createInvoice,
+  checkInvoiceStatus,
+  createLsatFromInvoice,
+  getLocation,
+} from '../helpers'
+import { Lsat } from '../lsat'
 
-export default async function boltwall(
+export default async function paywall(
   req: Request,
   res: Response,
   next: NextFunction
@@ -39,20 +43,10 @@ export default async function boltwall(
       return next({ message: 'Problem generating invoice' })
     }
 
-    const { payreq, id } = invoice
-    const identifier = new Identifier({
-      paymentHash: Buffer.from(id, 'hex'),
-    })
-    const { SESSION_SECRET } = getEnvVars()
-    const location = req.headers.host || req.headers.hostname
+    const location = getLocation(req)
 
     // TODO: Support custom caveats and expiration caveat
-    const macaroon = MacaroonsBuilder.create(
-      location,
-      SESSION_SECRET,
-      identifier.toString()
-    )
-    const lsat = Lsat.fromMacaroon(macaroon.serialize(), payreq)
+    const lsat = createLsatFromInvoice({ invoice, location })
     res.status(402)
     res.set({
       'WWW-Authenticate': lsat.toChallenge(),

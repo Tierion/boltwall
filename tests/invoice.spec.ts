@@ -215,15 +215,17 @@ describe('/invoice', () => {
   })
 
   describe('POST /invoice', () => {
-    it('should return a new invoice with expected description and payment amt', async () => {
-      const response: InvoiceResponse = {
+    let response: InvoiceResponse
+    beforeEach(() => {
+      response = {
         id: invoiceResponse.id,
         payreq: invoiceResponse.request,
         createdAt: invoiceResponse.created_at,
         amount: invoiceResponse.tokens,
         description: invoiceResponse.description,
       }
-
+    })
+    it('should return a new invoice with expected description and payment amt', async () => {
       // TODO: Do we want to rate limit this or require a macaroon at all to avoid DDoS?
       const supertestResp: request.Response = await request
         .agent(app)
@@ -233,5 +235,4 @@ describe('/invoice', () => {
       expect(supertestResp.body).to.eqls(response)
     })
   })
-  it('should have an LSAT header? or just cleanup')
 })

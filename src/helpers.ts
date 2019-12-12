@@ -1,17 +1,21 @@
 import { Request } from 'express'
-const {
+import assert from 'assert'
+import {
   MacaroonsBuilder,
   MacaroonsVerifier,
-  MacaroonsConstants: { MACAROON_SUGGESTED_SECRET_LENGTH },
-  verifier: { TimestampCaveatVerifier },
-} = require('macaroons.js')
+  MacaroonsConstants,
+  verifier,
+} from 'macaroons.js'
 import dotenv from 'dotenv'
 import Macaroon from 'macaroons.js/lib/Macaroon'
 import crypto from 'crypto'
-const lnService = require('ln-service')
+import lnService from 'ln-service'
 
 import { InvoiceResponse, CaveatVerifier } from './typings'
+import { Lsat, Identifier } from './lsat'
 
+const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
+const { TimestampCaveatVerifier } = verifier
 interface EnvVars {
   PORT?: string
   OPEN_NODE_KEY?: string | undefined
@@ -94,6 +98,36 @@ export function testEnvVars(): boolean | Error {
     'No configs set in environment to connect to a lightning node. \
 See README for instructions: https://github.com/Tierion/boltwall'
   )
+}
+
+export function createLsatFromInvoice({
+  invoice,
+  location,
+}: {
+  invoice: InvoiceResponse
+  location: string
+}): Lsat {
+  assert(
+    invoice.payreq && invoice.id,
+    'Must pass an invoice with payreq and id to create LSAT'
+  )
+  assert(
+    typeof location === 'string',
+    'Must pass a location string to create LSAT'
+  )
+  const { payreq, id } = invoice
+  const identifier = new Identifier({
+    paymentHash: Buffer.from(id, 'hex'),
+  })
+  const { SESSION_SECRET } = getEnvVars()
+
+  // TODO: Support custom caveats and expiration caveat
+  const macaroon = MacaroonsBuilder.create(
+    location,
+    SESSION_SECRET,
+    identifier.toString()
+  )
+  return Lsat.fromMacaroon(macaroon.serialize(), payreq)
 }
 
 /**
@@ -204,7 +238,7 @@ export async function createRootMacaroon(
   invoiceId: string,
   location: string,
   has3rdPartyCaveat = false
-) {
+): Promise<string> {
   if (!invoiceId)
     throw new Error(
       'Missing an invoice object with an id. Cannot create macaroon'

@@ -1,5 +1,5 @@
 import express, { Response, Request, Router, NextFunction } from 'express'
-const lnService = require('ln-service')
+import lnService from 'ln-service'
 
 import { NodeInfo } from '../typings'
 
