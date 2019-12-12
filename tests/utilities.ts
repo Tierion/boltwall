@@ -22,7 +22,10 @@ export function getLnStub(
   return sinon.stub(lnService, method)
 }
 
-export function getEnvStub(sessionSecret = 'my super secret'): sinon.SinonStub {
+// need to return any as a hack since the SinonStub type doesn't
+// seem to agree with the return of this stub.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getEnvStub(sessionSecret = 'my super secret'): any {
   return sinon
     .stub(helpers, 'getEnvVars')
     .returns({ SESSION_SECRET: sessionSecret })

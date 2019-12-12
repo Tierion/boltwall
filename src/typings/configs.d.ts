@@ -1,5 +1,5 @@
-import { InvoiceResponse, LndRequest } from '.'
-
+import { InvoiceResponse } from '.'
+import { Request } from 'express'
 /**
  * Describes a function that returns a description string
  * for including in lightning invoices. Can use elements in the request
@@ -8,7 +8,7 @@ import { InvoiceResponse, LndRequest } from '.'
  * @example
  * (req) => `Access for ${req.body.amount} seconds of access.`
  */
-export type DescriptionGetter = (req: LndRequest) => Promise<string>
+export type DescriptionGetter = (req: Request) => Promise<string>
 
 /**
  * Describes a function that will create a caveat to attach onto a discharge macaroon.
@@ -21,7 +21,7 @@ export type DescriptionGetter = (req: LndRequest) => Promise<string>
  * () => `time < ${new Date(Date.now() + 30000)}`
  */
 export type CaveatGetter = (
-  req: LndRequest,
+  req: Request,
   invoice: InvoiceResponse
 ) => Promise<string> | string
 
@@ -41,7 +41,7 @@ export type CaveatGetter = (
  * @example
  * (req) => Promise.resolve((caveat) => caveat.indexOf(req.host) > -1)
  */
-export type AsyncCaveatVerifier = (req: LndRequest) => Promise<CaveatVerifier>
+export type AsyncCaveatVerifier = (req: Request) => Promise<CaveatVerifier>
 
 export type CaveatVerifier = (caveat: string) => boolean
 

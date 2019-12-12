@@ -1,6 +1,6 @@
-import { Response, Router, NextFunction } from 'express'
+import { Response, Request, Router, NextFunction } from 'express'
 
-import { InvoiceResponse, LndRequest } from '../typings'
+import { InvoiceResponse } from '../typings'
 import { Lsat } from '../lsat'
 import {
   createInvoice,
@@ -19,7 +19,7 @@ const router: Router = Router()
  * authenticated with a macaroon
  */
 async function getInvoice(
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
@@ -89,7 +89,7 @@ async function getInvoice(
  * (Formerly GET /invoice which is still supported but PUT is preferred when a body is sent)
  */
 async function updateInvoiceStatus(
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
@@ -152,7 +152,7 @@ async function updateInvoiceStatus(
  * before access to the protected route will be granted
  */
 async function postNewInvoice(
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {

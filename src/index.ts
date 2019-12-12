@@ -4,7 +4,7 @@ import { compose } from 'compose-middleware'
 import Logger from 'blgr'
 import { node, invoice, parseEnv, paywall, hodl, validateLsat } from './routes'
 import { getEnvVars } from './helpers'
-import { LndRequest, BoltwallConfig, LoggerInterface } from './typings'
+import { BoltwallConfig, LoggerInterface } from './typings'
 
 const { SESSION_SECRET } = getEnvVars()
 
@@ -32,7 +32,7 @@ const dischargeMacaroon = cookieSession({
 
 function errorHandler(
   err: any,
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): void | Response {
@@ -65,7 +65,7 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/
   }
 
   return async (
-    req: LndRequest,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void | Response> => {

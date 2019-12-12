@@ -2,10 +2,9 @@
  * @file Exposes different useful configs that can be used out of the box
  * for various common use cases
  */
-
+import { Request } from 'express'
 import {
   BoltwallConfig,
-  LndRequest,
   InvoiceResponse,
   CaveatGetter,
   AsyncCaveatVerifier,
@@ -19,7 +18,7 @@ const { verifier } = require('macaroons.js')
  * amount paid
  */
 const getTimeCaveat: CaveatGetter = (
-  _req: LndRequest,
+  _req: Request,
   invoice: InvoiceResponse
 ) => {
   const amount =
@@ -46,8 +45,9 @@ const verifyTimeCaveat: AsyncCaveatVerifier = () =>
  * Generates a descriptive invoice description indicating more information
  * about the circumstances the invoice was created under
  */
-const getTimedInvoiceDescription: DescriptionGetter = (req: LndRequest) => {
-  let { time, title, appName, amount } = req.body // time in seconds
+const getTimedInvoiceDescription: DescriptionGetter = (req: Request) => {
+  let { time, title, appName } = req.body // time in seconds
+  const { amount } = req.body
 
   if (!appName) appName = `[unknown application @ ${req.ip}]`
   if (!title) title = '[unknown data]'

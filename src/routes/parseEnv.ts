@@ -1,11 +1,10 @@
-import { Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express'
 const lnService = require('ln-service')
 
 import { testEnvVars, getEnvVars } from '../helpers'
-import { LndRequest } from '../typings'
 
 export default function parseEnv(
-  req: LndRequest,
+  req: Request,
   _res: Response,
   next: NextFunction
 ): void {
@@ -34,7 +33,7 @@ export default function parseEnv(
     }
     next()
   } catch (e) {
-    console.error(
+    req.logger.error(
       'Problem with configs for connecting to lightning node:',
       e.message
     )

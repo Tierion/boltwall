@@ -1,3 +1,4 @@
+import { Request } from 'express'
 const {
   MacaroonsBuilder,
   MacaroonsVerifier,
@@ -9,8 +10,7 @@ import Macaroon from 'macaroons.js/lib/Macaroon'
 import crypto from 'crypto'
 const lnService = require('ln-service')
 
-import { LndRequest, InvoiceResponse, CaveatVerifier } from './typings'
-import boltwall from './routes/paywall'
+import { InvoiceResponse, CaveatVerifier } from './typings'
 
 interface EnvVars {
   PORT?: string
@@ -26,6 +26,7 @@ export function getEnvVars(): EnvVars {
   dotenv.config()
 
   if (!process.env.SESSION_SECRET) {
+    // eslint-disable-next-line no-console
     console.log(
       `No session secret set. Generating random ${MACAROON_SUGGESTED_SECRET_LENGTH} byte value for signing macaroons.`
     )
@@ -101,9 +102,9 @@ See README for instructions: https://github.com/Tierion/boltwall'
  * @param {Object} req - express request object that either contains an lnd or opennode object
  * @returns {Object} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
-export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
+export async function createInvoice(req: Request): Promise<InvoiceResponse> {
   const { lnd, opennode, body, boltwallConfig } = req
-  let { time, expiresAt, amount } = body // time in seconds
+  const { time, expiresAt, amount } = body // time in seconds
 
   let tokens = time || amount
 
@@ -124,7 +125,7 @@ export async function createInvoice(req: LndRequest): Promise<InvoiceResponse> {
   // helpful to warn that we're creating a free invoice
   // though this could be useful in donation scenarios
   if (!tokens)
-    console.warn(
+    req.logger.warning(
       'Create invoice request has no amount set. \
 This means payer can pay whatever they want for access.'
     )
@@ -172,6 +173,22 @@ This means payer can pay whatever they want for access.'
   return invoice
 }
 
+/*
+ * returns a set of mostly constants that describes the first party caveat
+ * this is set on a root macaroon. Supports an empty invoiceId
+ * since we can use this for matching the prefix on a populated macaroon caveat
+ */
+
+export function getFirstPartyCaveat(invoiceId = ''): FirstPartyCaveat {
+  return {
+    key: 'invoiceId',
+    value: invoiceId,
+    separator: '=',
+    caveat: `invoiceId = ${invoiceId}`,
+    prefixMatch: (value: string): boolean => /invoiceId = .*/.test(value),
+  }
+}
+
 /**
  * Given an invoice object and a request
  * we want to create a root macaroon with a third party caveat, which both need to be
@@ -186,7 +203,7 @@ This means payer can pay whatever they want for access.'
 export async function createRootMacaroon(
   invoiceId: string,
   location: string,
-  has3rdPartyCaveat: boolean = false
+  has3rdPartyCaveat = false
 ) {
   if (!invoiceId)
     throw new Error(
@@ -382,19 +399,6 @@ export function getDischargeMacaroon(
   return macaroon.serialize()
 }
 
-// returns a set of mostly constants that describes the first party caveat
-// this is set on a root macaroon. Supports an empty invoiceId
-// since we can use this for matching the prefix on a populated macaroon caveat
-export function getFirstPartyCaveat(invoiceId = ''): FirstPartyCaveat {
-  return {
-    key: 'invoiceId',
-    value: invoiceId,
-    separator: '=',
-    caveat: `invoiceId = ${invoiceId}`,
-    prefixMatch: (value: string): boolean => /invoiceId = .*/.test(value),
-  }
-}
-
 /**
  * Utility to extract first party caveat value from a serialized root macaroon
  * See `getFirstPartyCaveat` for what this value represents
@@ -428,7 +432,7 @@ export function isHex(h: string): boolean {
  * @param {Express.request.hostname} - fallback if not in a now lambda
  * @returns {String} - location string
  */
-export function getLocation({ headers, hostname }: LndRequest): string {
+export function getLocation({ headers, hostname }: Request): string {
   return headers && headers['x-now-deployment-url']
     ? headers['x-forwarded-proto'] + '://' + headers['x-now-deployment-url']
     : hostname || 'self'

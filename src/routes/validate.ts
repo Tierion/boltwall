@@ -1,7 +1,6 @@
-import { Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
 
-import { LndRequest } from '../typings'
 import { Lsat, verifyFirstPartyMacaroon, satisfiers } from '../lsat'
 import { getEnvVars } from '../helpers'
 
@@ -9,7 +8,7 @@ import { getEnvVars } from '../helpers'
  * @description middleware to test existence and validity of macaroon
  */
 export default async function validateLsat(
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {

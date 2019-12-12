@@ -136,7 +136,9 @@ export class Lsat extends Struct {
     try {
       id = Identifier.fromString(identifier)
     } catch (e) {
-      throw new Error('Unexpected encoding for macaroon identifier.', e.message)
+      throw new Error(
+        `Unexpected encoding for macaroon identifier: ${e.message}`
+      )
     }
 
     const options: LsatOptions = {
@@ -192,9 +194,9 @@ export class Lsat extends Struct {
       invoice = ''
 
     // get the indexes of the challenge strings so that we can split them
-    // kind of convoluted but accounts for challenges being in the wrong order
+    // kind of convoluted but it takes into account challenges being in the wrong order
     // and for excess challenges that we can ignore
-    for (let c of challenges) {
+    for (const c of challenges) {
       // check if we're looking at the macaroon challenge
       if (!macaroon.length && c.indexOf(macChallenge) > -1) {
         const split = c.split('=')

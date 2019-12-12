@@ -1,7 +1,7 @@
-import { Response, Router, NextFunction } from 'express'
-const lnService = require('ln-service')
+import { Response, Router, Request, NextFunction } from 'express'
+import lnService from 'ln-service'
 
-import { LndRequest, InvoiceBody, InvoiceResponse } from '../typings'
+import { InvoiceBody, InvoiceResponse } from '../typings'
 import { getLocation, createRootMacaroon } from '../helpers'
 
 const router: Router = Router()
@@ -21,11 +21,10 @@ const router: Router = Router()
  * Otherwise, counterparty could wait out the hodl invoice and cost the node its funds
  */
 async function postNewHodl(
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
-  console.log('Request to create new hodl invoice')
   const location: string = getLocation(req)
   const body: InvoiceBody = req.body
 
@@ -57,7 +56,7 @@ async function postNewHodl(
 
   try {
     const {
-      created_at,
+      created_at: createdAt,
       description,
       id,
       request,
@@ -67,7 +66,7 @@ async function postNewHodl(
       id,
       payreq: request,
       description,
-      createdAt: created_at,
+      createdAt,
       amount: tokens,
     }
 
@@ -77,7 +76,7 @@ async function postNewHodl(
     // and associates the given invoice with the current session
 
     // check if we need to also add a third party caveat to macaroon
-    let has3rdPartyCaveat =
+    const has3rdPartyCaveat =
       req.boltwallConfig && req.boltwallConfig.getCaveat ? true : false
 
     const macaroon = await createRootMacaroon(
@@ -92,13 +91,13 @@ async function postNewHodl(
     res.status(200)
     return res.json(invoice)
   } catch (e) {
-    console.log('There was a problem creating hodl invoice:', e)
     // lnService returns errors as array
     if (Array.isArray(e)) {
+      req.logger.error('There was a problem creating hodl invoice:', ...e)
       res.status(e[0])
       return next({ message: e[1], details: e[2].err.details })
     }
-
+    req.logger.error('There was a problem creating hodl invoice %s', e.message)
     res.status(500)
     return next({ message: 'Problem processing new hodl invoice' })
   }
@@ -112,7 +111,7 @@ async function postNewHodl(
  * @returns {Promise<boolean>} res.json.success - true if settled successfully
  */
 async function settleHodl(
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<any> {
@@ -139,12 +138,16 @@ async function settleHodl(
     res.status(200)
     return next()
   } catch (e) {
-    console.error('There was an error settling a hodl invoice:', e)
     // lnService returns errors as array
     if (Array.isArray(e) && e[2]) {
+      req.logger.error('There was an error settling a hodl invoice:', ...e)
       res.status(e[0])
       return next({ message: e[1], details: e[2].err.details })
     }
+    req.logger.error(
+      'There was an error settling a hodl invoice: %s',
+      e.message
+    )
 
     res.status(500)
     return next({

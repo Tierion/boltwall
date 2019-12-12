@@ -1,7 +1,7 @@
 import express, { Response, Request, Router, NextFunction } from 'express'
 const lnService = require('ln-service')
 
-import { LndRequest, NodeInfo } from '../typings'
+import { NodeInfo } from '../typings'
 
 const router: Router = express.Router()
 

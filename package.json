@@ -10,7 +10,7 @@
     "start": "nodemon",
     "build": "tsc --project tsconfig.build.json",
     "clean": "rm -rf dist && mkdir dist",
-    "lint": "eslint ./src/**/*.ts --quiet",
+    "lint": "tsc --noEmit --project tsconfig.json && eslint --ext .ts src --quiet",
     "test": "ts-mocha -p tsconfig.json tests/**/*.spec.ts",
     "test:watch": "ts-mocha -p tsconfig.json --reporter nyan --watch --watch-extensions ts tests/**/*.spec.ts",
     "prepare": "npm run build",

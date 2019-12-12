@@ -1,5 +1,4 @@
 import { parsePaymentRequest } from 'ln-service'
-import { parse } from 'path'
 
 export const nodeInfo = {
   alias: 'alice',
