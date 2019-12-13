@@ -13,7 +13,6 @@ import lnService from 'ln-service'
 
 import { InvoiceResponse, CaveatVerifier } from './typings'
 import { Lsat, Identifier } from './lsat'
-import { boltwall } from 'src'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
 const { TimestampCaveatVerifier } = verifier

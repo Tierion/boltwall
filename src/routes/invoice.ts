@@ -104,9 +104,9 @@ async function postNewInvoice(
         })
       }
     }
-    req.logger.error('Error getting invoice:', error)
+    req.logger.error('Error getting invoice:', e)
     res.status(400)
-    return next({ message: error.message })
+    return next({ message: e.message })
   }
 }
 

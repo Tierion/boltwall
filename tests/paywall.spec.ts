@@ -72,7 +72,7 @@ describe('paywall', () => {
     )
   })
 
-  it('should return a 401 with expiration message if macaroon is expired', async () => {
+  it('should return 401 with expiration message if macaroon is expired', async () => {
     const expirationCaveat = getExpirationCaveat(-100)
 
     const macaroon = builder
@@ -91,7 +91,7 @@ describe('paywall', () => {
     expect(response.body.error.message).to.match(/expired/g)
   })
 
-  it('should return a 401 for invalid macaroon', async () => {
+  it('should return 401 for invalid macaroon', async () => {
     const macaroon = getTestBuilder('another secret')
       .getMacaroon()
       .serialize()
@@ -121,7 +121,7 @@ describe('paywall', () => {
     ).to.include('Bad Request')
   })
 
-  it('should return a 200 response for request with valid LSAT', async () => {
+  it('should return 200 response for request with valid LSAT', async () => {
     const macaroon = builder.getMacaroon().serialize()
     const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)

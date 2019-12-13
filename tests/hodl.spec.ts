@@ -12,7 +12,7 @@ import {
 } from './utilities'
 import { Lsat } from '../src/lsat'
 
-describe('hodl LSAT flow', () => {
+describe('hodl paywall', () => {
   let envStub: sinon.SinonStub,
     lndGrpcStub: sinon.SinonStub,
     createHodlStub: sinon.SinonStub,
