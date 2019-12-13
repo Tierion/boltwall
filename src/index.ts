@@ -2,7 +2,7 @@ import { Response, NextFunction, Request } from 'express'
 import cookieSession from 'cookie-session'
 import { compose } from 'compose-middleware'
 import Logger from 'blgr'
-import { node, invoice, parseEnv, paywall, hodl, validateLsat } from './routes'
+import { node, invoice, parseEnv, paywall, validateLsat } from './routes'
 import { getEnvVars } from './helpers'
 import { BoltwallConfig, LoggerInterface } from './typings'
 
@@ -79,7 +79,6 @@ rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/
       dischargeMacaroon,
       node,
       invoice,
-      hodl,
       validateLsat,
       paywall,
       errorHandler,
