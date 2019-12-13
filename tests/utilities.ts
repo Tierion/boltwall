@@ -12,14 +12,13 @@ export class BuilderInterface extends MacaroonsBuilder {}
 // getStub is a utility for generating a sinon stub for an lnService method
 export function getLnStub(
   method: string,
-  returnValue?: object | string
+  returnValue?: object | string,
+  args?: any
 ): sinon.SinonStub {
-  if (returnValue) {
-    const stub: sinon.SinonStub = sinon.stub(lnService, method)
-    stub.returns(returnValue)
-    return stub
-  }
-  return sinon.stub(lnService, method)
+  let stub: sinon.SinonStub = sinon.stub(lnService, method)
+  if (args) stub.withArgs(args)
+  if (returnValue) stub.returns(returnValue)
+  return stub
 }
 
 // need to return any as a hack since the SinonStub type doesn't

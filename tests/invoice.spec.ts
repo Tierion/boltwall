@@ -76,7 +76,7 @@ describe('/invoice', () => {
     lndGrpcStub.restore()
   })
 
-  describe('GET /invoice', () => {
+  describe('GET', () => {
     it('should return 400 Bad Request when no macaroon to check', async () => {
       const response1: request.Response = await request
         .agent(app)
@@ -214,7 +214,7 @@ describe('/invoice', () => {
     })
   })
 
-  describe('POST /invoice', () => {
+  describe('POST', () => {
     let response: InvoiceResponse
     beforeEach(() => {
       response = {

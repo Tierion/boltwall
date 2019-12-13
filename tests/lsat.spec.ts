@@ -192,7 +192,8 @@ describe('LSAT utils', () => {
       paymentHash: string,
       paymentPreimage: string,
       expiration: number,
-      challenge: string
+      challenge: string,
+      challengeWithSpace: string
 
     beforeEach(() => {
       expiration = Date.now() + 1000
@@ -210,18 +211,28 @@ describe('LSAT utils', () => {
 
       challenge = `macaroon=${macaroon}, invoice=${invoice.payreq}`
       challenge = Buffer.from(challenge, 'utf8').toString('base64')
+      challengeWithSpace = `macaroon=${macaroon} invoice=${invoice.payreq}`
+      challengeWithSpace = Buffer.from(challengeWithSpace, 'utf8').toString(
+        'base64'
+      )
     })
 
     it('should be able to decode from challenge and from header', () => {
       const header = `LSAT ${challenge}`
 
       const fromChallenge = (): Lsat => Lsat.fromChallenge(challenge)
+      const fromChallengeWithSpace = (): Lsat =>
+        Lsat.fromChallenge(challengeWithSpace)
       const fromHeader = (): Lsat => Lsat.fromHeader(header)
 
       const tests = [
         {
           name: 'fromChallenge',
           test: fromChallenge,
+        },
+        {
+          name: 'fromChallengeWithSpace',
+          test: fromChallengeWithSpace,
         },
         {
           name: 'fromHeader',

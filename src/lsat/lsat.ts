@@ -184,7 +184,14 @@ export class Lsat extends Struct {
     const macChallenge = 'macaroon='
     const invoiceChallenge = 'invoice='
 
-    const challenges: string[] = challenge.split(',')
+    let challenges: string[]
+
+    challenges = challenge.split(',')
+
+    // add support for challenges that are separated with just a space
+    if (challenges.length < 2) challenges = challenge.split(' ')
+
+    // if we still don't have at least two, then there was a malformed header/challenge
     assert(
       challenges.length >= 2,
       'Expected at least two challenges in the LSAT: invoice and macaroon'
@@ -227,6 +234,7 @@ export class Lsat extends Struct {
       id: identifier,
       baseMacaroon: macaroon,
       paymentHash,
+      invoice: invoice,
     })
   }
 

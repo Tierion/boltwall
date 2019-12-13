@@ -54,4 +54,5 @@ export interface BoltwallConfig {
   caveatVerifier?: AsyncCaveatVerifier
   getInvoiceDescription?: DescriptionGetter
   minAmount?: string | number
+  hodl?: boolean
 }

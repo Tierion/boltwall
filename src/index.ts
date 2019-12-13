@@ -52,8 +52,8 @@ async function getLogger(level = 'none'): Promise<LoggerInterface> {
 }
 
 export function boltwall(
-  config: BoltwallConfig,
-  logger: LoggerInterface
+  config?: BoltwallConfig,
+  logger?: LoggerInterface
 ): Function {
   if (config) {
     const { CAVEAT_KEY } = getEnvVars()

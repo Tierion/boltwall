@@ -12,7 +12,7 @@ import {
 import app, { protectedRoute } from '../src/app'
 import { Lsat } from '../src/lsat'
 
-describe('Paywall', () => {
+describe('paywall', () => {
   let envStub: sinon.SinonStub,
     lndGrpcStub: sinon.SinonStub,
     createInvStub: sinon.SinonStub,
@@ -43,7 +43,7 @@ describe('Paywall', () => {
       .agent(app)
       .get(protectedRoute)
       .expect(402)
-      .expect('WWW-Authenticate', /LSAT/g)
+      .expect('WWW-Authenticate', /LSAT/i)
 
     const header = resp.header['www-authenticate']
     const getLsat = (): Lsat => Lsat.fromHeader(header)
@@ -121,13 +121,15 @@ describe('Paywall', () => {
     ).to.include('Bad Request')
   })
 
-  it('should return a 200 response for request with valid LSAT', async () => {
+  it.only('should return a 200 response for request with valid LSAT', async () => {
     const macaroon = builder.getMacaroon().serialize()
-    // const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.secret)
+    const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
+    lsat.setPreimage(invoiceResponse.secret)
+
     await request
       .agent(app)
       .get(protectedRoute)
-      .set('Authorization', `LSAT ${macaroon}:${invoiceResponse.secret}`)
+      .set('Authorization', lsat.toToken())
       .expect(200)
   })
 })

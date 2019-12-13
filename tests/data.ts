@@ -32,6 +32,7 @@ const request = parsePaymentRequest({ request: invoice.payreq })
 export interface InvoiceResponseStub {
   request: string
   is_confirmed: boolean
+  is_held?: boolean | undefined
   id: string
   secret: string
   tokens: number
