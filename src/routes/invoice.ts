@@ -91,7 +91,19 @@ async function postNewInvoice(
     const invoice: InvoiceResponse = await createInvoice(req)
     res.status(200)
     return res.json(invoice)
-  } catch (error) {
+  } catch (e) {
+    if (Array.isArray(e)) {
+      req.logger.error(`Problem creating invoice:`, ...e)
+      if (e[0] === 400) {
+        res.status(404)
+        return next({ message: e[1] })
+      } else {
+        res.status(500)
+        return res.send({
+          error: { message: 'Unknown error when looking up invoice' },
+        })
+      }
+    }
     req.logger.error('Error getting invoice:', error)
     res.status(400)
     return next({ message: error.message })

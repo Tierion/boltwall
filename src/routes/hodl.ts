@@ -42,7 +42,7 @@ async function postNewHodl(
 
   if (paymentHash.length !== 64) {
     res.status(400)
-    return next({ message: 'Expected a 256 bit string for the payment hash' })
+    return next({ message: 'Expected a 256-bit string for the payment hash' })
   }
 
   const paymentInfo = {

@@ -12,7 +12,7 @@ import {
 } from './utilities'
 import { Lsat } from '../src/lsat'
 
-describe.only('hodl LSAT flow', () => {
+describe('hodl LSAT flow', () => {
   let envStub: sinon.SinonStub,
     lndGrpcStub: sinon.SinonStub,
     createHodlStub: sinon.SinonStub,
@@ -50,9 +50,37 @@ describe.only('hodl LSAT flow', () => {
       .agent(app)
       .get(protectedRoute)
       .expect(400)
+      .expect(res => {
+        if (!res.error || !res.body.error.message)
+          throw new Error('Expected error message')
+        if (
+          !/(paymentHash.*missing)|(missing.*paymentHash)/gi.test(
+            res.body.error.message
+          )
+        )
+          throw new Error(
+            'Expected error message to mention missing paymentHash in request body'
+          )
+      })
   })
 
-  it('should create a hodl invoice LSAT with paymentHash provided in body', async () => {
+  it('should return 400 bad request if paymentHash is not a 256-bit hex string', async () => {
+    await request
+      .agent(app)
+      .get(protectedRoute)
+      .send({ paymentHash: '1235' })
+      .expect(400)
+      .expect(res => {
+        if (!res.error || !res.body.error.message)
+          throw new Error('Expected error message')
+        if (!/(256.bit)/gi.test(res.body.error.message))
+          throw new Error(
+            'Expected error message to mention 256-bit string requirement'
+          )
+      })
+  })
+
+  it('should create a hodl invoice LSAT when paymentHash provided in body', async () => {
     const resp: request.Response = await request
       .agent(app)
       .get(protectedRoute)
@@ -124,10 +152,13 @@ describe.only('hodl LSAT flow', () => {
       .set('Authorization', lsat.toToken())
       .expect(200)
 
-    expect(settleHodlStub.called).to.be.true
+    expect(
+      settleHodlStub.called,
+      'Expected lnService call to settle invoice to be called'
+    ).to.be.true
   })
 
-  it('should block access and return 402 for a hodl invoice that is settled', async () => {
+  it('should block access and return 401 for a hodl invoice that is settled', async () => {
     getInvStub.restore()
     getInvStub = getLnStub('getInvoice', {
       ...invoiceResponse,
@@ -139,16 +170,19 @@ describe.only('hodl LSAT flow', () => {
     const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)
 
-    const resp = await request
+    await request
       .agent(app)
       .get(protectedRoute)
       .set('Authorization', lsat.toToken())
-      .expect(402)
+      .expect(401)
+      .expect(res => {
+        if (!res.error || !res.body.error.message)
+          throw new Error('Expected error message')
+        if (!/(expired)|(unauthorized)/gi.test(res.body.error.message))
+          throw new Error('Expected error message to mention expired lsat')
+      })
 
     expect(getInvStub.called).to.be.true
-    const header = resp.header['www-authenticate']
-    const getLsat = (): Lsat => Lsat.fromHeader(header)
-    expect(getLsat, 'Should return a valid LSAT header').to.not.throw()
   })
 
   describe('GET /invoice', () => {

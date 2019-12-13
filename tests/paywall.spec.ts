@@ -121,7 +121,7 @@ describe('paywall', () => {
     ).to.include('Bad Request')
   })
 
-  it.only('should return a 200 response for request with valid LSAT', async () => {
+  it('should return a 200 response for request with valid LSAT', async () => {
     const macaroon = builder.getMacaroon().serialize()
     const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)

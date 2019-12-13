@@ -13,6 +13,7 @@ import lnService from 'ln-service'
 
 import { InvoiceResponse, CaveatVerifier } from './typings'
 import { Lsat, Identifier } from './lsat'
+import { boltwall } from 'src'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
 const { TimestampCaveatVerifier } = verifier
@@ -170,15 +171,17 @@ This means payer can pay whatever they want for access.'
     _description = await boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
-
   if (lnd) {
+    let invoiceFunction = lnService.createInvoice
+    if (boltwallConfig && boltwallConfig.hodl)
+      invoiceFunction = lnService.createHodlInvoice
     const {
       request: payreq,
       id,
       description = _description,
       created_at: createdAt,
       tokens: amount,
-    } = await lnService.createInvoice({
+    } = await invoiceFunction({
       lnd: lnd,
       description: _description,
       expires_at: expiresAt,

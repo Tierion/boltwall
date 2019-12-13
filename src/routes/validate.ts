@@ -2,10 +2,10 @@ import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
 
 import { Lsat, verifyFirstPartyMacaroon, satisfiers } from '../lsat'
-import { getEnvVars } from '../helpers'
+import { getEnvVars, isHex } from '../helpers'
 
 /**
- * @description middleware to test existence and validity of macaroon
+ * @description middleware to test existence and validity of LSAT or LSAT request
  */
 export default async function validateLsat(
   req: Request,
@@ -13,6 +13,35 @@ export default async function validateLsat(
   next: NextFunction
 ): Promise<void> {
   const { headers } = req
+  // of hodl is enabled and there is not already an auth header
+  // then we need to check if there is a paymentHash in the request body
+  if (
+    req.boltwallConfig &&
+    req.boltwallConfig.hodl &&
+    !req.body.paymentHash &&
+    (!headers.authorization || !headers.authorization.includes('LSAT'))
+  ) {
+    req.logger.debug(
+      `Request made to hodl protected endpoint ${req.originalUrl} without LSAT or payment hash.`
+    )
+    res.status(400)
+    return next({
+      message:
+        'Request malformed: Missing paymentHash in request body. Required to create HODL invoice LSAT',
+    })
+  } else if (
+    req.body &&
+    req.body.paymentHash &&
+    // if there is a paymentHash then we need to validate it
+    (req.body.paymentHash.length !== 64 || !isHex(req.body.paymentHash))
+  ) {
+    res.status(400)
+    return next({
+      message:
+        'Request malformed: Expected a 256-bit string for the payment hash',
+    })
+  }
+
   // if no LSAT then it depends on the route for how to handle it
   if (!headers.authorization || !headers.authorization.includes('LSAT')) {
     return next()
