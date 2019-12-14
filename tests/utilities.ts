@@ -15,7 +15,7 @@ export function getLnStub(
   returnValue?: object | string,
   args?: any
 ): sinon.SinonStub {
-  let stub: sinon.SinonStub = sinon.stub(lnService, method)
+  const stub: sinon.SinonStub = sinon.stub(lnService, method)
   if (args) stub.withArgs(args)
   if (returnValue) stub.returns(returnValue)
   return stub

@@ -48,10 +48,8 @@ export default async function paywall(
       return next({ message: 'Problem generating invoice' })
     }
 
-    const location = getLocation(req)
-
     // TODO: Support custom caveats and expiration caveat
-    const lsat = createLsatFromInvoice({ invoice, location })
+    const lsat = createLsatFromInvoice(req, invoice)
     res.status(402)
     res.set({
       'WWW-Authenticate': lsat.toChallenge(),

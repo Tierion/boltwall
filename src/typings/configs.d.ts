@@ -50,7 +50,7 @@ export type CaveatVerifier = (caveat: string) => boolean
  * to customize various aspects of the paywall functionality.
  */
 export interface BoltwallConfig {
-  getCaveat?: CaveatGetter
+  getCaveats?: CaveatGetter | CaveatGetter[]
   caveatVerifier?: AsyncCaveatVerifier
   getInvoiceDescription?: DescriptionGetter
   minAmount?: string | number

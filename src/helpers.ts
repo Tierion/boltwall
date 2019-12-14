@@ -11,7 +11,7 @@ import Macaroon from 'macaroons.js/lib/Macaroon'
 import crypto from 'crypto'
 import lnService from 'ln-service'
 
-import { InvoiceResponse, CaveatVerifier } from './typings'
+import { InvoiceResponse, CaveatVerifier, CaveatGetter } from './typings'
 import { Lsat, Identifier } from './lsat'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
@@ -100,33 +100,58 @@ See README for instructions: https://github.com/Tierion/boltwall'
   )
 }
 
-export function createLsatFromInvoice({
-  invoice,
-  location,
-}: {
+/**
+ * Utility function to get a location string to describe _where_ the server is.
+ * useful for setting identifiers in macaroons
+ * @param {Express.request} req - expressjs request object
+ * @param {Express.request.headers} [headers] - optional headers property added by zeit's now
+ * @param {Express.request.hostname} - fallback if not in a now lambda
+ * @returns {String} - location string
+ */
+export function getLocation({ headers, hostname }: Request): string {
+  return headers && headers['x-now-deployment-url']
+    ? headers['x-forwarded-proto'] + '://' + headers['x-now-deployment-url']
+    : hostname || 'self'
+}
+
+export function createLsatFromInvoice(
+  req: Request,
   invoice: InvoiceResponse
-  location: string
-}): Lsat {
+): Lsat {
   assert(
-    invoice.payreq && invoice.id,
+    invoice && invoice.payreq && invoice.id,
     'Must pass an invoice with payreq and id to create LSAT'
   )
-  assert(
-    typeof location === 'string',
-    'Must pass a location string to create LSAT'
-  )
+
   const { payreq, id } = invoice
   const identifier = new Identifier({
     paymentHash: Buffer.from(id, 'hex'),
   })
   const { SESSION_SECRET } = getEnvVars()
+  const location = getLocation(req)
 
-  // TODO: Support custom caveats and expiration caveat
-  const macaroon = MacaroonsBuilder.create(
+  const builder = new MacaroonsBuilder(
     location,
     SESSION_SECRET,
     identifier.toString()
   )
+
+  // if config has custom caveat getters, need to retrieve them
+  // and add first party caveats
+  if (req.boltwallConfig && req.boltwallConfig.getCaveats) {
+    const { getCaveats } = req.boltwallConfig
+    let caveatGetters: CaveatGetter[]
+
+    if (!Array.isArray(getCaveats)) caveatGetters = [getCaveats]
+    else caveatGetters = getCaveats
+
+    for (const getCaveat of caveatGetters) {
+      const caveat = getCaveat(req)
+      builder.add_first_party_caveat(caveat)
+    }
+  }
+
+  const macaroon = builder.getMacaroon()
   return Lsat.fromMacaroon(macaroon.serialize(), payreq)
 }
 
@@ -458,20 +483,6 @@ export function getFirstPartyCaveatFromMacaroon(
 
 export function isHex(h: string): boolean {
   return Buffer.from(h, 'hex').toString('hex') === h
-}
-
-/**
- * Utility function to get a location string to describe _where_ the server is.
- * useful for setting identifiers in macaroons
- * @param {Express.request} req - expressjs request object
- * @param {Express.request.headers} [headers] - optional headers property added by zeit's now
- * @param {Express.request.hostname} - fallback if not in a now lambda
- * @returns {String} - location string
- */
-export function getLocation({ headers, hostname }: Request): string {
-  return headers && headers['x-now-deployment-url']
-    ? headers['x-forwarded-proto'] + '://' + headers['x-now-deployment-url']
-    : hostname || 'self'
 }
 
 type prefixMatchFn = (value: string) => boolean
