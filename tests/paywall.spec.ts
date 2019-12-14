@@ -1,5 +1,6 @@
 import * as request from 'supertest'
 import { expect } from 'chai'
+import { Application } from 'express'
 
 import { invoiceResponse } from './data'
 import {
@@ -9,7 +10,7 @@ import {
   BuilderInterface,
   getExpirationCaveat,
 } from './utilities'
-import app, { protectedRoute } from '../src/app'
+import getApp, { protectedRoute } from './mockApp'
 import { Lsat } from '../src/lsat'
 
 describe('paywall', () => {
@@ -18,7 +19,8 @@ describe('paywall', () => {
     createInvStub: sinon.SinonStub,
     getInvStub: sinon.SinonStub,
     sessionSecret: string,
-    builder: BuilderInterface
+    builder: BuilderInterface,
+    app: Application
 
   beforeEach(() => {
     sessionSecret = 'my super secret'
@@ -29,6 +31,7 @@ describe('paywall', () => {
     // need to stub this to avoid connection errors and speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     builder = getTestBuilder(sessionSecret)
+    app = getApp()
   })
 
   afterEach(() => {

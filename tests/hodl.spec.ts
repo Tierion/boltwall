@@ -1,7 +1,8 @@
 import * as request from 'supertest'
+import { Application } from 'express'
 import { expect } from 'chai'
 
-import app, { protectedRoute } from './hodlApp'
+import getApp, { protectedRoute } from './mockApp'
 import { invoiceResponse, InvoiceResponseStub } from './data'
 import { InvoiceResponse } from '../src/typings'
 import {
@@ -21,7 +22,8 @@ describe('hodl paywall', () => {
     sessionSecret: string,
     builder: BuilderInterface,
     paymentHash: string,
-    heldInvoice: InvoiceResponseStub
+    heldInvoice: InvoiceResponseStub,
+    app: Application
 
   beforeEach(async () => {
     heldInvoice = { ...invoiceResponse, is_held: true, is_confirmed: false }
@@ -35,6 +37,7 @@ describe('hodl paywall', () => {
     // need to stub this to avoid connection errors and speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     builder = getTestBuilder(sessionSecret)
+    app = getApp({ hodl: true })
   })
 
   afterEach(() => {

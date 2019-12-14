@@ -1,11 +1,12 @@
 import * as request from 'supertest'
 import { expect } from 'chai'
 import * as sinon from 'sinon'
+import { Application } from 'express'
 import { parsePaymentRequest } from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'
 
 import { Lsat } from '../src/lsat'
-import app from '../src/app'
+import getApp from './mockApp'
 
 import {
   getLnStub,
@@ -35,7 +36,8 @@ describe('/invoice', () => {
     lndGrpcStub: sinon.SinonStub,
     invoiceResponse: InvoiceResponseStub,
     sessionSecret: string,
-    builder: BuilderInterface
+    builder: BuilderInterface,
+    app: Application
 
   beforeEach(() => {
     // boltwall sets up authenticated client when it boots up
@@ -67,6 +69,7 @@ describe('/invoice', () => {
       is_confirmed: false,
       secret: undefined,
     })
+    app = getApp()
   })
 
   afterEach(() => {
