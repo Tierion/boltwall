@@ -5,6 +5,7 @@ import { Application } from 'express'
 import { parsePaymentRequest } from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'
 
+import { satisfiers } from '../src/lsat'
 import { Lsat } from '../src/lsat'
 import getApp from './mockApp'
 
@@ -174,7 +175,7 @@ describe('/invoice', () => {
       expect(response.body.error.message).to.match(/invoice/g)
     })
 
-    it('should return return invoice information w/ status for request w/ valid LSAT macaroon', async () => {
+    it('should return invoice information w/ status for request w/ valid LSAT macaroon', async () => {
       const response: InvoiceResponse = {
         id: invoiceResponse.id,
         payreq: invoiceResponse.request,
@@ -188,7 +189,7 @@ describe('/invoice', () => {
       // add extra expiration caveats. it should pass if newer is more restrictive
       builder.add_first_party_caveat(`expiration=${Date.now() + 500}`)
       const macaroon = builder.getMacaroon().serialize()
-
+      app = getApp({ caveatSatisfiers: satisfiers.expirationSatisfier })
       const supertestResp: request.Response = await request
         .agent(app)
         .get('/invoice')

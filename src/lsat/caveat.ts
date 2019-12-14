@@ -1,4 +1,5 @@
 import assert from 'assert'
+import { Request } from 'express'
 const { Macaroon, MacaroonsVerifier } = require('macaroons.js')
 import { CaveatPacketClass, MacaroonClass } from '../typings/lsat'
 import { CaveatOptions, Satisfier } from '../typings'
@@ -107,12 +108,24 @@ export function hasCaveat(
 /**
  * @description A function that mimics functionality from loop's lsat utilities
  * @param caveats a list of caveats to verify
- * @param satisfiers a list of satisfiers to check the caveats against
+ * @param {Request} request a request object with a boltwallConfig that includes 
+ * satisfiers property
  */
 export function verifyCaveats(
   caveats: Caveat[],
-  ...satisfiers: Satisfier[]
+  req: Request
 ): boolean {
+  assert(
+    req.boltwallConfig && req.boltwallConfig?.caveatSatisfiers,
+    'Must have a boltwall config with satisfiers on the request object in order to verify caveats'
+  )
+
+  let satisfiers = req.boltwallConfig?.caveatSatisfiers
+
+  // if there are no satisfiers then we can just assume everything is verified
+  if (!satisfiers) return true
+  else if (!Array.isArray(satisfiers)) satisfiers = [satisfiers]
+  
   // create map of satisfiers keyed by their conditions
   const caveatSatisfiers = new Map()
 
@@ -145,11 +158,11 @@ export function verifyCaveats(
       // confirm satisfyPrevious
       const prevCaveat = caveatsList[i]
       const curCaveat = caveatsList[i + 1]
-      if (!satisfier.satisfyPrevious(prevCaveat, curCaveat)) return false
+      if (!satisfier.satisfyPrevious(prevCaveat, curCaveat, req)) return false
     }
 
     // check satisfyFinal for the final caveat
-    if (!satisfier.satisfyFinal(caveatsList[caveatsList.length - 1]))
+    if (!satisfier.satisfyFinal(caveatsList[caveatsList.length - 1], req))
       return false
   }
   return true
@@ -158,33 +171,40 @@ export function verifyCaveats(
 /**
  * @description verifyFirstPartyMacaroon will check if a macaroon is valid or
  * not based on a set of satisfiers to pass as general caveat verifiers.
- * @param macaroon A macaroon class to run a verifier against
- * @param satisfiers satisfiers to pass through as general caveat checkers
+ * @param {Macaroon} macaroon A macaroon class to run a verifier against
+ * @param {String} secret The secret key used to sign the macaroon
+ * @param {Satisfier} satisfiers satisfiers to pass through as general caveat checkers
  */
 export function verifyFirstPartyMacaroon(
   macaroon: MacaroonClass,
   secret: string,
-  ...satisfiers: Satisfier[]
+  req: Request
 ): boolean {
   const verifier = new MacaroonsVerifier(macaroon)
 
-  for (const satisfier of satisfiers) {
-    // first convert the caveat string that satisfy general gives us
-    // into a caveat object and pass that to our satisfier functions
-    verifier.satisfyGeneral((rawCaveat: string) => {
-      const caveat = Caveat.decode(rawCaveat)
-      return satisfier.satisfyFinal(caveat)
-    })
-  }
+  if (req.boltwallConfig && req.boltwallConfig.caveatSatisfiers) {
+    let satisfiers = req.boltwallConfig.caveatSatisfiers
 
-  // want to also do previous caveat check
-  const caveats = []
-  for (const { rawValue } of macaroon.caveatPackets) {
-    const caveat = Caveat.decode(rawValue.toString())
-    caveats.push(caveat)
-  }
+    if (!Array.isArray(satisfiers)) satisfiers = [satisfiers]
 
-  if (!verifyCaveats(caveats, ...satisfiers)) return false
+    for (const satisfier of satisfiers) {
+      // first convert the caveat string that satisfy general gives us
+      // into a caveat object and pass that to our satisfier functions
+      verifier.satisfyGeneral((rawCaveat: string) => {
+        const caveat = Caveat.decode(rawCaveat)
+        return satisfier.satisfyFinal(caveat, req)
+      })
+    }
+
+    // want to also do previous caveat check
+    const caveats = []
+    for (const { rawValue } of macaroon.caveatPackets) {
+      const caveat = Caveat.decode(rawValue.toString())
+      caveats.push(caveat)
+    }
+    
+    if (!verifyCaveats(caveats, req)) return false
+  }
 
   return verifier.isValid(secret)
 }

@@ -1,7 +1,8 @@
 import { randomBytes } from 'crypto'
 import { expect } from 'chai'
-const { MacaroonsBuilder } = require('macaroons.js')
+import { MacaroonsBuilder } from 'macaroons.js'
 import { parsePaymentRequest } from 'ln-service'
+import { Request } from 'express'
 
 import { invoice } from './data'
 
@@ -137,7 +138,8 @@ describe('LSAT utils', () => {
         caveat2: Caveat,
         caveat3: Caveat,
         caveats: Caveat[],
-        satisfier: Satisfier
+        satisfier: Satisfier,
+        req: any
 
       beforeEach(() => {
         caveat1 = new Caveat({ condition: '1', value: 'test' })
@@ -153,15 +155,18 @@ describe('LSAT utils', () => {
             cur.value.toString().includes('test'),
           satisfyFinal: (): boolean => true,
         }
+        req = { boltwallConfig: { caveatSatisfiers: satisfier } }
       })
 
       it('should verify caveats given a set of satisfiers', () => {
         const validatesCaveats = (): boolean | Error =>
-          verifyCaveats(caveats, satisfier)
+          verifyCaveats(caveats, req as Request)
 
         expect(validatesCaveats).to.not.throw()
         expect(validatesCaveats()).to.be.true
       })
+
+      it('should be able to verify caveats using items on the request object')
 
       it('should throw when satisfiers fail', () => {
         const invalidSatisfyFinal: Satisfier = {
@@ -175,11 +180,20 @@ describe('LSAT utils', () => {
             prev.value.toString().includes('test') &&
             cur.value.toString().includes('foobar'),
         }
-
+        const invalidReq1 = {
+          boltwallConfig: {
+            caveatSatisfiers: [satisfier, invalidSatisfyFinal],
+          },
+        }
+        const invalidReq2 = {
+          boltwallConfig: {
+            caveatSatisfiers: [satisfier, invalidSatisfyPrev],
+          },
+        }
         const invalidateFinal = (): boolean =>
-          verifyCaveats(caveats, satisfier, invalidSatisfyFinal)
+          verifyCaveats(caveats, invalidReq1 as Request)
         const invalidatePrev = (): boolean =>
-          verifyCaveats(caveats, satisfier, invalidSatisfyPrev)
+          verifyCaveats(caveats, invalidReq2 as Request)
 
         expect(invalidateFinal()).to.be.false
         expect(invalidatePrev()).to.be.false

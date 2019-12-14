@@ -135,4 +135,8 @@ describe('paywall', () => {
       .set('Authorization', lsat.toToken())
       .expect(200)
   })
+
+  // add caveat that needs a matching req ip
+  // test that it fails if ip doesn't match and passes when it does
+  it('should support custom caveats and caveat satisfiers')
 })

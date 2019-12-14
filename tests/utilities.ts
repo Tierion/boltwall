@@ -45,6 +45,5 @@ export function getTestBuilder(secret: string): BuilderInterface {
     secret,
     identifier.toString()
   )
-  const caveat = getExpirationCaveat()
-  return builder.add_first_party_caveat(caveat.encode())
+  return builder
 }

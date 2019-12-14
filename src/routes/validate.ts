@@ -77,9 +77,11 @@ export default async function validateLsat(
   const isValid = verifyFirstPartyMacaroon(
     lsat.getMacaroon(),
     SESSION_SECRET,
-    satisfiers.expirationSatisfier
+    req
   )
+
   if (!isValid) {
+    req.logger.debug('Request made with invalid LSAT macaroon')
     res.status(401)
     return next({
       message: 'Unauthorized: LSAT invalid',

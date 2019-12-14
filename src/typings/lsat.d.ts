@@ -1,5 +1,6 @@
 import { Macaroon, CaveatPacket } from 'macaroons.js'
 import { Caveat } from '../lsat/caveat'
+import { Request } from 'express'
 
 /**
  * Describes the shape of the options for creating a new identifier struct
@@ -42,8 +43,8 @@ export interface LsatOptions {
 
 export interface Satisfier {
   condition: string
-  satisfyPrevious?: (prev: Caveat, curr: Caveat) => boolean
-  satisfyFinal: (caveat: Caveat) => boolean
+  satisfyPrevious?: (prev: Caveat, curr: Caveat, request?: Request) => boolean
+  satisfyFinal: (caveat: Caveat, request?: Request) => boolean
 }
 
 declare class MacaroonClass extends Macaroon {}
