@@ -139,7 +139,7 @@ describe('LSAT utils', () => {
         caveat3: Caveat,
         caveats: Caveat[],
         satisfier: Satisfier,
-        req: any
+        req: any // eslint-disable-line @typescript-eslint/no-explicit-any
 
       beforeEach(() => {
         caveat1 = new Caveat({ condition: '1', value: 'test' })
@@ -165,8 +165,6 @@ describe('LSAT utils', () => {
         expect(validatesCaveats).to.not.throw()
         expect(validatesCaveats()).to.be.true
       })
-
-      it('should be able to verify caveats using items on the request object')
 
       it('should throw when satisfiers fail', () => {
         const invalidSatisfyFinal: Satisfier = {

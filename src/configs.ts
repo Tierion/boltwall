@@ -7,9 +7,10 @@ import {
   BoltwallConfig,
   InvoiceResponse,
   CaveatGetter,
-  AsyncCaveatVerifier,
   DescriptionGetter,
+  Satisfier,
 } from './typings'
+import { Caveat } from './lsat'
 const { verifier } = require('macaroons.js')
 
 /**
@@ -20,7 +21,7 @@ const { verifier } = require('macaroons.js')
 const getTimeCaveat: CaveatGetter = (
   _req: Request,
   invoice: InvoiceResponse
-) => {
+): string => {
   const amount =
     typeof invoice.amount === 'string'
       ? parseInt(invoice.amount, 10)
@@ -38,8 +39,11 @@ const getTimeCaveat: CaveatGetter = (
  * This example caveatVerifier method simply implements the
  * built in TimestamCaveatVerifier available in the macaroons.js pacakge
  */
-const verifyTimeCaveat: AsyncCaveatVerifier = () =>
-  Promise.resolve((caveat: string) => verifier.TimestampCaveatVerifier(caveat))
+const verifyTimeCaveat: Satisfier = {
+  condition: '',
+  satisfyFinal: (caveat: Caveat): boolean =>
+    verifier.TimestampCaveatVerifier(caveat.encode()),
+}
 
 /**
  * Generates a descriptive invoice description indicating more information
@@ -53,9 +57,7 @@ const getTimedInvoiceDescription: DescriptionGetter = (req: Request) => {
   if (!title) title = '[unknown data]'
   if (!time) time = amount
 
-  return Promise.resolve(
-    `Access for ${time} seconds in ${appName} for requested data: ${title}`
-  )
+  return `Access for ${time} seconds in ${appName} for requested data: ${title}`
 }
 
 export const TIME_CAVEAT_CONFIGS: BoltwallConfig = {

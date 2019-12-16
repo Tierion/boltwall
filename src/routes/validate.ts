@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
 
-import { Lsat, verifyFirstPartyMacaroon, satisfiers } from '../lsat'
+import { Lsat, verifyFirstPartyMacaroon } from '../lsat'
 import { getEnvVars, isHex } from '../helpers'
 
 /**

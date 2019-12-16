@@ -1,5 +1,6 @@
-import { Satisfier } from '.'
 import { Request } from 'express'
+import { Satisfier, InvoiceResponse } from '.'
+
 /**
  * Describes a function that returns a description string
  * for including in lightning invoices. Can use elements in the request
@@ -8,7 +9,7 @@ import { Request } from 'express'
  * @example
  * (req) => `Access for ${req.body.amount} seconds of access.`
  */
-export type DescriptionGetter = (req: Request) => Promise<string>
+export type DescriptionGetter = (req: Request) => string
 
 /**
  * Describes a function that will create a caveat to attach onto a discharge macaroon.
@@ -20,7 +21,7 @@ export type DescriptionGetter = (req: Request) => Promise<string>
  * @example
  * () => `time < ${new Date(Date.now() + 30000)}`
  */
-export type CaveatGetter = (req: Request) => Promise<string> | string
+export type CaveatGetter = (req: Request, invoice: InvoiceResponse) => string
 
 /**
  * Describes a configuration object that can be passed to boltwall during initialization

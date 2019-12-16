@@ -44,7 +44,7 @@ export interface LsatOptions {
 export interface Satisfier {
   condition: string
   satisfyPrevious?: (prev: Caveat, curr: Caveat, request?: Request) => boolean
-  satisfyFinal: (caveat: Caveat, request?: Request) => boolean
+  satisfyFinal: (caveat: Caveat, request: Request) => boolean
 }
 
 declare class MacaroonClass extends Macaroon {}

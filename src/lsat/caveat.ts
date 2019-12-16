@@ -2,7 +2,7 @@ import assert from 'assert'
 import { Request } from 'express'
 const { Macaroon, MacaroonsVerifier } = require('macaroons.js')
 import { CaveatPacketClass, MacaroonClass } from '../typings/lsat'
-import { CaveatOptions, Satisfier } from '../typings'
+import { CaveatOptions } from '../typings'
 
 export class ErrInvalidCaveat extends Error {
   constructor(...params: any[]) {
@@ -181,21 +181,22 @@ export function verifyFirstPartyMacaroon(
   req: Request
 ): boolean {
   const verifier = new MacaroonsVerifier(macaroon)
-
+  
   if (req.boltwallConfig && req.boltwallConfig.caveatSatisfiers) {
     let satisfiers = req.boltwallConfig.caveatSatisfiers
-
+    
     if (!Array.isArray(satisfiers)) satisfiers = [satisfiers]
-
+    
     for (const satisfier of satisfiers) {
       // first convert the caveat string that satisfy general gives us
       // into a caveat object and pass that to our satisfier functions
       verifier.satisfyGeneral((rawCaveat: string) => {
         const caveat = Caveat.decode(rawCaveat)
-        return satisfier.satisfyFinal(caveat, req)
+        const valid = satisfier.satisfyFinal(caveat, req)
+        return valid
       })
     }
-
+    
     // want to also do previous caveat check
     const caveats = []
     for (const { rawValue } of macaroon.caveatPackets) {
@@ -203,7 +204,10 @@ export function verifyFirstPartyMacaroon(
       caveats.push(caveat)
     }
     
-    if (!verifyCaveats(caveats, req)) return false
+    if (!verifyCaveats(caveats, req)) {
+      req.logger.debug('Caveat verification for macaroon failed')
+      return false
+    }
   }
 
   return verifier.isValid(secret)

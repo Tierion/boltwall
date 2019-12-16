@@ -30,6 +30,11 @@ export function getEnvStub(sessionSecret = 'my super secret'): any {
     .returns({ SESSION_SECRET: sessionSecret })
 }
 
+export function setSessionSecret(): string {
+  process.env.SESSION_SECRET = randomBytes(32).toString('hex')
+  return process.env.SESSION_SECRET
+}
+
 export const getExpirationCaveat = (time = 1000): Caveat =>
   new Caveat({ condition: 'expiration', value: Date.now() + time })
 

@@ -55,7 +55,7 @@ export default async function paywall(
       'WWW-Authenticate': lsat.toChallenge(),
     })
     req.logger.debug(
-      `Request made for ${req.baseUrl} from ${req.hostname} that requires payment. LSAT ID: ${lsat.id}`
+      `Request made from ${req.hostname} that requires payment. LSAT ID: ${lsat.id}`
     )
     return next({ message: 'Payment required' })
   } else if (!lsat.paymentPreimage) {

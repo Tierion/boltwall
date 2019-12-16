@@ -31,7 +31,7 @@ const dischargeMacaroon = cookieSession({
 })
 
 function errorHandler(
-  err: any,
+  err: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   req: Request,
   res: Response,
   next: NextFunction
@@ -55,15 +55,6 @@ export function boltwall(
   config?: BoltwallConfig,
   logger?: LoggerInterface
 ): Function {
-  if (config) {
-    const { CAVEAT_KEY } = getEnvVars()
-    if (config.getCaveats && !CAVEAT_KEY)
-      throw new Error(
-        'Missing CAVEAT_KEY environment variable. This is required when creating a custom authorization \
-rule with `getCaveat` config. Read more in the docs: https://github.com/Tierion/boltwall#configuration'
-      )
-  }
-
   return async (
     req: Request,
     res: Response,

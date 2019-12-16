@@ -4,13 +4,7 @@ import {
   InvoiceBody,
 } from './invoice'
 
-import {
-  BoltwallConfig,
-  DescriptionGetter,
-  CaveatGetter,
-  CaveatVerifier,
-  AsyncCaveatVerifier,
-} from './configs'
+import { BoltwallConfig, DescriptionGetter, CaveatGetter } from './configs'
 import { NodeInfo } from './node'
 
 import {
@@ -27,8 +21,6 @@ export {
   LnServiceInvoiceResponse,
   CaveatGetter,
   BoltwallConfig,
-  AsyncCaveatVerifier,
-  CaveatVerifier,
   DescriptionGetter,
   NodeInfo,
   InvoiceBody,

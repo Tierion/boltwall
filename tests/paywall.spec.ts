@@ -1,21 +1,21 @@
 import * as request from 'supertest'
 import { expect } from 'chai'
-import { Application } from 'express'
+import { Application, Request } from 'express'
 
 import { invoiceResponse } from './data'
 import {
-  getEnvStub,
   getLnStub,
   getTestBuilder,
   BuilderInterface,
   getExpirationCaveat,
+  setSessionSecret,
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
-import { Lsat } from '../src/lsat'
+import { Caveat, Lsat } from '../src/lsat'
+import { BoltwallConfig } from 'src/typings'
 
 describe('paywall', () => {
-  let envStub: sinon.SinonStub,
-    lndGrpcStub: sinon.SinonStub,
+  let lndGrpcStub: sinon.SinonStub,
     createInvStub: sinon.SinonStub,
     getInvStub: sinon.SinonStub,
     sessionSecret: string,
@@ -23,8 +23,7 @@ describe('paywall', () => {
     app: Application
 
   beforeEach(() => {
-    sessionSecret = 'my super secret'
-    envStub = getEnvStub(sessionSecret)
+    sessionSecret = setSessionSecret()
     createInvStub = getLnStub('createInvoice', invoiceResponse)
     getInvStub = getLnStub('getInvoice', invoiceResponse)
     // boltwall sets up authenticated client when it boots up
@@ -35,7 +34,6 @@ describe('paywall', () => {
   })
 
   afterEach(() => {
-    envStub.restore()
     lndGrpcStub.restore()
     createInvStub.restore()
     getInvStub.restore()
@@ -136,7 +134,53 @@ describe('paywall', () => {
       .expect(200)
   })
 
-  // add caveat that needs a matching req ip
-  // test that it fails if ip doesn't match and passes when it does
-  it('should support custom caveats and caveat satisfiers')
+  it('should support custom caveats and caveat satisfiers', async () => {
+    // can't mock a different origin IP address which would be most practical
+    // so we'll test that a property in the body matches from the time of the
+    // original request and a subsequent paid for request. This will verify that
+    // we can validate caveats that are entirely reliant on the initial and
+    // subsequent requests
+    const options: BoltwallConfig = {
+      getCaveats: req =>
+        `middlename=${req.body?.middlename}`,
+      caveatSatisfiers: {
+        condition: 'middlename',
+        satisfyFinal: (caveat: Caveat, req: Request): boolean => {
+          const middlename = req.body?.middlename
+          if (caveat.value === middlename) return true
+          return false
+        },
+      },
+    }
+    // get an express App with our custom options
+    const middlename = 'danger'
+    app = getApp(options)
+    let resp = await request
+      .agent(app)
+      .get(protectedRoute)
+      .send({ middlename })
+      .expect(402)
+
+    const lsat = Lsat.fromChallenge(resp.header['www-authenticate'])
+
+    // make a valid lsat with secret
+    lsat.setPreimage(invoiceResponse.secret)
+
+    // make a request with the wrong body parameter
+    // which should fail authorization (because macaroon won't validate)
+    resp = await request
+      .agent(app)
+      .get(protectedRoute)
+      .set('Authorization', lsat.toToken())
+      .send({ middlename: 'scott' })
+      .expect(401)
+
+    // make a request with a valid request body
+    resp = await request
+      .agent(app)
+      .get(protectedRoute)
+      .set('Authorization', lsat.toToken())
+      .send({ middlename })
+      .expect(200)
+  })
 })

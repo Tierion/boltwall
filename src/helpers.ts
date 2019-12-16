@@ -1,21 +1,16 @@
 import { Request } from 'express'
 import assert from 'assert'
-import {
-  MacaroonsBuilder,
-  MacaroonsVerifier,
-  MacaroonsConstants,
-  verifier,
-} from 'macaroons.js'
+import { MacaroonsBuilder, MacaroonsConstants } from 'macaroons.js'
 import dotenv from 'dotenv'
 import Macaroon from 'macaroons.js/lib/Macaroon'
 import crypto from 'crypto'
 import lnService from 'ln-service'
 
-import { InvoiceResponse, CaveatVerifier, CaveatGetter } from './typings'
+import { InvoiceResponse, CaveatGetter } from './typings'
 import { Lsat, Identifier } from './lsat'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
-const { TimestampCaveatVerifier } = verifier
+
 interface EnvVars {
   PORT?: string
   OPEN_NODE_KEY?: string | undefined
@@ -146,7 +141,7 @@ export function createLsatFromInvoice(
     else caveatGetters = getCaveats
 
     for (const getCaveat of caveatGetters) {
-      const caveat = getCaveat(req)
+      const caveat = getCaveat(req, invoice)
       builder.add_first_party_caveat(caveat)
     }
   }
@@ -359,67 +354,6 @@ export async function checkInvoiceStatus(
   }
   if (returnSecret && secret && status === 'paid') invoice.secret = secret
   return invoice
-}
-
-/**
- * Validates a macaroon and should indicate reason for failure
- * if possible
- * @param {Macaroon} root - root macaroon
- * @param {Macaroon} discharge - discharge macaroon from 3rd party validation
- * @param {String} exactCaveat - a first party, exact caveat to test on root macaroon
- * @returns {Promise<Boolean|Exception>} will return true if passed or throw with failure
- */
-export function validateMacaroons(
-  root: Macaroon,
-  discharge: Macaroon,
-  firstPartyCaveat: FirstPartyCaveat,
-  caveatVerifier?: CaveatVerifier
-): boolean | void {
-  root = MacaroonsBuilder.deserialize(root)
-  discharge = MacaroonsBuilder.deserialize(discharge)
-
-  const boundMacaroon = MacaroonsBuilder.modify(root)
-    .prepare_for_request(discharge)
-    .getMacaroon()
-
-  const { SESSION_SECRET } = getEnvVars()
-
-  // lets verify the macaroon caveats
-  const verifier = new MacaroonsVerifier(root)
-    // root macaroon should have a caveat to match the invoiceId
-    .satisfyExact(firstPartyCaveat.caveat)
-    // confirm that the payment node has discharged appropriately
-    .satisfy3rdParty(boundMacaroon)
-
-  if (caveatVerifier) verifier.satisfyGeneral(caveatVerifier)
-
-  // if it's valid then we're good to go
-  if (verifier.isValid(SESSION_SECRET)) return true
-
-  // if not valid, let's check if it's because of time or because of docId mismatch
-  const TIME_CAVEAT_PREFIX = /time < .*/
-
-  // find time caveat in third party macaroon and check if time has expired
-  for (let caveat of boundMacaroon.caveatPackets) {
-    caveat = caveat.getValueAsText()
-    if (TIME_CAVEAT_PREFIX.test(caveat) && !TimestampCaveatVerifier(caveat))
-      throw new Error(`Time has expired for accessing content`)
-  }
-
-  for (const rawCaveat of root.caveatPackets) {
-    const caveat = rawCaveat.getValueAsText()
-    // TODO: should probably generalize the exact caveat check or export as constant.
-    // This would fail even if there is a space missing in the caveat creation
-    if (
-      firstPartyCaveat.prefixMatch(caveat) &&
-      caveat !== firstPartyCaveat.caveat
-    ) {
-      throw new Error(`${firstPartyCaveat.key} did not match with macaroon`)
-    }
-  }
-
-  if (!verifier.isValid(SESSION_SECRET))
-    throw new Error('Unable to verify macaroon.')
 }
 
 /**
