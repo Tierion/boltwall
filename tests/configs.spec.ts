@@ -2,14 +2,19 @@ import { expect } from 'chai'
 import { Request } from 'express'
 
 import { TIME_CAVEAT_CONFIGS } from '../src/configs'
-import { BoltwallConfig, InvoiceResponse } from '../src/typings'
-import { Caveat } from '../src/lsat'
+import { BoltwallConfig, InvoiceResponse, Satisfier } from '../src/typings'
+import { Caveat, verifyCaveats } from '../src/lsat'
 
-describe.only('configs', () => {
+describe('configs', () => {
   describe('TIME_CAVEAT_CONFIGS', () => {
-    let config: BoltwallConfig
+    let config: BoltwallConfig, satisfier: Satisfier
     beforeEach(() => {
       config = TIME_CAVEAT_CONFIGS
+      if (!config.caveatSatisfiers)
+        throw new Error('Missing caveat satisfiers on time config')
+      satisfier = Array.isArray(config.caveatSatisfiers)
+        ? config.caveatSatisfiers[0]
+        : config.caveatSatisfiers
     })
     it('should create valid caveat that expires after x seconds, where "x" is number satoshis paid', () => {
       if (!config.getCaveats)
@@ -117,10 +122,6 @@ describe.only('configs', () => {
         condition: 'expiration',
         value: Date.now() + 1000,
       })
-      const satisfier = Array.isArray(config.caveatSatisfiers)
-        ? config.caveatSatisfiers[0]
-        : config.caveatSatisfiers
-      if (!satisfier) throw new Error('Expected to have a satisfier property')
 
       expect(validCaveat.condition).to.equal(satisfier.condition)
       let isValid = satisfier.satisfyFinal(validCaveat, {} as Request)
@@ -133,6 +134,37 @@ describe.only('configs', () => {
       expect(expired.condition).to.equal(satisfier.condition)
       isValid = satisfier.satisfyFinal(expired, {} as Request)
       expect(isValid, 'expired caveat should be invalid').to.be.false
+    })
+
+    it('should only satisfy caveats that get more restrictive', () => {
+      const interval = 1000
+      const condition = 'expiration'
+      const firstCaveat = new Caveat({
+        condition,
+        value: Date.now() + interval,
+      })
+      const secondCaveat = new Caveat({
+        condition,
+        value: Date.now() + interval / 2, // more restrictive time
+      })
+
+      expect(satisfier).to.have.property('satisfyPrevious')
+
+      let isValid = verifyCaveats([firstCaveat, secondCaveat], {
+        boltwallConfig: config,
+      } as Request)
+
+      expect(isValid, 'Expected caveats w/ increasing restrictiveness to pass')
+        .to.be.true
+
+      isValid = verifyCaveats([secondCaveat, firstCaveat], {
+        boltwallConfig: config,
+      } as Request)
+
+      expect(
+        isValid,
+        'Expected caveats w/ decreasingly restrictive expirations to fail'
+      ).to.be.false
     })
   })
 })
