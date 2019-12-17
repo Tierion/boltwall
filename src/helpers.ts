@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import Macaroon from 'macaroons.js/lib/Macaroon'
 import crypto from 'crypto'
 import lnService from 'ln-service'
+import binet from 'binet'
 
 import { InvoiceResponse, CaveatGetter } from './typings'
 import { Lsat, Identifier } from './lsat'
@@ -417,6 +418,31 @@ export function getFirstPartyCaveatFromMacaroon(
 
 export function isHex(h: string): boolean {
   return Buffer.from(h, 'hex').toString('hex') === h
+}
+
+export function getOriginFromRequest(req: Request): string {
+  let origin: string
+  if (req.ip) origin = req.ip
+  else if (req.headers && req.headers['x-forwarded-for']) {
+    // for requests that have gone through proxies we need to get
+    // the first ip which is of the client
+    let proxies = req.headers['x-forwarded-for']
+    if (Array.isArray(proxies)) origin = proxies[0]
+    else {
+      proxies = proxies.split(',')
+      origin = proxies[0]
+    }
+  } else if (req.connection && req.connection.remoteAddress) {
+    origin = req.connection.remoteAddress
+  } else {
+    throw new Error('Could not find an origin on the ip address on the request')
+  }
+
+  if (!binet.isIPString(origin)) {
+    throw new Error('Origin retrieved from request is an invalid ip address')
+  }
+
+  return origin
 }
 
 type prefixMatchFn = (value: string) => boolean

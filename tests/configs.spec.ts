@@ -1,8 +1,13 @@
 import { expect } from 'chai'
 import { Request } from 'express'
 
-import { TIME_CAVEAT_CONFIGS } from '../src/configs'
-import { BoltwallConfig, InvoiceResponse, Satisfier } from '../src/typings'
+import { TIME_CAVEAT_CONFIGS, ORIGIN_CAVEAT_CONFIGS } from '../src/configs'
+import {
+  BoltwallConfig,
+  InvoiceResponse,
+  Satisfier,
+  CaveatGetter,
+} from '../src/typings'
 import { Caveat, verifyCaveats } from '../src/lsat'
 
 describe('configs', () => {
@@ -165,6 +170,82 @@ describe('configs', () => {
         isValid,
         'Expected caveats w/ decreasingly restrictive expirations to fail'
       ).to.be.false
+    })
+  })
+  describe('ORIGIN_CAVEAT_CONFIGS', () => {
+    let config: BoltwallConfig,
+      satisfier: Satisfier,
+      getCaveats: CaveatGetter,
+      condition: string
+    beforeEach(() => {
+      config = ORIGIN_CAVEAT_CONFIGS
+      condition = 'ip'
+      if (!config.caveatSatisfiers)
+        throw new Error('Missing caveat satisfiers on origin config')
+
+      if (!config.getCaveats)
+        throw new Error('Missing caveat getter from origin config')
+      satisfier = Array.isArray(config.caveatSatisfiers)
+        ? config.caveatSatisfiers[0]
+        : config.caveatSatisfiers
+
+      getCaveats = Array.isArray(config.getCaveats)
+        ? config.getCaveats[0]
+        : config.getCaveats
+    })
+
+    it('should create a caveat that restricts access by ip and be able to satisfy it', () => {
+      const origin = '180.1.23.45'
+      const expected = new Caveat({ condition, value: origin })
+
+      const requests = [
+        {
+          name: 'request from proxy',
+          req: { headers: { 'x-forwarded-for': origin } },
+        },
+        {
+          name: 'request from proxy with array of ips',
+          req: { headers: { 'x-forwarded-for': [origin, '127.0.0.1'] } },
+        },
+        {
+          name: 'request with ip (express)',
+          req: { ip: origin },
+        },
+        {
+          name: 'request without express',
+          req: { connection: { remoteAddress: origin } },
+        },
+      ]
+
+      for (const { req, name } of requests) {
+        const caveat = getCaveats(
+          (req as unknown) as Request,
+          {} as InvoiceResponse
+        )
+        expect(
+          caveat,
+          `Expected ${name} request to generate expected caveat`
+        ).to.equal(expected.encode())
+        const decoded = Caveat.decode(caveat)
+
+        expect(satisfier.condition).to.equal(decoded.condition)
+        const isValid = satisfier.satisfyFinal(
+          decoded,
+          (req as unknown) as Request
+        )
+        expect(isValid).to.be.true
+      }
+    })
+
+    it('should not support additional caveats from other origin', () => {
+      const firstCaveat = new Caveat({ condition, value: '84.123.45.2' })
+      const secondCaveat = new Caveat({ condition, value: '74.321.5.27' })
+      const request = { ip: firstCaveat.value, boltwallConfig: config }
+      const isValid = verifyCaveats(
+        [firstCaveat, secondCaveat],
+        request as Request
+      )
+      expect(isValid).to.be.false
     })
   })
 })

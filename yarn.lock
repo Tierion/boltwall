@@ -647,6 +647,14 @@ bindings@^1.3.0, bindings@^1.5.0:
   dependencies:
     file-uri-to-path "1.0.0"
 
+binet@^0.3.5:
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/binet/-/binet-0.3.5.tgz#bf4f2a1859d08bb5de55fce9faa34274b18cce0b"
+  integrity sha512-suogkqXrt63Z76ABvwJjI28w+LWrRE53nwItDPz1VwNjHEuh1+rxudGYtoewFmMhkJ9pW/VGGnjoxP+AGzHgLQ==
+  dependencies:
+    bs32 "~0.1.5"
+    bsert "~0.0.10"
+
 bip174@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/bip174/-/bip174-1.0.1.tgz#858a587f9529e22ee9b0572fd884e5783696824d"
@@ -797,6 +805,13 @@ browserify-aes@^1.0.6:
     evp_bytestokey "^1.0.3"
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
+
+bs32@~0.1.5:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/bs32/-/bs32-0.1.6.tgz#2710cb70da3f55447138181fa645e2c54b1ef6d0"
+  integrity sha512-usjDesQqZ8ihHXOnOEQuAdymBHnJEfSd+aELFSg1jN/V3iAf12HrylHlRJwIt6DTMmXpBDQ+YBg3Q3DIYdhRgQ==
+  dependencies:
+    bsert "~0.0.10"
 
 bs58@^4.0.0:
   version "4.0.1"

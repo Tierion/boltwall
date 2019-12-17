@@ -4,11 +4,61 @@ import { MacaroonsBuilder } from 'macaroons.js'
 
 import { MacaroonClass } from '../src/typings/lsat'
 import { invoiceResponse } from './data'
-import { createLsatFromInvoice } from '../src/helpers'
+import { createLsatFromInvoice, getOriginFromRequest } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
 import { Identifier, Lsat, Caveat } from '../src/lsat'
 
 describe('helper functions', () => {
+  describe('getOriginFromRequest', () => {
+    it('should get the client ip from different request objects', () => {
+      const origin = '182.39.28.11'
+      const requests = [
+        {
+          name: 'request from proxy',
+          req: { headers: { 'x-forwarded-for': origin } },
+        },
+        {
+          name: 'request from proxy with array of ips',
+          req: { headers: { 'x-forwarded-for': [origin, '127.0.0.1'] } },
+        },
+        {
+          name: 'request with ip (express)',
+          req: { ip: origin },
+        },
+        {
+          name: 'request without express',
+          req: { connection: { remoteAddress: origin } },
+        },
+        {
+          name: 'no origin',
+          shouldThrow: true,
+          req: {},
+        },
+        {
+          name: 'invalid ip',
+          shouldThrow: true,
+          req: { connection: { remoteAddress: `${origin}00000000` } },
+        },
+      ]
+
+      for (const { req, name, shouldThrow } of requests) {
+        if (shouldThrow) {
+          const getOrigin = (): string =>
+            getOriginFromRequest((req as unknown) as Request)
+          expect(
+            getOrigin,
+            `Expected function to throw with ${name}`
+          ).to.throw()
+        } else {
+          const origin = getOriginFromRequest((req as unknown) as Request)
+          expect(
+            origin,
+            `Expected to get correct origin from ${name}`
+          ).to.equal(origin)
+        }
+      }
+    })
+  })
   describe('createLsatFromInvoice', () => {
     let invoice: InvoiceResponse, request: any
     beforeEach(() => {

@@ -1,4 +1,5 @@
 import { Satisfier } from '../typings'
+import { getOriginFromRequest } from '../helpers'
 
 /**
  * @description A satisfier for validating expiration caveats on macaroon. Used in the exported
@@ -20,5 +21,25 @@ export const expirationSatisfier: Satisfier = {
     // if the expiration value is less than current time than satisfier is failed
     if (caveat.value < Date.now()) return false
     return true
+  },
+}
+
+/**
+ * @description A satisfier for validating caveats based on the origin IP
+ * used in the exported boltwallConfig ORIGIN_CAVEAT_CONFIGS
+ * Does not allow for caveats with different ips otherwise anyone could add their own
+ * @type Satisfier
+ */
+export const originSatisfier: Satisfier = {
+  condition: 'ip',
+  satisfyPrevious: (prev, curr) => {
+    if (prev.condition !== 'ip' || curr.condition !== 'ip') return false
+    else if (prev.value !== curr.value) return false
+    else return true
+  },
+  satisfyFinal: (caveat, req) => {
+    const origin = getOriginFromRequest(req)
+    if (caveat.condition === 'ip' && caveat.value === origin) return true
+    else return false
   },
 }
