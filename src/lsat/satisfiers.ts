@@ -1,5 +1,10 @@
 import { Satisfier } from '../typings'
 
+/**
+ * @description A satisfier for validating expiration caveats on macaroon. Used in the exported
+ * boltwallConfig TIME_CAVEAT_CONFIGS
+ * @type Satisfier
+ */
 export const expirationSatisfier: Satisfier = {
   condition: 'expiration',
   satisfyPrevious: (prev, curr) => {

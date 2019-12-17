@@ -8,10 +8,8 @@ import {
   InvoiceResponse,
   CaveatGetter,
   DescriptionGetter,
-  Satisfier,
 } from './typings'
-import { Caveat } from './lsat'
-const { verifier } = require('macaroons.js')
+import { Caveat, satisfiers } from './lsat'
 
 /**
  * Creates a general caveat where the macaroon this is attached to
@@ -31,18 +29,9 @@ const getTimeCaveat: CaveatGetter = (
   const milli: number = amount * 1000
 
   // add 200 milliseconds of "free time" as a buffer
-  const time = new Date(Date.now() + milli + 200)
-  return `time < ${time}`
-}
-
-/**
- * This example caveatVerifier method simply implements the
- * built in TimestamCaveatVerifier available in the macaroons.js pacakge
- */
-const verifyTimeCaveat: Satisfier = {
-  condition: '',
-  satisfyFinal: (caveat: Caveat): boolean =>
-    verifier.TimestampCaveatVerifier(caveat.encode()),
+  const time = Date.now() + milli + 200
+  const caveat = new Caveat({ condition: 'expiration', value: time.toString() })
+  return caveat.encode()
 }
 
 /**
@@ -53,16 +42,21 @@ const getTimedInvoiceDescription: DescriptionGetter = (req: Request) => {
   let { time, title, appName } = req.body // time in seconds
   const { amount } = req.body
 
-  if (!appName) appName = `[unknown application @ ${req.ip}]`
-  if (!title) title = '[unknown data]'
+  let info
+  if (!appName && !title) info = `${req.method} ${req.originalUrl}`
+  else {
+    if (!appName) appName = `[unknown application @ ${req.ip}]`
+    if (!title) title = '[unknown data]'
+    info = `${title} in ${appName}`
+  }
   if (!time) time = amount
 
-  return `Access for ${time} seconds in ${appName} for requested data: ${title}`
+  return `Payment to access ${info} for ${time} seconds`
 }
 
 export const TIME_CAVEAT_CONFIGS: BoltwallConfig = {
   getCaveats: getTimeCaveat,
-  caveatSatisfiers: verifyTimeCaveat,
+  caveatSatisfiers: satisfiers.expirationSatisfier,
   getInvoiceDescription: getTimedInvoiceDescription,
   minAmount: 1, // want this to make sure at least some amount is paid to create invoice
 }
