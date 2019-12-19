@@ -2,7 +2,6 @@ import { Request } from 'express'
 import assert from 'assert'
 import { MacaroonsBuilder, MacaroonsConstants } from 'macaroons.js'
 import dotenv from 'dotenv'
-import Macaroon from 'macaroons.js/lib/Macaroon'
 import crypto from 'crypto'
 import lnService from 'ln-service'
 import binet from 'binet'
@@ -230,75 +229,6 @@ This means payer can pay whatever they want for access.'
   return invoice
 }
 
-/*
- * returns a set of mostly constants that describes the first party caveat
- * this is set on a root macaroon. Supports an empty invoiceId
- * since we can use this for matching the prefix on a populated macaroon caveat
- */
-
-export function getFirstPartyCaveat(invoiceId = ''): FirstPartyCaveat {
-  return {
-    key: 'invoiceId',
-    value: invoiceId,
-    separator: '=',
-    caveat: `invoiceId = ${invoiceId}`,
-    prefixMatch: (value: string): boolean => /invoiceId = .*/.test(value),
-  }
-}
-
-/**
- * Given an invoice object and a request
- * we want to create a root macaroon with a third party caveat, which both need to be
- * satisfied in order to authenticate the macaroon
- * @param {invoice.id} - invoice must at least have an id for creating the 3rd party caveat
- * @param {Object} req - request object is needed for identification of the macaroon, in particular
- * the headers and the originating ip
- * @param {Boolean} has3rdPartyCaveat
- * @returns {Macaroon} - serialized macaroon object
- */
-
-export async function createRootMacaroon(
-  invoiceId: string,
-  location: string,
-  has3rdPartyCaveat = false
-): Promise<string> {
-  if (!invoiceId)
-    throw new Error(
-      'Missing an invoice object with an id. Cannot create macaroon'
-    )
-
-  const { SESSION_SECRET: secret, CAVEAT_KEY: caveatKey } = getEnvVars()
-
-  const publicIdentifier = 'session secret'
-  // caveat is created to make sure invoice id matches when validating with this macaroon
-  const { caveat } = getFirstPartyCaveat(invoiceId)
-  const builder = new MacaroonsBuilder(
-    location,
-    secret,
-    publicIdentifier
-  ).add_first_party_caveat(caveat)
-
-  // when protecting "local" content, i.e. this is being used as a paywall to protect
-  // content in the same location as the middleware is implemented, then the third party
-  // caveat is discharged by the current host as well, so location is the same for both.
-  // In alternative scenarios, where now-paywall is being used to authenticate access at another source
-  // then this will be different. e.g. see Prism Reader as an example
-  if (has3rdPartyCaveat && !caveatKey)
-    throw new Error(
-      'Missing caveat key in environment variables necessary for third party macaroon verification'
-    )
-
-  let macaroon
-
-  if (has3rdPartyCaveat)
-    macaroon = builder
-      .add_third_party_caveat(location, caveatKey, invoiceId)
-      .getMacaroon()
-  else macaroon = builder.getMacaroon()
-
-  return macaroon.serialize()
-}
-
 /**
  * Checks the status of an invoice given an id
  * @param {express.request} - request object from expressjs
@@ -357,65 +287,6 @@ export async function checkInvoiceStatus(
   return invoice
 }
 
-/**
- * Returns serealized discharge macaroon, signed with the server's caveat key
- * and with an attached caveat (if passed)
- * @param {Express.request} - req object
- * @param {String} caveat - first party caveat such as `time < ${now + 1000 seconds}`
- * @returns {Macaroon} discharge macaroon
- */
-export function getDischargeMacaroon(
-  invoiceId: string,
-  location: string,
-  caveat?: string
-): string {
-  if (!invoiceId) throw new Error('Missing invoiceId in request')
-
-  const { CAVEAT_KEY } = getEnvVars()
-
-  // check if there is a caveat key before proceeding
-  if (!CAVEAT_KEY)
-    throw new Error(
-      'Service is missing caveat key for signing discharge macaroon. Contact node admin.'
-    )
-
-  // create discharge macaroon
-
-  // Now that we've confirmed invoice is paid, create the discharge macaroon
-  let macaroon = new MacaroonsBuilder(
-    location,
-    CAVEAT_KEY, // this should be randomly generated, w/ enough entropy and of length > 32 bytes
-    invoiceId
-  )
-
-  if (caveat) macaroon.add_first_party_caveat(caveat)
-
-  macaroon = macaroon.getMacaroon()
-
-  return macaroon.serialize()
-}
-
-/**
- * Utility to extract first party caveat value from a serialized root macaroon
- * See `getFirstPartyCaveat` for what this value represents
- */
-export function getFirstPartyCaveatFromMacaroon(
-  serialized: Macaroon
-): string | void {
-  const macaroon = MacaroonsBuilder.deserialize(serialized)
-  const firstPartyCaveat = getFirstPartyCaveat()
-  for (let caveat of macaroon.caveatPackets) {
-    caveat = caveat.getValueAsText()
-    // find the caveat where the prefix matches our root caveat
-    if (firstPartyCaveat.prefixMatch(caveat)) {
-      // split on the separator, which should be an equals sign
-      const [, value] = caveat.split(firstPartyCaveat.separator)
-      // return value of the first party caveat (e.g. invoice id)
-      return value.trim()
-    }
-  }
-}
-
 export function isHex(h: string): boolean {
   return Buffer.from(h, 'hex').toString('hex') === h
 }
@@ -443,13 +314,4 @@ export function getOriginFromRequest(req: Request): string {
   }
 
   return origin
-}
-
-type prefixMatchFn = (value: string) => boolean
-interface FirstPartyCaveat {
-  key: string
-  value?: string
-  separator: string
-  caveat: string
-  prefixMatch: prefixMatchFn
 }

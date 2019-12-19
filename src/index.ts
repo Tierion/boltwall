@@ -50,5 +50,4 @@ export function boltwall(
 }
 
 // expose common configs
-export { TIME_CAVEAT_CONFIGS } from './configs'
-export { getFirstPartyCaveatFromMacaroon } from './helpers'
+export { TIME_CAVEAT_CONFIGS, ORIGIN_CAVEAT_CONFIGS } from './configs'
