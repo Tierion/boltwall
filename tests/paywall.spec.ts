@@ -20,7 +20,9 @@ describe('paywall', () => {
     getInvStub: sinon.SinonStub,
     sessionSecret: string,
     builder: BuilderInterface,
-    app: Application
+    app: Application,
+    lsat: Lsat,
+    macaroon: string
 
   beforeEach(() => {
     sessionSecret = setSessionSecret()
@@ -31,6 +33,8 @@ describe('paywall', () => {
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     builder = getTestBuilder(sessionSecret)
     app = getApp()
+    macaroon = builder.getMacaroon().serialize()
+    lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
   })
 
   afterEach(() => {
@@ -58,16 +62,14 @@ describe('paywall', () => {
   })
 
   it('should return 402 if request has LSAT with a macaroon but no secret', async () => {
-    const macaroon = builder.getMacaroon().serialize()
-
     const resp: request.Response = await request
       .agent(app)
       .get(protectedRoute)
-      .set('Authorization', `LSAT ${macaroon}:`)
+      .set('Authorization', lsat.toToken())
       .expect(402)
 
-    const lsat = Lsat.fromChallenge(resp.header['www-authenticate'])
-    expect(lsat.baseMacaroon).to.include(
+    const lsatFromChallenge = Lsat.fromChallenge(resp.header['www-authenticate'])
+    expect(lsatFromChallenge.baseMacaroon).to.include(
       macaroon,
       'Expected response to include the macaroon sent in Authorization header'
     )
@@ -76,15 +78,17 @@ describe('paywall', () => {
   it('should return 401 with expiration message if macaroon is expired', async () => {
     const expirationCaveat = getExpirationCaveat(-100)
 
-    const macaroon = builder
+    macaroon = builder
       .add_first_party_caveat(expirationCaveat.encode())
       .getMacaroon()
       .serialize()
 
+    lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
+  
     const response: request.Response = await request
       .agent(app)
       .get(protectedRoute)
-      .set('Authorization', `LSAT ${macaroon}:`)
+      .set('Authorization', lsat.toToken())
 
     expect(response.status).to.equal(401)
     expect(response).to.have.nested.property('body.error.message')
@@ -93,26 +97,25 @@ describe('paywall', () => {
   })
 
   it('should return 401 for invalid macaroon', async () => {
-    const macaroon = getTestBuilder('another secret')
+    macaroon = getTestBuilder('another secret')
       .getMacaroon()
       .serialize()
-
+    lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
+    
     const response: request.Response = await request
       .agent(app)
       .get(protectedRoute)
-      .set('Authorization', `LSAT ${macaroon}:`)
+      .set('Authorization', lsat.toToken())
 
     expect(response.status).to.equal(401)
     expect(response).to.have.nested.property('body.error.message')
   })
 
   it('should return 400 response if LSAT has an invalid secret', async () => {
-    const macaroon = builder.getMacaroon().serialize()
-
     const response: request.Response = await request
       .agent(app)
       .get(protectedRoute)
-      .set('Authorization', `LSAT ${macaroon}:12345`)
+      .set('Authorization', `${lsat.toToken()}12345`)
       .expect(400)
 
     expect(response).to.have.nested.property('body.error.message')
@@ -123,10 +126,7 @@ describe('paywall', () => {
   })
 
   it('should return 200 response for request with valid LSAT', async () => {
-    const macaroon = builder.getMacaroon().serialize()
-    const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)
-
     await request
       .agent(app)
       .get(protectedRoute)
