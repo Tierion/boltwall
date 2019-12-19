@@ -1,17 +1,21 @@
 import * as request from 'supertest'
 import { expect } from 'chai'
+import { Application } from 'express'
 
-import app from '../src/app'
+import getApp from './mockApp'
 import { nodeInfo } from './data'
 import { getLnStub } from './utilities'
 
 describe('/node', () => {
-  let getInfoStub: sinon.SinonStub, lndGrpcStub: sinon.SinonStub
+  let getInfoStub: sinon.SinonStub,
+    lndGrpcStub: sinon.SinonStub,
+    app: Application
 
   before(() => {
     getInfoStub = getLnStub('getWalletInfo', nodeInfo)
     // stub authentication to speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
+    app = getApp()
   })
   after(() => {
     getInfoStub.restore()

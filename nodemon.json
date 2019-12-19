@@ -2,5 +2,5 @@
   "verbose": false,
   "ext": "ts,json",
   "watch": ["src"],
-  "exec": "ts-node --project tsconfig.json src/server.ts"
+  "exec": "yarn build && node dist/server"
 }

@@ -12,7 +12,7 @@ import {
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
 import { Caveat, Lsat } from '../src/lsat'
-import { BoltwallConfig } from 'src/typings'
+import { BoltwallConfig } from '../src/typings'
 
 describe('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,

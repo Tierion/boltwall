@@ -8,13 +8,21 @@
 import express from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
-import { BoltwallConfig } from 'src/typings'
+import { BoltwallConfig } from '../src/typings'
 
 const { boltwall } = require('../src/index')
 
 export const protectedRoute = '/protected'
 
 export default function getApp(configs?: BoltwallConfig): express.Application {
+  // mock env vars for testing
+  process.env = {
+    ...process.env,
+    LND_TLS_CERT: '123',
+    LND_SOCKET: 'localhost:10001',
+    LND_MACAROON: '1234',
+  }
+
   const app: express.Application = express()
 
   // Required middleware - These must be used in any boltwall project
