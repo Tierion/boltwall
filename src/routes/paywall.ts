@@ -60,9 +60,9 @@ export default async function paywall(
     return next({ message: 'Payment required' })
   } else if (!lsat.paymentPreimage) {
     const { payreq, status } = await checkInvoiceStatus(
+      lsat.paymentHash,
       req.lnd,
-      req.opennode,
-      lsat.paymentHash
+      req.opennode
     )
 
     // for hodl paywalls, held status and no preimage is valid
@@ -94,9 +94,9 @@ export default async function paywall(
   // (has preimage in the LSAT or hodl invoice is not held)
   if (hodl) {
     const { status } = await checkInvoiceStatus(
+      lsat.paymentHash,
       req.lnd,
-      req.opennode,
-      lsat.paymentHash
+      req.opennode
     )
     // hodl lsat with paid/settled invoice is considered expired
     if (status === 'paid') {

@@ -1,3 +1,8 @@
+/**
+ * @file This file provides predefined satisfiers that can be used to validate
+ * commonly used caveats that can be added on a macaroon.
+ */
+
 import { Satisfier } from '../typings'
 import { getOriginFromRequest } from '../helpers'
 

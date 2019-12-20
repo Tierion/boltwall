@@ -46,9 +46,9 @@ async function getInvoice(
   let invoice
   try {
     invoice = await checkInvoiceStatus(
+      lsat.paymentHash,
       req.lnd,
       req.opennode,
-      lsat.paymentHash,
       true
     )
   } catch (e) {

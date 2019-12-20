@@ -5,7 +5,10 @@ import { Lsat, verifyFirstPartyMacaroon } from '../lsat'
 import { getEnvVars, isHex } from '../helpers'
 
 /**
- * @description middleware to test existence and validity of LSAT or LSAT request
+ * @description Middleware to test existence and validity of LSAT or LSAT request.
+ * This middleware includes checks for hodl invoice configuration, which if active
+ * requires a payment hash if there's not already an LSAT header
+ * @param {Request} req - BoltwallRequest that includes a user defined configuration object
  */
 export default async function validateLsat(
   req: Request,

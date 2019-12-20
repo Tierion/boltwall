@@ -6,6 +6,7 @@
   "repository": "git@github.com:Tierion/boltwall.git",
   "author": "Buck Perley <bucko.perley@gmail.com>",
   "license": "AGPL-3.0",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "start": "nodemon",
     "build": "tsc --project tsconfig.build.json",

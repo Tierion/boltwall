@@ -1,3 +1,8 @@
+/**
+ * @file helper functions for use in a boltwall server, including setting up the middleware
+ * evaluationg macaroons and lsats, and communicating with the lnd node
+ */
+
 import { Request } from 'express'
 import assert from 'assert'
 import { MacaroonsBuilder, MacaroonsConstants } from 'macaroons.js'
@@ -17,10 +22,15 @@ interface EnvVars {
   LND_TLS_CERT?: string
   LND_MACAROON?: string
   SESSION_SECRET: string
-  CAVEAT_KEY?: string
   LND_SOCKET?: string
 }
 
+/**
+ * @description Utility function for getting required environment variables
+ * It will validate existing env vars and create missing ones that are required
+ * and can be generated randomly (namely the SESSION_SECRET for signing macaroons)
+ * @returns {EnvVars} environment variables relevant to boltwall operation
+ */
 export function getEnvVars(): EnvVars {
   dotenv.config()
 
@@ -48,11 +58,14 @@ export function getEnvVars(): EnvVars {
     LND_TLS_CERT: process.env.LND_TLS_CERT as string,
     LND_MACAROON: process.env.LND_MACAROON as string,
     SESSION_SECRET: process.env.SESSION_SECRET as string,
-    CAVEAT_KEY: process.env.CAVEAT_KEY as string,
     LND_SOCKET: process.env.LND_SOCKET as string,
   }
 }
 
+/**
+ * @description evaluates environment variables and throws errors
+ * based on what might be missing but required
+ */
 export function testEnvVars(): boolean | Error {
   const {
     OPEN_NODE_KEY,
@@ -109,6 +122,13 @@ export function getLocation({ headers, hostname }: Request): string {
     : hostname || 'self'
 }
 
+/**
+ * @description Given a request and an invoice, generate a new LSAT including building
+ * and signing a new macaroon based on the user defined boltwall config
+ * @param {Request} req
+ * @param {InvoiceResponse} invoice
+ * @returns {Lsat}
+ */
 export function createLsatFromInvoice(
   req: Request,
   invoice: InvoiceResponse
@@ -151,10 +171,10 @@ export function createLsatFromInvoice(
 }
 
 /**
- * Utility to create an invoice based on either an authenticated lnd grpc instance
+ * @description Utility to create an invoice based on either an authenticated lnd grpc instance
  * or an opennode connection
- * @param {Object} req - express request object that either contains an lnd or opennode object
- * @returns {Object} invoice - returns an invoice with a payreq, id, description, createdAt, and
+ * @param {Request} req - express request object that either contains an lnd or opennode object
+ * @returns {InvoiceResponse} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
 export async function createInvoice(req: Request): Promise<InvoiceResponse> {
   const { lnd, opennode, body, boltwallConfig } = req
@@ -230,18 +250,17 @@ This means payer can pay whatever they want for access.'
 }
 
 /**
- * Checks the status of an invoice given an id
- * @param {express.request} - request object from expressjs
- * @param {req.query.id} invoiceId - id of invoice to check status of
- * @param {req.lnd} [lnd] - ln-service authenticated grpc object
+ * Checks the status of an invoice given an id (i.e. a payment hash)
+ * @param {string} invoiceId - the id or paymentHash of the invoice to check the status of
+ * @param {lnd} [lnd] - ln-service authenticated grpc object
  * @param {req.opennode} [opennode] - authenticated opennode object for communicating with OpenNode API
- * @returns {Object} - status - Object with status, amount, and payment request
+ * @returns {InvoiceResponse} invoice - Object with status, amount, and payment request
  */
 
 export async function checkInvoiceStatus(
-  lnd: any,
-  opennode: any,
   invoiceId: string,
+  lnd?: any,
+  opennode?: any,
   returnSecret = false
 ): Promise<InvoiceResponse> {
   if (!invoiceId) throw new Error('Missing invoice id.')
@@ -287,10 +306,21 @@ export async function checkInvoiceStatus(
   return invoice
 }
 
+/**
+ * @description Given a string, determine if it is in hex encoding or not.
+ * @param {string} h - string to evaluate
+ */
 export function isHex(h: string): boolean {
   return Buffer.from(h, 'hex').toString('hex') === h
 }
 
+/**
+ * @description A utility function used to determine the origin IP of a given request.
+ * The function accounts for different circumstances such as proxies (x-forwarded-for) or
+ * use in frameworks that don't support Express's req.ip/req.ips properties.
+ * @param {Request} req - request object used to determine the origin
+ * @returns {string} ip address where the request originated from
+ */
 export function getOriginFromRequest(req: Request): string {
   let origin: string
   if (req.ip) origin = req.ip

@@ -10,6 +10,9 @@ import { isHex } from '../helpers'
 
 class MacaroonInterface extends Macaroon {}
 
+/**
+ * @description A a class for creating and converting LSATs
+ */
 export class Lsat extends Struct {
   id: string
   validUntil: number
@@ -66,19 +69,40 @@ export class Lsat extends Struct {
     return this
   }
 
+  /**
+   * Determine if the LSAT is expired or not. This is based on the
+   * `validUntil` property of the lsat which is evaluated at creation time
+   * based on the macaroon and any existing expiration caveats
+   * @returns {boolean}
+   */
   isExpired(): boolean {
     if (this.validUntil === 0) return false
     return this.validUntil < Date.now()
   }
 
+  /**
+   * Determines if the lsat is valid or not depending on if there is a preimage or not
+   * @returns {boolean}
+   */
   isPending(): boolean {
     return this.paymentPreimage ? false : true
   }
 
+  /**
+   * Gets the base macaroon from the lsat
+   * @returns {MacaroonInterface}
+   */
   getMacaroon(): MacaroonInterface {
     return MacaroonsBuilder.deserialize(this.baseMacaroon)
   }
 
+  /**
+   * @description A utility for returning the expiration date of the LSAT's macaroon based on
+   * an optional caveat
+   * @param {string} [macaroon] - raw macaroon to get expiration date from if exists as a caveat. If
+   * none is provided then it will use LSAT's base macaroon. Will throw if neither exists
+   * @returns {number} expiration date
+   */
   getExpirationFromMacaroon(macaroon?: string): number {
     if (!macaroon) macaroon === this.baseMacaroon
     assert(macaroon, 'Missing macaroon')
@@ -99,6 +123,11 @@ export class Lsat extends Struct {
     return Number(expirationCaveats[expirationCaveats.length - 1].value)
   }
 
+  /**
+   * A utility for setting the preimage for an LSAT. This method will validate the preimage and throw
+   * if it is either of the incorrect length or does not match the paymentHash
+   * @param {string} preimage - 32-byte hex string of the preimage that is used as proof of payment of a lightning invoice
+   */
   setPreimage(preimage: string): void {
     assert(
       isHex(preimage) && preimage.length === 64,
@@ -117,10 +146,23 @@ export class Lsat extends Struct {
     this.paymentPreimage = preimage
   }
 
+  /**
+   * @description Converts the lsat into a valid LSAT token for use in an http
+   * Authorization header. This will return a string in the form: "LSAT [macaroon]:[preimage?]".
+   *  If no preimage is available the last character should be a colon, which would be
+   * an "incomplete" LSAT
+   * @returns {string}
+   */
   toToken(): string {
     return `LSAT ${this.baseMacaroon}:${this.paymentPreimage || ''}`
   }
 
+  /**
+   * @description Converts LSAT into a challenge header to return in the WWW-Authenticate response
+   * header. Returns base64 encoded string with macaroon and invoice information prefixed with
+   * authentication type ("LSAT")
+   * @returns {string}
+   */
   toChallenge(): string {
     assert(
       this.invoice,
@@ -130,6 +172,13 @@ export class Lsat extends Struct {
     return `LSAT ${Buffer.from(challenge).toString('base64')}`
   }
 
+  // Static API
+
+  /**
+   * @description generates a new LSAT from an invoice and an optional invoice
+   * @param {string} macaroon - macaroon to parse and generate relevant lsat properties from
+   * @param {string} [invoice] - optional invoice which can provide other relevant information for the lsat
+   */
   static fromMacaroon(macaroon: string, invoice?: string): Lsat {
     const { identifier } = MacaroonsBuilder.deserialize(macaroon)
     let id: Identifier
@@ -162,6 +211,12 @@ export class Lsat extends Struct {
     return new this(options)
   }
 
+  /**
+   * @description Create an LSAT from an http Authorization header. A useful utility
+   * when trying to parse an LSAT sent in a request and determining its validity
+   * @param {string} token - LSAT token sent in request
+   * @returns {Lsat}
+   */
   static fromToken(token: string): Lsat {
     assert(token.includes(this.type), 'Token must include LSAT prefix')
     token = token.slice(this.type.length).trim()
@@ -178,6 +233,12 @@ export class Lsat extends Struct {
     return lsat
   }
 
+  /**
+   * @description Validates and converts an LSAT challenge from a WWW-Authenticate header
+   * response into an LSAT object. This method expects an invoice and a macaroon in the challenge
+   * @param {string} challenge
+   * @returns {Lsat}
+   */
   static fromChallenge(challenge: string): Lsat {
     // challenge should be in base64 encoding, so we need to convert it to utf8 first
     challenge = Buffer.from(challenge, 'base64').toString('utf8')
@@ -238,6 +299,11 @@ export class Lsat extends Struct {
     })
   }
 
+  /**
+   * @description Given an LSAT WWW-Authenticate challenge header (with token type, "LSAT", prefix)
+   * will return an Lsat.
+   * @param header
+   */
   static fromHeader(header: string): Lsat {
     // remove the token type prefix to get the challenge
     const challenge = header.slice(this.type.length).trim()
