@@ -1,7 +1,7 @@
 import { Response, Request, Router, NextFunction } from 'express'
 
 import { InvoiceResponse } from '../typings'
-import { Lsat } from '../lsat'
+import { Lsat } from 'lsat-js'
 import { createInvoice, checkInvoiceStatus } from '../helpers'
 import { validateLsat } from '.'
 const router: Router = Router()

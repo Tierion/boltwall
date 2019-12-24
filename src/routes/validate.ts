@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
 
-import { Lsat, verifyFirstPartyMacaroon } from '../lsat'
+import { Lsat, verifyFirstPartyMacaroon } from 'lsat-js'
 import { getEnvVars, isHex } from '../helpers'
 
 /**
@@ -77,9 +77,11 @@ export default async function validateLsat(
 
   // verify macaroon
   const { SESSION_SECRET } = getEnvVars()
+  const macaroon = lsat.getMacaroon()
   const isValid = verifyFirstPartyMacaroon(
-    lsat.getMacaroon(),
+    macaroon,
     SESSION_SECRET,
+    req.boltwallConfig?.caveatSatisfiers,
     req
   )
 

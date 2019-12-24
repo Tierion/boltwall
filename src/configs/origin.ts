@@ -1,6 +1,8 @@
 import { Request } from 'express'
 import { BoltwallConfig, DescriptionGetter, CaveatGetter } from '../typings'
-import { Caveat, satisfiers } from '../lsat'
+
+import { Caveat } from 'lsat-js'
+import { originSatisfier } from '.'
 import { getOriginFromRequest } from '../helpers'
 
 const getOriginInvoiceDescription: DescriptionGetter = () =>
@@ -16,7 +18,7 @@ const ORIGIN_CAVEAT_CONFIGS: BoltwallConfig = {
   minAmount: 1,
   getInvoiceDescription: getOriginInvoiceDescription,
   getCaveats: getOriginCaveat,
-  caveatSatisfiers: satisfiers.originSatisfier,
+  caveatSatisfiers: originSatisfier,
 }
 
 export default ORIGIN_CAVEAT_CONFIGS

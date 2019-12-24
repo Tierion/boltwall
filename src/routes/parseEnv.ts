@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-const lnService = require('ln-service')
+import lnService from 'ln-service'
 
 import { testEnvVars, getEnvVars } from '../helpers'
 

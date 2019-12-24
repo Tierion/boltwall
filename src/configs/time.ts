@@ -9,7 +9,8 @@ import {
   CaveatGetter,
   DescriptionGetter,
 } from '../typings'
-import { Caveat, satisfiers } from '../lsat'
+import { Caveat } from 'lsat-js'
+import { expirationSatisfier } from '.'
 
 /**
  * Creates a general caveat where the macaroon this is attached to
@@ -56,7 +57,7 @@ const getTimedInvoiceDescription: DescriptionGetter = (req: Request) => {
 
 const TIME_CAVEAT_CONFIGS: BoltwallConfig = {
   getCaveats: getTimeCaveat,
-  caveatSatisfiers: satisfiers.expirationSatisfier,
+  caveatSatisfiers: expirationSatisfier,
   getInvoiceDescription: getTimedInvoiceDescription,
   minAmount: 1, // want this to make sure at least some amount is paid to create invoice
 }

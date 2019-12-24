@@ -1,6 +1,7 @@
 import * as request from 'supertest'
 import { expect } from 'chai'
 import { Application, Request } from 'express'
+import { Caveat, Lsat } from 'lsat-js'
 
 import { invoiceResponse } from './data'
 import {
@@ -11,7 +12,6 @@ import {
   setSessionSecret,
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
-import { Caveat, Lsat } from '../src/lsat'
 import { BoltwallConfig } from '../src/typings'
 
 describe('paywall', () => {
@@ -28,7 +28,7 @@ describe('paywall', () => {
     sessionSecret = setSessionSecret()
     createInvStub = getLnStub('createInvoice', invoiceResponse)
     getInvStub = getLnStub('getInvoice', invoiceResponse)
-    // boltwall sets up authenticated client when it boots up
+    // boltwall sets up authenticatea client when it boots up
     // need to stub this to avoid connection errors and speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     builder = getTestBuilder(sessionSecret)

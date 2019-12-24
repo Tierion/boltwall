@@ -2,13 +2,8 @@ import { expect } from 'chai'
 import { Request } from 'express'
 
 import { TIME_CAVEAT_CONFIGS, ORIGIN_CAVEAT_CONFIGS } from '../src/configs'
-import {
-  BoltwallConfig,
-  InvoiceResponse,
-  Satisfier,
-  CaveatGetter,
-} from '../src/typings'
-import { Caveat, verifyCaveats } from '../src/lsat'
+import { BoltwallConfig, InvoiceResponse, CaveatGetter } from '../src/typings'
+import { Satisfier, Caveat, verifyCaveats } from 'lsat-js'
 
 describe('configs', () => {
   describe('TIME_CAVEAT_CONFIGS', () => {
@@ -155,16 +150,12 @@ describe('configs', () => {
 
       expect(satisfier).to.have.property('satisfyPrevious')
 
-      let isValid = verifyCaveats([firstCaveat, secondCaveat], {
-        boltwallConfig: config,
-      } as Request)
+      let isValid = verifyCaveats([firstCaveat, secondCaveat], satisfier)
 
       expect(isValid, 'Expected caveats w/ increasing restrictiveness to pass')
         .to.be.true
 
-      isValid = verifyCaveats([secondCaveat, firstCaveat], {
-        boltwallConfig: config,
-      } as Request)
+      isValid = verifyCaveats([secondCaveat, firstCaveat], satisfier)
 
       expect(
         isValid,
@@ -229,10 +220,7 @@ describe('configs', () => {
         const decoded = Caveat.decode(caveat)
 
         expect(satisfier.condition).to.equal(decoded.condition)
-        const isValid = satisfier.satisfyFinal(
-          decoded,
-          (req as unknown) as Request
-        )
+        const isValid = satisfier.satisfyFinal(decoded, req)
         expect(isValid).to.be.true
       }
     })
@@ -243,7 +231,8 @@ describe('configs', () => {
       const request = { ip: firstCaveat.value, boltwallConfig: config }
       const isValid = verifyCaveats(
         [firstCaveat, secondCaveat],
-        request as Request
+        satisfier,
+        request
       )
       expect(isValid).to.be.false
     })

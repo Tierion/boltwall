@@ -11,7 +11,7 @@ import {
   getTestBuilder,
   BuilderInterface,
 } from './utilities'
-import { Lsat } from '../src/lsat'
+import { Lsat } from 'lsat-js'
 
 describe('hodl paywall', () => {
   let envStub: sinon.SinonStub,

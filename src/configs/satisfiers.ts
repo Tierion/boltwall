@@ -3,7 +3,8 @@
  * commonly used caveats that can be added on a macaroon.
  */
 
-import { Satisfier } from '../typings'
+import { Satisfier, Caveat } from 'lsat-js'
+import { Request } from 'express'
 import { getOriginFromRequest } from '../helpers'
 
 /**
@@ -13,7 +14,7 @@ import { getOriginFromRequest } from '../helpers'
  */
 export const expirationSatisfier: Satisfier = {
   condition: 'expiration',
-  satisfyPrevious: (prev, curr) => {
+  satisfyPrevious: (prev: Caveat, curr: Caveat) => {
     if (prev.condition !== 'expiration' || curr.condition !== 'expiration')
       return false
     // fails if current expiration is later than previous
@@ -21,7 +22,7 @@ export const expirationSatisfier: Satisfier = {
     else if (prev.value < curr.value) return false
     else return true
   },
-  satisfyFinal: caveat => {
+  satisfyFinal: (caveat: Caveat) => {
     if (caveat.condition !== 'expiration') return false
     // if the expiration value is less than current time than satisfier is failed
     if (caveat.value < Date.now()) return false
@@ -37,12 +38,12 @@ export const expirationSatisfier: Satisfier = {
  */
 export const originSatisfier: Satisfier = {
   condition: 'ip',
-  satisfyPrevious: (prev, curr) => {
+  satisfyPrevious: (prev: Caveat, curr: Caveat) => {
     if (prev.condition !== 'ip' || curr.condition !== 'ip') return false
     else if (prev.value !== curr.value) return false
     else return true
   },
-  satisfyFinal: (caveat, req) => {
+  satisfyFinal: (caveat: Caveat, req: Request) => {
     const origin = getOriginFromRequest(req)
     if (caveat.condition === 'ip' && caveat.value === origin) return true
     else return false

@@ -5,7 +5,7 @@ import { randomBytes } from 'crypto'
 
 import * as helpers from '../src/helpers'
 import { invoice } from './data'
-import { Identifier, Caveat } from '../src/lsat'
+import { Identifier, Caveat } from 'lsat-js'
 
 export class BuilderInterface extends MacaroonsBuilder {}
 

@@ -1,6 +1,6 @@
 # ⚡️ Boltwall ⚡️
 
-Bitcoin Lightning paywall, and authentication using LSATs. Charge to access your API without requiring user accounts, API keys, credit cards, or storing any user data. All you need is a lightning node and a single line of code in your server. Built with [LND](https://lightning.engineering/), Nodejs, and Typescript.
+Bitcoin Lightning paywall and authentication using LSATs. Charge to access your API without requiring user accounts, API keys, credit cards, or storing any user data. All you need is a lightning node and a single line of code in your server. Built with [LND](https://lightning.engineering/), Nodejs, and Typescript.
 
 ```js
 app.use(boltwall())

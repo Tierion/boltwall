@@ -12,7 +12,7 @@ import lnService from 'ln-service'
 import binet from 'binet'
 
 import { InvoiceResponse, CaveatGetter } from './typings'
-import { Lsat, Identifier } from './lsat'
+import { Lsat, Identifier } from 'lsat-js'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
 

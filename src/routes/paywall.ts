@@ -8,7 +8,7 @@ import {
   createLsatFromInvoice,
   getLocation,
 } from '../helpers'
-import { Lsat } from '../lsat'
+import { Lsat } from 'lsat-js'
 
 export default async function paywall(
   req: Request,

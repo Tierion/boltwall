@@ -1,12 +1,11 @@
 import { expect } from 'chai'
 import { Request } from 'express'
 import { MacaroonsBuilder } from 'macaroons.js'
+import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
 
-import { MacaroonClass } from '../src/typings/lsat'
 import { invoiceResponse } from './data'
 import { createLsatFromInvoice, getOriginFromRequest } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
-import { Identifier, Lsat, Caveat } from '../src/lsat'
 
 describe('helper functions', () => {
   describe('getOriginFromRequest', () => {
@@ -157,7 +156,7 @@ describe('helper functions', () => {
         )
 
         // get the macaroon from the lsat so we can test its caveats
-        const macaroon: MacaroonClass = MacaroonsBuilder.deserialize(
+        const macaroon: MacaroonInterface = MacaroonsBuilder.deserialize(
           lsat.baseMacaroon
         )
         let hasFirstMacaroon = false,
