@@ -172,7 +172,7 @@ SESSION_SECRET=[RANDOM STRING MINIMUM 32 BYTES IN LENGTH]
 ## What is an LSAT
 
 LSATs are a new authentication scheme first introduced by Lightning Labs CTO Olaoluwa Osuntokun. Slides from
-the origina presentation can be read [here](https://docs.google.com/presentation/d/1QSm8tQs35-ZGf7a7a2pvFlSduH3mzvMgQaf-06Jjaow/edit#slide=id.p)
+the original presentation can be read [here](https://docs.google.com/presentation/d/1QSm8tQs35-ZGf7a7a2pvFlSduH3mzvMgQaf-06Jjaow/edit#slide=id.p)
 
 The idea is to create a standardized specification format for dealing with _payment-based_ authentication,
 in contrast to the username/password (a.k.a. "Basic Authentication") and token based (most commonly used in

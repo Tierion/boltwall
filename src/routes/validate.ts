@@ -79,7 +79,7 @@ export default async function validateLsat(
   const { SESSION_SECRET } = getEnvVars()
   const macaroon = lsat.getMacaroon()
   const isValid = verifyFirstPartyMacaroon(
-    macaroon,
+    macaroon.serialize(),
     SESSION_SECRET,
     req.boltwallConfig?.caveatSatisfiers,
     req
