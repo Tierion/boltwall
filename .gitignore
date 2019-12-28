@@ -42,3 +42,4 @@ jspm_packages
 
 # Custom
 .DS_Store
+node_modules
