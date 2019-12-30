@@ -11,8 +11,8 @@ app.use(boltwall())
 - [⚡️ Boltwall ⚡️](#%e2%9a%a1%ef%b8%8f-boltwall-%e2%9a%a1%ef%b8%8f)
     - [Supported Features](#supported-features)
   - [System Requirements](#system-requirements)
-  - [Test the API](#test-the-api)
   - [Usage](#usage)
+  - [Test the API](#test-the-api)
   - [Required Environment Variables](#required-environment-variables)
     - [Lightning Configs](#lightning-configs)
   - [What is an LSAT](#what-is-an-lsat)
@@ -24,13 +24,13 @@ app.use(boltwall())
   - [HODL Invoices](#hodl-invoices)
     - [Example Implementation and Access Flow](#example-implementation-and-access-flow)
     - [Generation](#generation)
-    - [Authorization flows](#authorization-flows)
-    - [Making the payment](#making-the-payment)
-    - [A held invoice is a paid invoice](#a-held-invoice-is-a-paid-invoice)
+    - [Authorization Flows](#authorization-flows)
+    - [Making the Payment](#making-the-payment)
+    - [A held Invoice is a Paid Invoice](#a-held-invoice-is-a-paid-invoice)
   - [3rd Party Caveats and Discharge Macaroons](#3rd-party-caveats-and-discharge-macaroons)
       - [Authentication flow](#authentication-flow)
   - [Documentation](#documentation)
-    - [Custom Configs](#custom-configs)
+    - [Custom Configs &amp; Caveats](#custom-configs-amp-caveats)
     - [REST API](#rest-api)
     - [Full API Documentation](#full-api-documentation)
 
@@ -51,48 +51,17 @@ app.use(boltwall())
 Your project must also use `Expressjs` 4.x as well as the `cors` and `body-parser` middleware.
 Restify is also supported although not broadly tested.
 
-## Test the API
-
-**Running the example server**
-
-To run the test server, clone the repo, add appropriate [configs](#required-environment-variables)
-to a local `.env` file, and from the directory run:
-
-```bash
-$ yarn install
-$ yarn start
-```
-
-This runs the server located in `/src/server.ts`, which you can edit to test the middleware's
-behavior.
-
-Once the server is running, you can test the API:
-
-1. `GET http://localhost:5000/node` to get connection information about your lightning node.
-
-2. `GET http://localhost:5000/protected` will return a `402` error for payment required. An LSAT challenge 
-will be available in the returned `WWW-Authenticate` header. Decode base64 to get invoice information
-
-3. `GET http://localhost:5000/protected` with appropriate LSAT in Authorization header (including
-   preimage) will return the response from the protected route
-
-4. `POST http://localhost:5000/invoice` with the following JSON body to get a new invoice (there
-   is no relation to the invoice): `{ "amount": 30 }`
-
-5. `GET http://localhost:5000/invoice` with the appropriate LSAT in Authorization header (even with missing
-   payment hash) will return the status of the associated invoice
-
-Read more about the REST API in the [documentation](#documentation).
-
 ## Usage
 
 To use as a middleware in an existing server, just install from npm into your project,
-and use before all routes that you want protected.
+and use before any routes that you want protected.
 
 > **NOTE:** Order matters with middleware. Any routes that appear _after_ boltwall will require
-proper authentication in order to access. 
+proper authentication in order to access. Boltwall can be used within routes to keep it isolated
+from other routes you want to remain free.
 
-An example project can be seen in `src/server.ts`. This is what is run when running `yarn start`.
+An example project can be seen in `src/server.ts`, which can be run with `yarn start` 
+(after [configuration](#required-environment-variables)).
 
 A very simple server file, with no special configurations, could look like this:
 
@@ -120,6 +89,7 @@ app.get('/', (_req, res) => {
 
 app.use(boltwall())
 
+// this will require payment and proper lsat to access
 app.get('/protected', (_req, res) =>
   res.json({
     message:
@@ -130,6 +100,40 @@ app.get('/protected', (_req, res) =>
 app.listen(5000, () => console.log('listening on port 5000!'))
 ```
 
+## Test the API
+
+**Running the example server**
+
+To run the test server, clone the repo, add appropriate [configs](#required-environment-variables)
+to a local `.env` file, and from the directory run:
+
+```bash
+$ yarn install
+$ yarn start
+```
+
+This runs the server located in `/src/server.ts`, which you can edit to test the middleware's
+behavior.
+
+Once the server is running, you can test the API:
+
+1. `GET http://localhost:5000/node` to get connection information about your lightning node 
+(no payment required).
+
+2. `GET http://localhost:5000/protected` will return a `402` error for payment required. An LSAT challenge 
+will be available in the returned `WWW-Authenticate` header. Decode base64 to get invoice information
+
+3. `GET http://localhost:5000/protected` with appropriate LSAT in Authorization header (including
+   preimage) will return the response from the protected route
+
+4. `POST http://localhost:5000/invoice` with the following JSON body to get a new invoice (there
+   is no relation to any lsat and so cannot be used for authentication): `{ "amount": 30 }`
+
+5. `GET http://localhost:5000/invoice` with the appropriate LSAT in Authorization header (even with missing
+   payment hash) will return the status of the associated invoice
+
+Read more about the REST API in the [documentation](#documentation).
+
 ## Required Environment Variables
 
 Several environment variables are required when running `boltwall`. 
@@ -138,7 +142,7 @@ for authentication/authorization.
 
 ### Lightning Configs
 
-**Lightning configs (either lnd connection info or OpenNode API key based on connection type)
+**Lightning configs (either lnd connection info _or_ OpenNode API key depending on connection type)
 are required environment variables**
 
 If you are connecting to a lightning node you will need the following in your project's `.env` file
@@ -171,24 +175,32 @@ none is provided.
 SESSION_SECRET=[RANDOM STRING MINIMUM 32 BYTES IN LENGTH]
 ```
 
+If you don't set this yourself, then the secret is not persisted between server restarts. This means
+that LSATs generated before the restart are no longer valid _after_ restart since the signing key
+used to generate (and validate) macaroons will have changed.
+
 ## What is an LSAT
 
 LSATs are a new authentication scheme first introduced by Lightning Labs CTO Olaoluwa Osuntokun. Slides from
-the original presentation can be read [here](https://docs.google.com/presentation/d/1QSm8tQs35-ZGf7a7a2pvFlSduH3mzvMgQaf-06Jjaow/edit#slide=id.p)
+the original presentation can be found [here](https://docs.google.com/presentation/d/1QSm8tQs35-ZGf7a7a2pvFlSduH3mzvMgQaf-06Jjaow/edit#slide=id.p).
 
 The idea is to create a standardized specification format for dealing with _payment-based_ authentication,
 in contrast to the username/password (a.k.a. "Basic Authentication") and token based (most commonly used in
-OAuth constructions) authentication schemes in common use today. By combining cryptographically verifiable
-proof of payment from a lightning invoice with its corresponding preimage along with a macaroon, the idea is
-that a new, flexible, and private authorization protocol can be developed.
+OAuth constructions) authentication schemes in common use today. By combining a 
+cryptographically verifiable proof of payment from a lightning invoice with its corresponding 
+preimage and a [macaroon](http://hackingdistributed.com/2014/05/16/macaroons-are-better-than-cookies/), 
+the idea is that a new, flexible, and private authorization protocol can be developed.
+
+Checkout `lsat-js` for a separate utility library available for manipulating, interacting 
+with, and validating LSATs. Available on npm: https://www.npmjs.com/package/lsat-js
 
 ### Authentication Flow
 
 There are three main stages to the authentication flow with LSATS:
 
 1. When a request is made to protected route, a `402 Payment Required` response is sent back.
-   This includes a `WWW-Authenticate` header with an LSAT. This is a base64 encoded "challenge" that includes
-   a macaroon (read more below to learn how these work) and an invoice
+   This includes a `WWW-Authenticate` header with an LSAT. This is a base64-encoded "challenge" 
+   that includes a macaroon (read more below to learn how these work) and an invoice.
 
 1. The consumer of the API extracts and pays the invoice from the LSAT. After payment, a payment preimage
    should be revealed that acts as a cryptographically verifiable proof of payment.
@@ -211,7 +223,7 @@ is valid for 1 second for every satoshi paid in the invoice.
 So if a user pays a 30 satoshi invoice, then access is allowed for 30 seconds.
 
 The config object should be passed to `boltwall` on initialization. e.g. `app.use(boltwall(myConfig))`, where `myConfig` provides the relevant properties. Currently, the config supports
-four properties: `caveatVerifier`(func), `getCaveat` (func), `getInvoiceDescription`, and `minAmount`.
+four properties: `getCaveats`(func), `caveatSatisfiers` (func), `getInvoiceDescription`, and `minAmount`.
 
 More information on the configs can be found in the
 [API Documentation](https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html).
@@ -231,6 +243,11 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 
 // ... protected routes and any other server code
 ```
+
+Since `getCaveats` and `caveatSatisfiers` can also accept an array of functions,
+you can also combine configs to add multiple caveats and their corresponding satisfiers.
+
+Currently Boltwall provides the following configs:
 
 #### **`TIME_CAVEAT_CONFIGS`**
 
@@ -288,8 +305,8 @@ app.get('/protected', (req, res) => res.send('This route is protected'))
 ```
 
 1. The initial request for the route _requires_ a paymentHash in the request body. This is
-how a hodl invoice is enabled. The payment hash can either be provided by the client or added in a middleware
-before `boltwall` is initialized (as in the example above).
+how a hodl invoice is created. The payment hash can either be provided by the client 
+or added in a middleware before `boltwall` is initialized (as in the example above).
 2. Boltwall will return an LSAT challenge in the `WWW-Authenticate` header as normal
 3. The client should pay the invoice. 
 4. Since this is a hodl invoice, the client won't get a `preimage` until the invoice settles. 
@@ -304,19 +321,19 @@ The source of the pre-image and payment hash can be whatever you want. One commo
 construction is for the pair to be tied to another invoice, which makes it so that the HODL
 invoice can't settle until another invoice settles and reveals its own preimage.
 
-### Authorization flows
+### Authorization Flows
 All authorization mechanisms (i.e. via macaroons) are preserved when using HODL invoices.
 The root macaroon is created and added to the LSAT when creating the invoice as normal.
 If time caveats are enabled, then this will timeout based on the amount paid. Custom 
 configurations can be devised and passed in to boltwall upon initialization.
 
-### Making the payment
-Note, when making the payment with your lightning client, it may look like the payment
+### Making the Payment
+When making the payment with your lightning client, it may look like the payment
 is stuck or is hanging. This is normal and is the result of a client having no way
-to know that an invoice is normal or HODL so it is waiting for the invoice to settle.
+to know whether an invoice is normal or HODL so it is waiting for the invoice to settle.
 This won't happen for a HODL invoice until you settle it with the preimage.
 
-### A `held` invoice is a paid invoice
+### A `held` Invoice is a Paid Invoice
 What this means is that the paywall considers the invoice paid and "unlocks"
 the protected content, by providing the discharge macaroon even though your node
 technically may not have settled the payment yet and so doesn't have access to the funds.
@@ -340,11 +357,11 @@ see [this comment](https://github.com/lightningnetwork/lnd/issues/288#issuecomme
 on a pending issue in lnd. The ideas laid out below will still mostly apply and are a huge
 part of the value add of LSATs and macaroons more generally for an ecosystem of self-sovereign paywalls.
 
-_**** DEPRECATED ****_
+_**** API DEPRECATED ****_
 
 The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
 in the section above covering the configurations, `boltwall`'s API also enables authorization schemes 
-with 3rd parties or as a 3rd party.
+with 3rd parties or as a 3rd party itself.
 
 **Think of it like running your own oAuth service.**
 
@@ -364,7 +381,7 @@ a 3rd party app requiring authorization, and the client paying for access.
 
 
 ## Documentation
-### Custom Configs
+### Custom Configs & Caveats
 
 Boltwall supports custom configurations that can be set on initialization. 
 One important part of this is the ability to create custom macaroon caveats and the satisfiers 
@@ -375,8 +392,9 @@ in order for a macaroon to validate.
 The properties that can be passed (none are required) to the boltwall config object are:
 
 - `getCaveats`: function or array of functions to generate caveats attached to LSAT macaroons
-- `caveatSatisfiers`- Satisfier object or array of Satisfiers (see full documentation for more details
-  on writing your own satisfiers) for evaluating caveats on a macaroon.
+- `caveatSatisfiers`- (required if getCaveats is set) Satisfier object or array of Satisfiers 
+(see full documentation for more details on writing your own satisfiers) for evaluating 
+caveats on a macaroon.
 - `getInvoiceDescription` - an optional function that returns a string to be used in the invoice description
 - `minAmount` - minimum amount to create invoices with if none is passed in request body
 - `hodl`- (optional, false by default) boolean, true to enable a hodl paywall.
