@@ -1,6 +1,7 @@
 import { Request } from 'express'
 import { InvoiceResponse } from '.'
 import { Satisfier } from 'lsat-js'
+
 /**
  * Describes a function that returns a description string
  * for including in lightning invoices. Can use elements in the request

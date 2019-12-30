@@ -1,7 +1,8 @@
 /**
- * @file Exposes different useful configs that can be used out of the box
- * for various common use cases
+ * @file Exposes custom configurations for a paywall that restricts
+ * access based on time calculated according to the amount paid
  */
+
 import { Request } from 'express'
 import {
   BoltwallConfig,
@@ -13,7 +14,8 @@ import { Caveat } from 'lsat-js'
 import { expirationSatisfier } from '.'
 
 /**
- * Creates a general caveat where the macaroon this is attached to
+ * @type {CaveatGetter}
+ * @description Creates a general caveat where the macaroon this is attached to
  * will only be valid for a designated amount of time, based on the invoice
  * amount paid
  */
@@ -36,8 +38,11 @@ const getTimeCaveat: CaveatGetter = (
 }
 
 /**
- * Generates a descriptive invoice description indicating more information
- * about the circumstances the invoice was created under
+ * @type {DescriptionGetter}
+ * @description Generates an invoice description that provides more information
+ * about the circumstances the invoice was created under. In this case
+ * we return an invoice description indicating what is being paid for and the time
+ * for access.
  */
 const getTimedInvoiceDescription: DescriptionGetter = (req: Request) => {
   let { time, title, appName } = req.body // time in seconds

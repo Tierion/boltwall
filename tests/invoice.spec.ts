@@ -81,7 +81,7 @@ describe('/invoice', () => {
   })
 
   describe('GET', () => {
-    it('should return 400 Bad Request when no macaroon to check', async () => {
+    it('should return 400 Bad Request when no lsat to check', async () => {
       const response1: request.Response = await request
         .agent(app)
         .get('/invoice')
@@ -156,7 +156,6 @@ describe('/invoice', () => {
       // Setup response from getInvoice with response that it could not be found
       getInvStub.restore()
 
-      // TODO: confirm the error message and code when no invoice with that id is available
       getInvStub = getLnStub('getInvoice')
       getInvStub.throws(() => [
         503,
@@ -175,7 +174,7 @@ describe('/invoice', () => {
       expect(response.body.error.message).to.match(/invoice/g)
     })
 
-    it('should return invoice information w/ status for request w/ valid LSAT macaroon', async () => {
+    it('should return invoice information w/ status for a request w/ valid LSAT macaroon', async () => {
       const response: InvoiceResponse = {
         id: invoiceResponse.id,
         payreq: invoiceResponse.request,
@@ -187,9 +186,11 @@ describe('/invoice', () => {
       }
 
       // add extra expiration caveats. it should pass if newer is more restrictive
+      // but not yet past current time
       builder.add_first_party_caveat(`expiration=${Date.now() + 500}`)
       const macaroon = builder.getMacaroon().serialize()
       app = getApp({ caveatSatisfiers: expirationSatisfier })
+
       const supertestResp: request.Response = await request
         .agent(app)
         .get('/invoice')
@@ -200,10 +201,9 @@ describe('/invoice', () => {
 
     it('should not return the secret if invoice is unpaid', async () => {
       const macaroon = builder.getMacaroon().serialize()
-      // Setup response from getInvoice that it could not be found
-      getInvStub.restore()
 
-      // TODO: confirm the error message and code when no invoice with that id is available
+      // Setup response from getInvoice w/ unconfirmed invoice
+      getInvStub.restore()
       getInvStub = getLnStub('getInvoice', {
         ...invoiceResponse,
         is_confirmed: false,
@@ -229,6 +229,7 @@ describe('/invoice', () => {
         description: invoiceResponse.description,
       }
     })
+
     it('should return a new invoice with expected description and payment amt', async () => {
       // TODO: Do we want to rate limit this or require a macaroon at all to avoid DDoS?
       const supertestResp: request.Response = await request

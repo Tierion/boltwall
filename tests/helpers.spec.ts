@@ -58,8 +58,11 @@ describe('helper functions', () => {
       }
     })
   })
+
   describe('createLsatFromInvoice', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let invoice: InvoiceResponse, request: any
+
     beforeEach(() => {
       invoice = {
         payreq: invoiceResponse.request,
@@ -69,21 +72,19 @@ describe('helper functions', () => {
       }
       request = { hostname: 'localhost', ip: '127.0.0.1' }
     })
+
     it('should be able to create an lsat from an invoice and location', () => {
+      const lsat = createLsatFromInvoice(request as Request, invoice)
       const createLsat = (): Lsat =>
         createLsatFromInvoice(request as Request, invoice)
+      const getId = (): Identifier => Identifier.fromString(lsat.id)
+      const getToken = (): string => lsat.toToken()
+      const getChallenge = (): string => lsat.toChallenge()
 
       expect(
         createLsat,
         'Should be able to create lsat from invoice'
       ).to.not.throw()
-
-      const lsat = createLsatFromInvoice(request as Request, invoice)
-
-      const getId = (): Identifier => Identifier.fromString(lsat.id)
-      const getToken = (): string => lsat.toToken()
-      const getChallenge = (): string => lsat.toChallenge()
-
       expect(lsat, 'LSAT should have base macaroon').to.have.property(
         'baseMacaroon'
       )
@@ -104,6 +105,7 @@ describe('helper functions', () => {
         'Should be able to generate a valid challenge from LSAT'
       ).to.not.throw()
     })
+
     it('should be able to add custom caveats that utilize the request object', () => {
       // test single caveat getter
       const singleCaveatGetter = (req: Request): string => {
@@ -114,6 +116,7 @@ describe('helper functions', () => {
         })
         return caveat.encode()
       }
+
       // test array of caveat getters
       const secondCaveatGetter = (): string => {
         const caveat = new Caveat({
@@ -124,7 +127,6 @@ describe('helper functions', () => {
       }
       const firstCaveat = singleCaveatGetter(request)
       const secondCaveat = secondCaveatGetter()
-
       const caveatGetters = [singleCaveatGetter, secondCaveatGetter]
 
       const requestWithArray = {

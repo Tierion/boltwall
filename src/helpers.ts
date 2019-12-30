@@ -250,16 +250,20 @@ This means payer can pay whatever they want for access.'
 }
 
 /**
- * Checks the status of an invoice given an id (i.e. a payment hash)
+ * @description Checks the status of an invoice given an id (i.e. a payment hash)
  * @param {string} invoiceId - the id or paymentHash of the invoice to check the status of
  * @param {lnd} [lnd] - ln-service authenticated grpc object
  * @param {req.opennode} [opennode] - authenticated opennode object for communicating with OpenNode API
+ * @param {boolean} [returnSecret=false] - whether or not to return the paymentHash secret in the response
+ * Useful to keep as false for unauthenticated clients who need the secret to prove authorization
  * @returns {InvoiceResponse} invoice - Object with status, amount, and payment request
  */
 
 export async function checkInvoiceStatus(
   invoiceId: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   lnd?: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   opennode?: any,
   returnSecret = false
 ): Promise<InvoiceResponse> {
@@ -309,6 +313,7 @@ export async function checkInvoiceStatus(
 /**
  * @description Given a string, determine if it is in hex encoding or not.
  * @param {string} h - string to evaluate
+ * @returns {boolean}
  */
 export function isHex(h: string): boolean {
   return Buffer.from(h, 'hex').toString('hex') === h

@@ -10,6 +10,14 @@ import {
 } from '../helpers'
 import { Lsat } from 'lsat-js'
 
+/**
+ * @description This is the main paywall handler that will validate requests
+ * that require payment for access. Normal lsats and hodl lsats both handled
+ * here.
+ * @param {Request} req
+ * @param {Response} res
+ * @param {NextFunction} next
+ */
 export default async function paywall(
   req: Request,
   res: Response,
@@ -33,6 +41,7 @@ export default async function paywall(
     }
   }
 
+  // handle circumstance where there is no lsat or it is expired
   if (!headers.authorization || !lsat || lsat.isExpired()) {
     let invoice: InvoiceResponse
     try {
@@ -48,7 +57,6 @@ export default async function paywall(
       return next({ message: 'Problem generating invoice' })
     }
 
-    // TODO: Support custom caveats and expiration caveat
     const lsat = createLsatFromInvoice(req, invoice)
     res.status(402)
     res.set({
@@ -59,6 +67,7 @@ export default async function paywall(
     )
     return next({ message: 'Payment required' })
   } else if (!lsat.paymentPreimage) {
+    // server received an lsat but it's not validated with preimage yet
     const { payreq, status } = await checkInvoiceStatus(
       lsat.paymentHash,
       req.lnd,
@@ -66,6 +75,7 @@ export default async function paywall(
     )
 
     // for hodl paywalls, held status and no preimage is valid
+    // so we can pass it to the next handler
     if (status === 'held' && hodl) {
       req.logger.debug(`Valid hodl request made with LSAT ${lsat.id}`)
       return next()
@@ -83,6 +93,7 @@ export default async function paywall(
         )
       }
       // for non-hodl paywalls need to return a 402
+      // or hodl paywalls that are not paid
       lsat.invoice = payreq
       res.status(402)
       res.set({ 'WWW-Authenticate': lsat.toChallenge() })

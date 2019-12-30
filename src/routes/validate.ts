@@ -8,7 +8,9 @@ import { getEnvVars, isHex } from '../helpers'
  * @description Middleware to test existence and validity of LSAT or LSAT request.
  * This middleware includes checks for hodl invoice configuration, which if active
  * requires a payment hash if there's not already an LSAT header
- * @param {Request} req - BoltwallRequest that includes a user defined configuration object
+ * @param {Request} req - Request object that includes a user defined configuration object
+ * @param {Response} res
+ * @param {NextFunction} next
  */
 export default async function validateLsat(
   req: Request,
@@ -16,7 +18,7 @@ export default async function validateLsat(
   next: NextFunction
 ): Promise<void> {
   const { headers } = req
-  // of hodl is enabled and there is not already an auth header
+  // if hodl is enabled and there is not already an auth header
   // then we need to check if there is a paymentHash in the request body
   if (
     req.boltwallConfig &&
@@ -25,7 +27,7 @@ export default async function validateLsat(
     (!headers.authorization || !headers.authorization.includes('LSAT'))
   ) {
     req.logger.debug(
-      `Request made to hodl protected endpoint ${req.originalUrl} without LSAT or payment hash.`
+      `Request made to hodl-protected endpoint ${req.originalUrl} without LSAT or payment hash.`
     )
     res.status(400)
     return next({

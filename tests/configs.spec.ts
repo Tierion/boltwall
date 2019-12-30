@@ -37,13 +37,11 @@ describe('configs', () => {
       // time is in milliseconds, so need to convert amount paid
       // from satoshis (should be number of seconds) to milliseconds
       const time = amount * 1000
-
       const convertCaveat = (): Caveat => Caveat.decode(result)
-      expect(convertCaveat).to.not.throw()
-
       const caveat = Caveat.decode(result)
       const value: number = +caveat.value
 
+      expect(convertCaveat).to.not.throw()
       expect(value).to.be.greaterThan(now)
       // increasing the range just to account for a buffer
       expect(value).to.be.lessThan(now + time + amount)
@@ -122,18 +120,17 @@ describe('configs', () => {
         condition: 'expiration',
         value: Date.now() + 1000,
       })
-
-      expect(validCaveat.condition).to.equal(satisfier.condition)
-      let isValid = satisfier.satisfyFinal(validCaveat, {} as Request)
-      expect(isValid, 'Valid caveat should have been satisfied').to.be.true
-
+      const expectValid = satisfier.satisfyFinal(validCaveat, {} as Request)
       const expired = new Caveat({
         condition: 'expiration',
         value: Date.now() - 100,
       })
+      const expectFailed = satisfier.satisfyFinal(expired, {} as Request)
+
+      expect(validCaveat.condition).to.equal(satisfier.condition)
+      expect(expectValid, 'Valid caveat should have been satisfied').to.be.true
       expect(expired.condition).to.equal(satisfier.condition)
-      isValid = satisfier.satisfyFinal(expired, {} as Request)
-      expect(isValid, 'expired caveat should be invalid').to.be.false
+      expect(expectFailed, 'expired caveat should be invalid').to.be.false
     })
 
     it('should only satisfy caveats that get more restrictive', () => {
@@ -147,27 +144,27 @@ describe('configs', () => {
         condition,
         value: Date.now() + interval / 2, // more restrictive time
       })
+      const expectValid = verifyCaveats([firstCaveat, secondCaveat], satisfier)
+      const expectFailed = verifyCaveats([secondCaveat, firstCaveat], satisfier)
 
       expect(satisfier).to.have.property('satisfyPrevious')
-
-      let isValid = verifyCaveats([firstCaveat, secondCaveat], satisfier)
-
-      expect(isValid, 'Expected caveats w/ increasing restrictiveness to pass')
-        .to.be.true
-
-      isValid = verifyCaveats([secondCaveat, firstCaveat], satisfier)
-
       expect(
-        isValid,
+        expectValid,
+        'Expected caveats w/ increasing restrictiveness to pass'
+      ).to.be.true
+      expect(
+        expectFailed,
         'Expected caveats w/ decreasingly restrictive expirations to fail'
       ).to.be.false
     })
   })
+
   describe('ORIGIN_CAVEAT_CONFIGS', () => {
     let config: BoltwallConfig,
       satisfier: Satisfier,
       getCaveats: CaveatGetter,
       condition: string
+
     beforeEach(() => {
       config = ORIGIN_CAVEAT_CONFIGS
       condition = 'ip'
@@ -176,6 +173,7 @@ describe('configs', () => {
 
       if (!config.getCaveats)
         throw new Error('Missing caveat getter from origin config')
+
       satisfier = Array.isArray(config.caveatSatisfiers)
         ? config.caveatSatisfiers[0]
         : config.caveatSatisfiers
@@ -213,14 +211,14 @@ describe('configs', () => {
           (req as unknown) as Request,
           {} as InvoiceResponse
         )
+        const decoded = Caveat.decode(caveat)
+        const isValid = satisfier.satisfyFinal(decoded, req)
+
         expect(
           caveat,
           `Expected ${name} request to generate expected caveat`
         ).to.equal(expected.encode())
-        const decoded = Caveat.decode(caveat)
-
         expect(satisfier.condition).to.equal(decoded.condition)
-        const isValid = satisfier.satisfyFinal(decoded, req)
         expect(isValid).to.be.true
       }
     })

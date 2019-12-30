@@ -6,7 +6,8 @@ import { NodeInfo } from '../typings'
 const router: Router = express.Router()
 
 /**
- * Retrieve relevant connection info about lightning node
+ * ## Route GET /node
+ * @description Retrieve relevant connection info about lightning node
  * @param {Request} req - expressjs request object decorated for middleware
  * @param {Response} res - expressjs response object
  * @returns {Promise<NodeInfo>} returns an express response with the node information

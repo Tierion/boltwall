@@ -28,7 +28,7 @@ describe('paywall', () => {
     sessionSecret = setSessionSecret()
     createInvStub = getLnStub('createInvoice', invoiceResponse)
     getInvStub = getLnStub('getInvoice', invoiceResponse)
-    // boltwall sets up authenticatea client when it boots up
+    // boltwall sets up authenticated client when it boots up
     // need to stub this to avoid connection errors and speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     builder = getTestBuilder(sessionSecret)
@@ -43,7 +43,7 @@ describe('paywall', () => {
     getInvStub.restore()
   })
 
-  it('should return 402 with LSAT WWW-Authenticate header if no LSAT present', async () => {
+  it('should return 402 with WWW-Authenticate LSAT header if no LSAT present', async () => {
     const resp: request.Response = await request
       .agent(app)
       .get(protectedRoute)
@@ -135,11 +135,10 @@ describe('paywall', () => {
   })
 
   it('should support custom caveats and caveat satisfiers', async () => {
-    // can't mock a different origin IP address which would be most practical
-    // so we'll test that a property in the body matches from the time of the
-    // original request and a subsequent paid for request. This will verify that
-    // we can validate caveats that are entirely reliant on the initial and
-    // subsequent requests
+    // To test that we can have caveats and satisfiers that are dependent
+    // on the request object, we're going to create a caveat that requires
+    // a value be sent in the request body and check against that
+
     const options: BoltwallConfig = {
       getCaveats: req =>
         `middlename=${req.body?.middlename}`,
@@ -153,8 +152,8 @@ describe('paywall', () => {
       },
     }
     // get an express App with our custom options
-    const middlename = 'danger'
     app = getApp(options)
+    const middlename = 'danger'
     let resp = await request
       .agent(app)
       .get(protectedRoute)

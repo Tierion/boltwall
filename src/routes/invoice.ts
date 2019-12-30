@@ -1,4 +1,11 @@
-import { Response, Request, Router, NextFunction } from 'express'
+import {
+  Response,
+  Request,
+  Router,
+  NextFunction,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Handler,
+} from 'express'
 
 import { InvoiceResponse } from '../typings'
 import { Lsat } from 'lsat-js'
@@ -8,8 +15,10 @@ const router: Router = Router()
 
 /**
  * ## Route: GET /invoice
- * Get information about an invoice including status and secret. Request must be
- * authenticated with a macaroon
+ * @description Get information about an invoice including status and secret. Request must be
+ * authenticated with a macaroon. The handler will check for an LSAT and reject requests
+ * without one since this is where the invoice id is extracted from.
+ * @type {Handler}
  */
 async function getInvoice(
   req: Request,
@@ -75,10 +84,10 @@ async function getInvoice(
 
 /**
  * ## Route: POST /invoice
- * Generate a new invoice based on a given request.
- * This will also create a new root macaroon to associate with the session.
- * The root macaroon and associated 3rd party caveat must be satisfied
- * before access to the protected route will be granted
+ * @description Generate a new invoice based on a given request. No LSAT services
+ * provided, so this endpoint should be used sparingly since a payment made will
+ * not authenticate a request automatically (since there's no associated lsat or macaroon)
+ * @type {Handler}
  */
 async function postNewInvoice(
   req: Request,

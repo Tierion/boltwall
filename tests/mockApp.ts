@@ -40,10 +40,10 @@ export default function getApp(configs?: BoltwallConfig): express.Application {
 
   app.use(boltwall(configs))
 
-  // /******
-  // Any middleware our route passed after this point will be protected and require
-  // payment
-  // ******/
+  /******
+  Any middleware our route passed after this point will be protected and require
+  payment
+  ******/
   app.get(protectedRoute, (_req, res: express.Response) =>
     res.json({
       message:

@@ -114,13 +114,13 @@ describe('hodl paywall', () => {
       .set('Authorization', `LSAT ${macaroon}:`)
       .expect(402)
 
-    expect(getInvStub.called, 'Expected the getInvoice method to be called').to
-      .be.true
-
     const header = resp.header['www-authenticate']
     const getLsat = (): Lsat => Lsat.fromHeader(header)
     expect(getLsat, 'Should return a valid LSAT header').to.not.throw()
+
     const lsat = getLsat()
+    expect(getInvStub.called, 'Expected the getInvoice method to be called').to
+      .be.true
     expect(lsat.paymentHash).to.equal(paymentHash)
     expect(lsat.invoice).to.equal(invoiceResponse.request)
   })
@@ -130,7 +130,7 @@ describe('hodl paywall', () => {
     getInvStub = getLnStub('getInvoice', {
       ...invoiceResponse,
       is_confirmed: false,
-      is_held: true,
+      is_held: true, // checking that access is allowed if getInvoice returns is_held: true
     })
 
     const macaroon = builder.getMacaroon().serialize()
@@ -138,7 +138,7 @@ describe('hodl paywall', () => {
       .agent(app)
       .get(protectedRoute)
       .set('Authorization', `LSAT ${macaroon}:`)
-      .expect(200)
+      .expect(200) // will only return 200 if access is allowed
 
     expect(getInvStub.called, 'Expected the getInvoice method to be called').to
       .be.true
@@ -185,6 +185,7 @@ describe('hodl paywall', () => {
           throw new Error('Expected error message to mention expired lsat')
       })
 
+    // This will confirm that the server is checking the status of the invoice
     expect(getInvStub.called).to.be.true
   })
 

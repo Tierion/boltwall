@@ -8,6 +8,10 @@ export interface InvoiceResponse {
   secret?: string
 }
 
+/**
+ * @description Response returned from ln-service requests for invoices,
+ * either after new creation or after checking status
+ */
 export interface LnServiceInvoiceResponse {
   chain_address: string
   confirmed_at?: string
