@@ -67,17 +67,56 @@
 				<a href="#⚡️-boltwall-⚡️" id="⚡️-boltwall-⚡️" style="color: inherit; text-decoration: none;">
 					<h1>⚡️ Boltwall ⚡️</h1>
 				</a>
-				<p>A lightning-based paywall middlware for Nodejs + Expressjs API services. Built with Typescript.</p>
+				<p>Bitcoin Lightning paywall and authentication using LSATs. Charge to access your API without requiring user accounts, API keys, credit cards, or storing any user data. All you need is a lightning node and a single line of code in your server. Built with <a href="https://lightning.engineering/">LND</a>, Nodejs, and Typescript.</p>
+				<p>All you need to put a paywall in front of a route on your server is this one line of code:</p>
+				<pre><code class="language-js">app.use(boltwall())</code></pre>
+				<ul>
+					<li><a href="#%e2%9a%a1%ef%b8%8f-boltwall-%e2%9a%a1%ef%b8%8f">⚡️ Boltwall ⚡️</a><ul>
+							<li><a href="#supported-features">Supported Features</a><ul>
+									<li><a href="#system-requirements">System Requirements</a></li>
+									<li><a href="#usage">Usage</a></li>
+									<li><a href="#test-the-api">Test the API</a></li>
+									<li><a href="#required-environment-variables">Required Environment Variables</a></li>
+								</ul>
+							</li>
+							<li><a href="#lightning-configs">Lightning Configs</a><ul>
+									<li><a href="#what-is-an-lsat">What is an LSAT</a></li>
+								</ul>
+							</li>
+							<li><a href="#authentication-flow">Authentication Flow</a></li>
+							<li><a href="#custom-authorization-w-macaroons">Custom Authorization w/ Macaroons</a></li>
+							<li><a href="#pre-built-configs">Pre-built Configs</a><ul>
+									<li><a href="#timecaveatconfigs">TIME_CAVEAT_CONFIGS</a></li>
+									<li><a href="#origincaveatconfigs">ORIGIN_CAVEAT_CONFIGS</a></li>
+									<li><a href="#hodl-invoices">HODL Invoices</a></li>
+								</ul>
+							</li>
+							<li><a href="#example-implementation-and-access-flow">Example Implementation and Access Flow</a></li>
+							<li><a href="#generation">Generation</a></li>
+							<li><a href="#authorization-flows">Authorization Flows</a></li>
+							<li><a href="#making-the-payment">Making the Payment</a></li>
+							<li><a href="#a-held-invoice-is-a-paid-invoice">A held Invoice is a Paid Invoice</a><ul>
+									<li><a href="#3rd-party-caveats-and-discharge-macaroons">3rd Party Caveats and Discharge Macaroons</a></li>
+									<li><a href="#authentication-flow">Authentication flow</a></li>
+									<li><a href="#documentation">Documentation</a></li>
+								</ul>
+							</li>
+							<li><a href="#custom-configs-amp-caveats">Custom Configs &amp; Caveats</a></li>
+							<li><a href="#rest-api">REST API</a></li>
+							<li><a href="#full-api-documentation">Full API Documentation</a></li>
+						</ul>
+					</li>
+				</ul>
 				<a href="#supported-features" id="supported-features" style="color: inherit; text-decoration: none;">
 					<h3>Supported Features</h3>
 				</a>
 				<ul>
+					<li>New LSAT protocol for authentication</li>
 					<li>Protect routes in your own API by using as a middleware</li>
 					<li>Custom attenuation via macaroons</li>
-					<li>oAuth-like authorization for compatible 3rd party services</li>
-					<li>Optional <a href="#3rd-party-caveats-and-discharge-macaroons">time-based access restrictions</a>
-					supported out of the box</li>
+					<li>Optional configurations available for time and IP restricted access</li>
 					<li><a href="#hodl-invoices">HODL Invoices</a></li>
+					<li>oAuth-like authorization for compatible 3rd party services (Coming soon)</li>
 				</ul>
 				<a href="#system-requirements" id="system-requirements" style="color: inherit; text-decoration: none;">
 					<h2>System Requirements</h2>
@@ -86,56 +125,20 @@
 					<li>Node &gt; 11.10.0</li>
 					<li>npm &gt; 6.9.0</li>
 				</ul>
-				<p>Your project must also use <code>Expressjs</code> 4.x as well as the <code>cors</code> and <code>body-parser</code> middleware.</p>
-				<a href="#run-example-server" id="run-example-server" style="color: inherit; text-decoration: none;">
-					<h2>Run Example Server</h2>
-				</a>
-				<p>To run the test server, clone the repo, add appropriate <a href="#required-environment-variables">configs</a>
-				to a local <code>.env</code> file, and from the directory run:</p>
-				<pre><code class="language-bash">$ yarn install
-$ yarn start</code></pre>
-				<p>This runs the server located in <code>/src/server.ts</code>, which you can edit to test the middleware&#39;s
-				behavior.</p>
-				<a href="#test-the-api" id="test-the-api" style="color: inherit; text-decoration: none;">
-					<h3>Test the API</h3>
-				</a>
-				<p>Once the server is running, you can test the API:</p>
-				<ol>
-					<li><p><code>GET http://localhost:5000/node</code> to get connection information about your lightning node.</p>
-					</li>
-					<li><p><code>GET http://localhost:5000/protected</code> will return a <code>402</code> error for payment required.</p>
-					</li>
-					<li><p><code>POST http://localhost:5000/invoice</code> with the following JSON body to get an invoice that will
-						give you access to the protected route for 30 seconds:</p>
-					</li>
-				</ol>
-				<pre><code class="language-json">{
-  <span class="hljs-attr">"amount"</span>: <span class="hljs-number">30</span>,
-  <span class="hljs-attr">"appName"</span>: <span class="hljs-string">"boltwall test"</span>,
-  <span class="hljs-attr">"title"</span>: <span class="hljs-string">"protected endpoint"</span>
-}</code></pre>
-				<ol start="4">
-					<li><p>Make payment using the <code>payreq</code> string returned from the above request (this is done w/ your
-						own node, NOT the boltwall API, since you are using your node as a client to pay the boltwall node).</p>
-					</li>
-					<li><p><code>PUT http://localhost:5000/invoice?id=[INVOICE ID]</code> to check payment status of invoice.
-							Id is an optional query parameter if requesting from the same session as the <code>POST /invoice</code>
-							request was made as the id can be inferred from a session cookie that is returned in that response.
-							Your request&#39;s session will be updated accordingly if the invoice state has changed.
-							For setups with <a href="#custom-configs">custom configs</a>, this is also a
-						request that may require extra parameters in the body for satisfying a</p>
-					</li>
-					<li><p><code>GET http://localhost:5000/protected</code> will return a <code>200</code> status and a different message.
-						Keep trying the request, and after 30 seconds you will get an expiration notice and <code>402</code> error.</p>
-					</li>
-				</ol>
-				<p>Read more about the REST API in the <a href="#documentation">documentation</a>.</p>
+				<p>Your project must also use <code>Expressjs</code> 4.x as well as the <code>cors</code> and <code>body-parser</code> middleware.
+				Restify is also supported although not broadly tested.</p>
 				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
 					<h2>Usage</h2>
 				</a>
 				<p>To use as a middleware in an existing server, just install from npm into your project,
-				and use before all routes that you want protected.</p>
-				<p>An example project can be seen in <code>src/server.ts</code>. This is what is run when running <code>yarn start</code>.</p>
+				and use before any routes that you want protected.</p>
+				<blockquote>
+					<p><strong>NOTE:</strong> Order matters with middleware. Any routes that appear <em>after</em> boltwall will require
+						proper authentication in order to access. Boltwall can be used within routes to keep it isolated
+					from other routes you want to remain free.</p>
+				</blockquote>
+				<p>An example project can be seen in <code>src/server.ts</code>, which can be run with <code>yarn start</code>
+				(after <a href="#required-environment-variables">configuration</a>).</p>
 				<p>A very simple server file, with no special configurations, could look like this:</p>
 				<pre><code class="language-javascript"><span class="hljs-keyword">const</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>)
 <span class="hljs-keyword">const</span> cors = <span class="hljs-built_in">require</span>(<span class="hljs-string">'cors'</span>)
@@ -160,6 +163,7 @@ app.get(<span class="hljs-string">'/'</span>, (_req, res) =&gt; {
 
 app.use(boltwall())
 
+<span class="hljs-comment">// this will require payment and proper lsat to access</span>
 app.get(<span class="hljs-string">'/protected'</span>, (_req, res) =&gt;
   res.json({
     <span class="hljs-attr">message</span>:
@@ -168,39 +172,96 @@ app.get(<span class="hljs-string">'/protected'</span>, (_req, res) =&gt;
 )
 
 app.listen(<span class="hljs-number">5000</span>, () =&gt; <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'listening on port 5000!'</span>))</code></pre>
+				<a href="#test-the-api" id="test-the-api" style="color: inherit; text-decoration: none;">
+					<h2>Test the API</h2>
+				</a>
+				<p><strong>Running the example server</strong></p>
+				<p>To run the test server, clone the repo, add appropriate <a href="#required-environment-variables">configs</a>
+				to a local <code>.env</code> file, and from the directory run:</p>
+				<pre><code class="language-bash">$ yarn install
+$ yarn start</code></pre>
+				<p>This runs the server located in <code>/src/server.ts</code>, which you can edit to test the middleware&#39;s
+				behavior.</p>
+				<p>Once the server is running, you can test the API:</p>
+				<ol>
+					<li><p><code>GET http://localhost:5000/node</code> to get connection information about your lightning node
+						(no payment required).</p>
+					</li>
+					<li><p><code>GET http://localhost:5000/protected</code> will return a <code>402</code> error for payment required. An LSAT challenge
+						will be available in the returned <code>WWW-Authenticate</code> header. Decode base64 to get invoice information</p>
+					</li>
+					<li><p><code>GET http://localhost:5000/protected</code> with appropriate LSAT in Authorization header (including
+						preimage) will return the response from the protected route</p>
+					</li>
+					<li><p><code>POST http://localhost:5000/invoice</code> with the following JSON body to get a new invoice (there
+						is no relation to any lsat and so cannot be used for authentication): <code>{ &quot;amount&quot;: 30 }</code></p>
+					</li>
+					<li><p><code>GET http://localhost:5000/invoice</code> with the appropriate LSAT in Authorization header (even with missing
+						payment hash) will return the status of the associated invoice</p>
+					</li>
+				</ol>
+				<p>Read more about the REST API in the <a href="#documentation">documentation</a>.</p>
 				<a href="#required-environment-variables" id="required-environment-variables" style="color: inherit; text-decoration: none;">
 					<h2>Required Environment Variables</h2>
 				</a>
-				<p>Several environment variables are required when running <code>boltwall</code>. These serve the purpose of connecting to your
-				lightning node and managing/signing macaroons for authentication/authorization.</p>
-				<p><strong>The required environment variables are:</strong></p>
-				<ul>
-					<li>Lightning configs (either lnd connection info or OpenNode API key based on connection type)</li>
-					<li><code>CAVEAT_KEY</code>, only required if using custom, 3rd party caveats (such as time based restrictions
-					described below). This is used for authenticating macaroons in custom authorization schemes.</li>
-				</ul>
-				<p>A <code>SESSION_SECRET</code> can also be set but will be generated with a secure number of random bytes if
-				none is provided.</p>
+				<p>Several environment variables are required when running <code>boltwall</code>.
+					These serve the purpose of connecting to your lightning node and managing/signing macaroons
+				for authentication/authorization.</p>
 				<a href="#lightning-configs" id="lightning-configs" style="color: inherit; text-decoration: none;">
 					<h3>Lightning Configs</h3>
 				</a>
+				<p><strong>Lightning configs (either lnd connection info <em>or</em> OpenNode API key depending on connection type)
+				are required environment variables</strong></p>
 				<p>If you are connecting to a lightning node you will need the following in your project&#39;s <code>.env</code> file
-				or in <code>process.env</code></p>
+				or on the <code>process.env</code> object</p>
 				<p>Learn how to find these values for your node
 					<a href="https://medium.com/@wbobeirne/making-a-lightning-web-app-part-1-4a13c82f3f78">in this article</a>
 				by Will O&#39;Beirne. You can also try this tool by <a href="https://lightningjoule.com/tools/node-info">lightning joule</a>.</p>
-				<pre><code><span class="hljs-attr">LND_TLS_CERT=</span>[BASE64 <span class="hljs-keyword">or</span> HEX encoded cert here]
-<span class="hljs-attr">LND_MACAROON=</span>[BASE64 <span class="hljs-keyword">or</span> HEX encoded cert here]
-<span class="hljs-attr">LND_SOCKET=</span>[address of <span class="hljs-keyword">node</span> <span class="hljs-title">here</span>, e.g. localhost:<span class="hljs-number">10006</span>]</code></pre><p>Alternatively, if you are using OpenNode for managing payments,
+				<pre><code><span class="hljs-attr">LND_TLS_CERT</span>=[BASE64 or HEX encoded cert here]
+<span class="hljs-attr">LND_MACAROON</span>=[BASE64 or HEX encoded cert here]
+<span class="hljs-attr">LND_SOCKET</span>=[address of node here, e.g. localhost:<span class="hljs-number">10006</span>]</code></pre><p>Alternatively, if you are using OpenNode for managing payments,
 					<a href="https://dev.opennode.co">create an OpenNode account</a> (currently testnet only),
 				generate an API key and save it as:</p>
-				<pre><code><span class="hljs-attr">OPEN_NODE_KEY</span>=[API KEY HERE]</code></pre><p>If you have both the lnd configs and open node, <em>lnd will take precedence</em>.</p>
-				<p>Finally, you will need a caveat key for enabling custom authorization schemes such as time-based auth
-				and a SESSION_SECRET for securing macaroons.</p>
-				<pre><code><span class="hljs-attr">CAVEAT_KEY</span>=[ENTER PASSWORD]
-<span class="hljs-attr">SESSION_SECRET</span>=[RANDOM STRING MINIMUM <span class="hljs-number">32</span> BYTES IN LENGTH]</code></pre>
+				<pre><code><span class="hljs-attr">OPEN_NODE_KEY</span>=[API KEY HERE]</code></pre><p>If you have both the lnd configs and OpenNode, <em>lnd will take precedence</em>.</p>
+				<p>A <code>SESSION_SECRET</code> can also be set but will be generated with a secure number of random bytes if
+				none is provided.</p>
+				<pre><code><span class="hljs-symbol">SESSION_SECRET</span>=[RANDOM <span class="hljs-keyword">STRING </span>MINIMUM <span class="hljs-number">32</span> <span class="hljs-keyword">BYTES </span>IN LENGTH]</code></pre><p>If you don&#39;t set this yourself, then the secret is not persisted between server restarts. This means
+					that LSATs generated before the restart are no longer valid <em>after</em> restart since the signing key
+				used to generate (and validate) macaroons will have changed.</p>
+				<a href="#what-is-an-lsat" id="what-is-an-lsat" style="color: inherit; text-decoration: none;">
+					<h2>What is an LSAT</h2>
+				</a>
+				<p>LSATs are a new authentication scheme first introduced by Lightning Labs CTO Olaoluwa Osuntokun. Slides from
+				the original presentation can be found <a href="https://docs.google.com/presentation/d/1QSm8tQs35-ZGf7a7a2pvFlSduH3mzvMgQaf-06Jjaow/edit#slide=id.p">here</a>.</p>
+				<p>The idea is to create a standardized specification format for dealing with <em>payment-based</em> authentication,
+					in contrast to the username/password (a.k.a. &quot;Basic Authentication&quot;) and token based (most commonly used in
+					OAuth constructions) authentication schemes in common use today. By combining a
+					cryptographically verifiable proof of payment from a lightning invoice with its corresponding
+					preimage and a <a href="http://hackingdistributed.com/2014/05/16/macaroons-are-better-than-cookies/">macaroon</a>,
+				the idea is that a new, flexible, and private authorization protocol can be developed.</p>
+				<p>Checkout <code>lsat-js</code> for a separate utility library available for manipulating, interacting
+				with, and validating LSATs. Available on npm: <a href="https://www.npmjs.com/package/lsat-js">https://www.npmjs.com/package/lsat-js</a></p>
+				<a href="#authentication-flow" id="authentication-flow" style="color: inherit; text-decoration: none;">
+					<h3>Authentication Flow</h3>
+				</a>
+				<p>There are three main stages to the authentication flow with LSATS:</p>
+				<ol>
+					<li><p>When a request is made to protected route, a <code>402 Payment Required</code> response is sent back.
+							This includes a <code>WWW-Authenticate</code> header with an LSAT. This is a base64-encoded &quot;challenge&quot;
+						that includes a macaroon (read more below to learn how these work) and an invoice.</p>
+					</li>
+					<li><p>The consumer of the API extracts and pays the invoice from the LSAT. After payment, a payment preimage
+						should be revealed that acts as a cryptographically verifiable proof of payment.</p>
+					</li>
+					<li><p>The consumer can now compose their LSAT using the preimage and the macaroon from the original challenge
+						and put it in the <code>Authorization</code> http header like so: <code>LSAT [macaroon]:[preimage]</code></p>
+					</li>
+				</ol>
+				<p>Since the payment hash associated with the paid invoice could <em>only</em> have been generated using the preimage
+					(also known as a &quot;secret&quot;) and that preimage would be impossible to guess and so could only have been retrieved
+				after paying the invoice, this serves as proof of payment and the server can verify that the request is authorized.</p>
 				<a href="#custom-authorization-w-macaroons" id="custom-authorization-w-macaroons" style="color: inherit; text-decoration: none;">
-					<h2>Custom Authorization w/ Macaroons</h2>
+					<h3>Custom Authorization w/ Macaroons</h3>
 				</a>
 				<p>Boltwall allows for flexible authorization schemes. Effectively, this means that a server
 					that is implementing Boltwall to protect content can dictate factors such as how long
@@ -209,29 +270,9 @@ app.listen(<span class="hljs-number">5000</span>, () =&gt; <span class="hljs-bui
 					is valid for 1 second for every satoshi paid in the invoice.
 				So if a user pays a 30 satoshi invoice, then access is allowed for 30 seconds.</p>
 				<p>The config object should be passed to <code>boltwall</code> on initialization. e.g. <code>app.use(boltwall(myConfig))</code>, where <code>myConfig</code> provides the relevant properties. Currently, the config supports
-				four properties: <code>caveatVerifier</code>(func), <code>getCaveat</code> (func), <code>getInvoiceDescription</code>, and <code>minAmount</code>.</p>
+				four properties: <code>getCaveats</code>(func), <code>caveatSatisfiers</code> (func), <code>getInvoiceDescription</code>, and <code>minAmount</code>.</p>
 				<p>More information on the configs can be found in the
 				<a href="https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html">API Documentation</a>.</p>
-				<a href="#3rd-party-caveats-and-discharge-macaroons" id="3rd-party-caveats-and-discharge-macaroons" style="color: inherit; text-decoration: none;">
-					<h2>3rd Party Caveats and Discharge Macaroons</h2>
-				</a>
-				<p>The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
-					in the section above covering the configurations, <code>boltwall</code>&#39;s API also enables authorization schemes with 3rd parties
-				or as a 3rd party.</p>
-				<p><strong>Think of it like running your own oAuth service.</strong></p>
-				<p>In the same way that Google&#39;s oAuth allows a 3rd party service to sign you in to their platform by verifying
-					your Google account, with Boltwall, your API can act like Google, where instead of verifying your account, the
-					service verifies payment. An example of how this can be implemented is in the <a href="https://prismreader.app">Prism Reader</a> app.
-					Prism Reader hosts documents provided by users. Authors of content can optionally require payment to view that content. Rather
-					than Prism acting as a custodian for the funds and issuing payouts, an author can run a boltwall instance, give Prism
-					the url of your API and a shared secret key (caveat key), and users will then <strong>only be able to read your content once <em>your
-				server</em> has acknowledged payment</strong>!</p>
-				<a href="#authentication-flow" id="authentication-flow" style="color: inherit; text-decoration: none;">
-					<h4>Authentication flow</h4>
-				</a>
-				<p>The below image should give an idea of the authentication flow between the boltwall api, a lightning node,
-					a 3rd party app requiring authorization, and the client paying for access.
-				<img src="https://raw.githubusercontent.com/Tierion/boltwall/master/boltwall-diagram.png" alt="boltwal architecture diagram" title="diagram"></p>
 				<a href="#pre-built-configs" id="pre-built-configs" style="color: inherit; text-decoration: none;">
 					<h3>Pre-built Configs</h3>
 				</a>
@@ -245,12 +286,19 @@ app.listen(<span class="hljs-number">5000</span>, () =&gt; <span class="hljs-bui
 app.use(boltwall(TIME_CAVEAT_CONFIGS))
 
 <span class="hljs-comment">// ... protected routes and any other server code</span></code></pre>
-				<a href="#time_caveat_configs" id="time_caveat_configs" style="color: inherit; text-decoration: none;">
-					<h4>TIME_CAVEAT_CONFIGS</h4>
+				<p>Since <code>getCaveats</code> and <code>caveatSatisfiers</code> can also accept an array of functions,
+				you can also combine configs to add multiple caveats and their corresponding satisfiers.</p>
+				<p>Currently Boltwall provides the following configs:</p>
+				<a href="#strongcodetime_caveat_configscodestrong" id="strongcodetime_caveat_configscodestrong" style="color: inherit; text-decoration: none;">
+					<h4><strong><code>TIME_CAVEAT_CONFIGS</code></strong></h4>
 				</a>
-				<p>Currently this is the only available pre-built config. It creates a restriction
-					that any authorization is only valid for a number of seconds equal to the number
-				of satoshis paid.</p>
+				<p>This creates a restriction that any authorization is only valid for a number of seconds
+				equal to the number of satoshis paid.</p>
+				<a href="#strongcodeorigin_caveat_configscodestrong" id="strongcodeorigin_caveat_configscodestrong" style="color: inherit; text-decoration: none;">
+					<h4><strong><code>ORIGIN_CAVEAT_CONFIGS</code></strong></h4>
+				</a>
+				<p>This creates a restriction that any authorization is only valid from the IP that originally
+				made the request for access.</p>
 				<a href="#hodl-invoices" id="hodl-invoices" style="color: inherit; text-decoration: none;">
 					<h2>HODL Invoices</h2>
 				</a>
@@ -269,71 +317,134 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 				<p>Boltwall includes basic support for creating and settling hodl invoices (cancelling
 					must be done directly by the owner of the node and is not exposed via the Boltwall
 				API at this time to avoid exposing potential <a href="https://en.wikipedia.org/wiki/Double-spending">double-spend</a>-like risks).</p>
-				<a href="#example-walk-thru" id="example-walk-thru" style="color: inherit; text-decoration: none;">
-					<h4>Example Walk-thru</h4>
+				<a href="#example-implementation-and-access-flow" id="example-implementation-and-access-flow" style="color: inherit; text-decoration: none;">
+					<h3>Example Implementation and Access Flow</h3>
 				</a>
+				<p>To enable a paywall that uses hodl invoices instead of normal invoices, simply initialize
+				the middleware with <code>hodl</code> set to true in the config:</p>
+				<pre><code class="language-js">app.use(<span class="hljs-function">(<span class="hljs-params">req, res, next</span>) =&gt;</span> {
+  <span class="hljs-keyword">if</span> (req.path === <span class="hljs-string">'protected'</span> &amp;&amp; !req.body.paymentHash) {
+    <span class="hljs-comment">// Note: you'll probably want to save the secret somehow</span>
+    <span class="hljs-comment">// otherwise the hodl invoice can't be redeemed</span>
+    <span class="hljs-keyword">const</span> secret = crypto.randomBytes(<span class="hljs-number">32</span>)
+    <span class="hljs-keyword">const</span> paymentHash = crypto
+        .createHash(<span class="hljs-string">'sha256'</span>)
+        .update(secret)
+        .digest()
+    req.body.paymentHash = paymentHash
+  }
+  next()
+})
+app.use(boltwall{ <span class="hljs-attr">hodl</span>: <span class="hljs-literal">true</span> })
+<span class="hljs-comment">// all routes after this will require payment to a hodl invoice</span>
+app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send(<span class="hljs-string">'This route is protected'</span>)) </code></pre>
 				<ol>
-					<li><code>POST /hodl</code> with a 256-bit <code>paymentHash</code> in the request body will return an invoice
-					locked to the preimage used to generate the hash.</li>
-					<li>Pay the invoice&#39;s payment request with another lightning node</li>
-					<li><code>GET /invoice?id=[PAYMENT_HASH]</code> should return information about the invoice. If
-					you paid the invoice it should return status <code>held</code>. If not it should return <code>unpaid</code>.</li>
-					<li><code>PUT /hodl</code> with the preimage used to generate the <code>paymentHash</code> from step 1 sent
-					in the request body: <code>{ secret: [PREIMAGE] }</code></li>
-					<li><code>GET /invoice?id=[PAYMENT_HASH]</code> to confirm that the invoice is <code>paid</code> and no longer
-					<code>held</code></li>
+					<li>The initial request for the route <em>requires</em> a paymentHash in the request body. This is
+						how a hodl invoice is created. The payment hash can either be provided by the client
+					or added in a middleware before <code>boltwall</code> is initialized (as in the example above).</li>
+					<li>Boltwall will return an LSAT challenge in the <code>WWW-Authenticate</code> header as normal</li>
+					<li>The client should pay the invoice. </li>
+					<li>Since this is a hodl invoice, the client won&#39;t get a <code>preimage</code> until the invoice settles.
+						How this is managed is up to the implementor and the architecture of the application. If the
+						server is storing the secret, or retrieving it by some other means (such as with split payments),
+					it can add it to the LSAT when it wants to invalidate <em>future</em> requests. </li>
+					<li>Once the invoice settles and has a status of <code>paid</code> (instead of <code>held</code>) the LSAT is considered
+					expired and future requests will be <code>Unauthorized</code></li>
 				</ol>
+				<a href="#generation" id="generation" style="color: inherit; text-decoration: none;">
+					<h3>Generation</h3>
+				</a>
 				<p>The source of the pre-image and payment hash can be whatever you want. One common
-				construction is for the pair to be tied to another invoice, which makes it so that the HODL invoice can&#39;t settle until another invoice settles and reveals its own preimage.</p>
+					construction is for the pair to be tied to another invoice, which makes it so that the HODL
+				invoice can&#39;t settle until another invoice settles and reveals its own preimage.</p>
+				<a href="#authorization-flows" id="authorization-flows" style="color: inherit; text-decoration: none;">
+					<h3>Authorization Flows</h3>
+				</a>
 				<p>All authorization mechanisms (i.e. via macaroons) are preserved when using HODL invoices.
-					The root macaroon is created and added to the session when creating the invoice as normal
-					and the discharge macaroon is attached to the session and returned when checking the
-					status of a <em>settled</em> HODL invoice. If time caveats are enabled, then this will timeout
-					based on the amount paid. Custom configurations can be devised and passed in to
-				boltwall upon initialization.</p>
-				<p>Note, when making the payment with your lightning client, it may look like the payment
+					The root macaroon is created and added to the LSAT when creating the invoice as normal.
+					If time caveats are enabled, then this will timeout based on the amount paid. Custom
+				configurations can be devised and passed in to boltwall upon initialization.</p>
+				<a href="#making-the-payment" id="making-the-payment" style="color: inherit; text-decoration: none;">
+					<h3>Making the Payment</h3>
+				</a>
+				<p>When making the payment with your lightning client, it may look like the payment
 					is stuck or is hanging. This is normal and is the result of a client having no way
-					to know that an invoice is normal or HODL so it is waiting for the invoice to settle.
-					This won&#39;t happen for a HODL invoice until you settle it with the preimage (via
-				<code>PUT /hodl</code> above).</p>
+					to know whether an invoice is normal or HODL so it is waiting for the invoice to settle.
+				This won&#39;t happen for a HODL invoice until you settle it with the preimage.</p>
 				<a href="#a-codeheldcode-invoice-is-a-paid-invoice" id="a-codeheldcode-invoice-is-a-paid-invoice" style="color: inherit; text-decoration: none;">
-					<h4>A <code>held</code> invoice is a paid invoice</h4>
+					<h3>A <code>held</code> Invoice is a Paid Invoice</h3>
 				</a>
 				<p>What this means is that the paywall considers the invoice paid and &quot;unlocks&quot;
 					the protected content, by providing the discharge macaroon even though your node
 				technically may not have settled the payment yet and so doesn&#39;t have access to the funds.</p>
-				<p>Since this is a middleware, <strong>it is up to the api implementer to process the payment</strong> if required
-					before moving on to any other routes. The reason for this is that how a hodl invoice
-				is settled is very application specific and so needs to be flexible.</p>
-				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
-					<h2>API Documentation</h2>
+				<p>Boltwall&#39;s default behavior for handling HODL LSAT requests is to settle an invoice when
+					the secret is provided in the LSAT <em>after</em> the request has been authorized. This means
+					that a request with the secret will be the <em>last</em> request for that LSAT since afterwards
+				it will be <code>paid</code> and therefore &quot;expired&quot;. </p>
+				<a href="#3rd-party-caveats-and-discharge-macaroons" id="3rd-party-caveats-and-discharge-macaroons" style="color: inherit; text-decoration: none;">
+					<h2>3rd Party Caveats and Discharge Macaroons</h2>
 				</a>
-				<a href="#custom-configs" id="custom-configs" style="color: inherit; text-decoration: none;">
-					<h4>Custom Configs</h4>
+				<p><strong>NOTE:</strong>
+					Boltwall&#39;s upgrade to support LSATs <em>deprecated</em> previous support for 3rd party caveats
+					and OAuth-like constructions. This will be re-introduced in a future release,
+					however the API will likely be different, including an improvement that will
+					remove the need for coordination between the root macaroon and discharge macaroon (lightning node)
+				issuers and the need for a <code>CAVEAT_KEY</code>.</p>
+				<p>To read more about the proposal for 3rd party caveats in LSATs,
+					see <a href="https://github.com/lightningnetwork/lnd/issues/288#issuecomment-559896636">this comment</a>
+					on a pending issue in lnd. The ideas laid out below will still mostly apply and are a huge
+				part of the value add of LSATs and macaroons more generally for an ecosystem of self-sovereign paywalls.</p>
+				<p><em><strong>** API DEPRECATED **</strong></em></p>
+				<p>The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
+					in the section above covering the configurations, <code>boltwall</code>&#39;s API also enables authorization schemes
+				with 3rd parties or as a 3rd party itself.</p>
+				<p><strong>Think of it like running your own oAuth service.</strong></p>
+				<p>In the same way that Google&#39;s oAuth allows a 3rd party service to sign you in to their platform by verifying
+					your Google account, with Boltwall, your API can act like Google, where instead of verifying your account, the
+					service verifies payment. An example of how this can be implemented is in the <a href="https://prismreader.app">Prism Reader</a> app.
+					Prism Reader hosts documents provided by users. Authors of content can optionally require payment to view that content. Rather
+					than Prism acting as a custodian for the funds and issuing payouts, an author can run a boltwall instance, give Prism
+					the url of your API and a shared secret key (caveat key), and users will then <strong>only be able to read your content once <em>your
+				server</em> has acknowledged payment</strong>!</p>
+				<a href="#authentication-flow-1" id="authentication-flow-1" style="color: inherit; text-decoration: none;">
+					<h4>Authentication flow</h4>
 				</a>
-				<p>Boltwall also supports custom configs. The properties that can be passed to boltwall are:</p>
-				<ul>
-					<li>getCaveat (function)</li>
-					<li>caveatVerifier (function)</li>
-					<li>getInvoiceDescription (function)</li>
-					<li>minAmount (number)</li>
-				</ul>
-				<p>More indepth documentation for these properties can be found in the <a href="https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html">docs</a></p>
+				<p>The below image should give an idea of the authentication flow between the boltwall api, a lightning node,
+					a 3rd party app requiring authorization, and the client paying for access.
+				<img src="https://raw.githubusercontent.com/Tierion/boltwall/master/boltwall-diagram.png" alt="boltwal architecture diagram" title="diagram"></p>
 				<a href="#documentation" id="documentation" style="color: inherit; text-decoration: none;">
 					<h2>Documentation</h2>
 				</a>
+				<a href="#custom-configs-amp-caveats" id="custom-configs-amp-caveats" style="color: inherit; text-decoration: none;">
+					<h3>Custom Configs &amp; Caveats</h3>
+				</a>
+				<p>Boltwall supports custom configurations that can be set on initialization.
+					One important part of this is the ability to create custom macaroon caveats and the satisfiers
+					your server will use to evaluate their validity. The <code>TIME</code> and <code>ORIGIN</code> configs described above
+					are just two examples of these. Note that each caveat must have a corresponding satisfier
+				in order for a macaroon to validate. </p>
+				<p>The properties that can be passed (none are required) to the boltwall config object are:</p>
+				<ul>
+					<li><code>getCaveats</code>: function or array of functions to generate caveats attached to LSAT macaroons</li>
+					<li><code>caveatSatisfiers</code>- (required if getCaveats is set) Satisfier object or array of Satisfiers
+						(see full documentation for more details on writing your own satisfiers) for evaluating
+					caveats on a macaroon.</li>
+					<li><code>getInvoiceDescription</code> - an optional function that returns a string to be used in the invoice description</li>
+					<li><code>minAmount</code> - minimum amount to create invoices with if none is passed in request body</li>
+					<li><code>hodl</code>- (optional, false by default) boolean, true to enable a hodl paywall.</li>
+				</ul>
+				<p>More indepth documentation for these properties can be found in the <a href="https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html">docs</a></p>
 				<a href="#rest-api" id="rest-api" style="color: inherit; text-decoration: none;">
 					<h3>REST API</h3>
 				</a>
 				<p>Check out the Swagger Docs for detailed API information. This details what to expect
 				at the various routes provided for by <code>Boltwall</code>.</p>
-				<a href="#a-hrefhttpsappswaggerhubcomapis-docsprism8boltwall100rest-apia" id="a-hrefhttpsappswaggerhubcomapis-docsprism8boltwall100rest-apia" style="color: inherit; text-decoration: none;">
-					<h4><a href="https://app.swaggerhub.com/apis-docs/prism8/boltwall/1.0.0">REST API</a></h4>
+				<p><strong><a href="https://app.swaggerhub.com/apis-docs/boltwall/boltwall/2.0.0-beta-oas3">REST API</a></strong></p>
+				<a href="#full-api-documentation" id="full-api-documentation" style="color: inherit; text-decoration: none;">
+					<h3>Full API Documentation</h3>
 				</a>
-				<a href="#api-documentation-1" id="api-documentation-1" style="color: inherit; text-decoration: none;">
-					<h3>API Documentation</h3>
-				</a>
-				<p>API documentation, with details on the code and API can be found at the <a href="https://Tierion.github.io/boltwall/">documentation website</a>.</p>
+				<p>API documentation, with details on the code, API, and Typescript definitions
+				can be found at the <a href="https://Tierion.github.io/boltwall/">documentation website</a>.</p>
 			</div>
 		</div>
 		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
@@ -346,340 +457,391 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 						<span>Internals</span>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_configs_.html">"src/configs"</a>
+						<a href="modules/_src_configs_index_.html">&quot;src/configs/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_helpers_.html">"src/helpers"</a>
+						<a href="modules/_src_configs_origin_.html">&quot;src/configs/origin&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_index_.html">"src/index"</a>
+						<a href="modules/_src_configs_satisfiers_.html">&quot;src/configs/satisfiers&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_boltwall_.html">"src/routes/boltwall"</a>
+						<a href="modules/_src_configs_time_.html">&quot;src/configs/time&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_hodl_.html">"src/routes/hodl"</a>
+						<a href="modules/_src_helpers_.html">&quot;src/helpers&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_index_.html">"src/routes/index"</a>
+						<a href="modules/_src_index_.html">&quot;src/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_invoice_.html">"src/routes/invoice"</a>
+						<a href="modules/_src_routes_index_.html">&quot;src/routes/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_node_.html">"src/routes/node"</a>
+						<a href="modules/_src_routes_invoice_.html">&quot;src/routes/invoice&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_parseenv_.html">"src/routes/parse<wbr>Env"</a>
+						<a href="modules/_src_routes_node_.html">&quot;src/routes/node&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_server_.html">"src/server"</a>
+						<a href="modules/_src_routes_parseenv_.html">&quot;src/routes/parse<wbr>Env&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_configs_d_.html">"src/typings/configs.d"</a>
+						<a href="modules/_src_routes_paywall_.html">&quot;src/routes/paywall&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_index_.html">"src/typings/index"</a>
+						<a href="modules/_src_routes_validate_.html">&quot;src/routes/validate&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_invoice_d_.html">"src/typings/invoice.d"</a>
+						<a href="modules/_src_server_.html">&quot;src/server&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_modules_d_.html">"src/typings/modules.d"</a>
+						<a href="modules/_src_typings_configs_d_.html">&quot;src/typings/configs.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_node_d_.html">"src/typings/node.d"</a>
+						<a href="modules/_src_typings_index_.html">&quot;src/typings/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_request_d_.html">"src/typings/request.d"</a>
+						<a href="modules/_src_typings_invoice_d_.html">&quot;src/typings/invoice.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_logger_d_.html">&quot;src/typings/logger.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_modules_d_.html">&quot;src/typings/modules.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_node_d_.html">&quot;src/typings/node.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_src_typings_request_d_.html">&quot;src/typings/request.d&quot;</a>
 					</li>
 					<li class="label tsd-is-external">
 						<span>Externals</span>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_body_parser_index_d_.html">"node_<wbr>modules/@types/body-<wbr>parser/index.d"</a>
+						<a href="modules/_node_modules__types_body_parser_index_d_.html">&quot;node_<wbr>modules/@types/body-<wbr>parser/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_bytebuffer_index_d_.html">"node_<wbr>modules/@types/bytebuffer/index.d"</a>
+						<a href="modules/_node_modules__types_bytebuffer_index_d_.html">&quot;node_<wbr>modules/@types/bytebuffer/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_connect_index_d_.html">"node_<wbr>modules/@types/connect/index.d"</a>
+						<a href="modules/_node_modules__types_chai_index_d_.html">&quot;node_<wbr>modules/@types/chai/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_cookie_session_index_d_.html">"node_<wbr>modules/@types/cookie-<wbr>session/index.d"</a>
+						<a href="modules/_node_modules__types_connect_index_d_.html">&quot;node_<wbr>modules/@types/connect/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_cookie_session_node_modules__types_express_index_d_.html">"node_<wbr>modules/@types/cookie-<wbr>session/node_<wbr>modules/@types/express/index.d"</a>
+						<a href="modules/_node_modules__types_cookiejar_index_d_.html">&quot;node_<wbr>modules/@types/cookiejar/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_cors_index_d_.html">"node_<wbr>modules/@types/cors/index.d"</a>
+						<a href="modules/_node_modules__types_cors_index_d_.html">&quot;node_<wbr>modules/@types/cors/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_cors_node_modules__types_express_index_d_.html">"node_<wbr>modules/@types/cors/node_<wbr>modules/@types/express/index.d"</a>
+						<a href="modules/_node_modules__types_cors_node_modules__types_express_index_d_.html">&quot;node_<wbr>modules/@types/cors/node_<wbr>modules/@types/express/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_debug_index_d_.html">"node_<wbr>modules/@types/debug/index.d"</a>
+						<a href="modules/_node_modules__types_debug_index_d_.html">&quot;node_<wbr>modules/@types/debug/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_dotenv_index_d_.html">"node_<wbr>modules/@types/dotenv/index.d"</a>
+						<a href="modules/_node_modules__types_dotenv_index_d_.html">&quot;node_<wbr>modules/@types/dotenv/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_eslint_visitor_keys_index_d_.html">"node_<wbr>modules/@types/eslint-<wbr>visitor-<wbr>keys/index.d"</a>
+						<a href="modules/_node_modules__types_eslint_visitor_keys_index_d_.html">&quot;node_<wbr>modules/@types/eslint-<wbr>visitor-<wbr>keys/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_express_serve_static_core_index_d_.html">"node_<wbr>modules/@types/express-<wbr>serve-<wbr>static-<wbr>core/index.d"</a>
+						<a href="modules/_node_modules__types_express_serve_static_core_index_d_.html">&quot;node_<wbr>modules/@types/express-<wbr>serve-<wbr>static-<wbr>core/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_express_index_d_.html">"node_<wbr>modules/@types/express/index.d"</a>
+						<a href="modules/_node_modules__types_express_index_d_.html">&quot;node_<wbr>modules/@types/express/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_json_schema_index_d_.html">"node_<wbr>modules/@types/json-<wbr>schema/index.d"</a>
+						<a href="modules/_node_modules__types_json_schema_index_d_.html">&quot;node_<wbr>modules/@types/json-<wbr>schema/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_keygrip_index_d_.html">"node_<wbr>modules/@types/keygrip/index.d"</a>
+						<a href="modules/_node_modules__types_json5_index_d_.html">&quot;node_<wbr>modules/@types/json5/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_long_index_d_.html">"node_<wbr>modules/@types/long/index.d"</a>
+						<a href="modules/_node_modules__types_long_index_d_.html">&quot;node_<wbr>modules/@types/long/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_mime_index_d_.html">"node_<wbr>modules/@types/mime/index.d"</a>
+						<a href="modules/_node_modules__types_mime_index_d_.html">&quot;node_<wbr>modules/@types/mime/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_minimatch_index_d_.html">"node_<wbr>modules/@types/minimatch/index.d"</a>
+						<a href="modules/_node_modules__types_minimatch_index_d_.html">&quot;node_<wbr>modules/@types/minimatch/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_assert_d_.html">"node_<wbr>modules/@types/node/assert.d"</a>
+						<a href="modules/_node_modules__types_mocha_index_d_.html">&quot;node_<wbr>modules/@types/mocha/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_async_hooks_d_.html">"node_<wbr>modules/@types/node/async_<wbr>hooks.d"</a>
+						<a href="modules/_node_modules__types_node_assert_d_.html">&quot;node_<wbr>modules/@types/node/assert.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_base_d_.html">"node_<wbr>modules/@types/node/base.d"</a>
+						<a href="modules/_node_modules__types_node_async_hooks_d_.html">&quot;node_<wbr>modules/@types/node/async_<wbr>hooks.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_buffer_d_.html">"node_<wbr>modules/@types/node/buffer.d"</a>
+						<a href="modules/_node_modules__types_node_base_d_.html">&quot;node_<wbr>modules/@types/node/base.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_child_process_d_.html">"node_<wbr>modules/@types/node/child_<wbr>process.d"</a>
+						<a href="modules/_node_modules__types_node_buffer_d_.html">&quot;node_<wbr>modules/@types/node/buffer.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_cluster_d_.html">"node_<wbr>modules/@types/node/cluster.d"</a>
+						<a href="modules/_node_modules__types_node_child_process_d_.html">&quot;node_<wbr>modules/@types/node/child_<wbr>process.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_console_d_.html">"node_<wbr>modules/@types/node/console.d"</a>
+						<a href="modules/_node_modules__types_node_cluster_d_.html">&quot;node_<wbr>modules/@types/node/cluster.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_constants_d_.html">"node_<wbr>modules/@types/node/constants.d"</a>
+						<a href="modules/_node_modules__types_node_console_d_.html">&quot;node_<wbr>modules/@types/node/console.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_crypto_d_.html">"node_<wbr>modules/@types/node/crypto.d"</a>
+						<a href="modules/_node_modules__types_node_constants_d_.html">&quot;node_<wbr>modules/@types/node/constants.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_dgram_d_.html">"node_<wbr>modules/@types/node/dgram.d"</a>
+						<a href="modules/_node_modules__types_node_crypto_d_.html">&quot;node_<wbr>modules/@types/node/crypto.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_dns_d_.html">"node_<wbr>modules/@types/node/dns.d"</a>
+						<a href="modules/_node_modules__types_node_dgram_d_.html">&quot;node_<wbr>modules/@types/node/dgram.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_domain_d_.html">"node_<wbr>modules/@types/node/domain.d"</a>
+						<a href="modules/_node_modules__types_node_dns_d_.html">&quot;node_<wbr>modules/@types/node/dns.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_events_d_.html">"node_<wbr>modules/@types/node/events.d"</a>
+						<a href="modules/_node_modules__types_node_domain_d_.html">&quot;node_<wbr>modules/@types/node/domain.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_fs_d_.html">"node_<wbr>modules/@types/node/fs.d"</a>
+						<a href="modules/_node_modules__types_node_events_d_.html">&quot;node_<wbr>modules/@types/node/events.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_globals_d_.html">"node_<wbr>modules/@types/node/globals.d"</a>
+						<a href="modules/_node_modules__types_node_fs_d_.html">&quot;node_<wbr>modules/@types/node/fs.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_http_d_.html">"node_<wbr>modules/@types/node/http.d"</a>
+						<a href="modules/_node_modules__types_node_globals_d_.html">&quot;node_<wbr>modules/@types/node/globals.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_http2_d_.html">"node_<wbr>modules/@types/node/http2.d"</a>
+						<a href="modules/_node_modules__types_node_http_d_.html">&quot;node_<wbr>modules/@types/node/http.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_https_d_.html">"node_<wbr>modules/@types/node/https.d"</a>
+						<a href="modules/_node_modules__types_node_http2_d_.html">&quot;node_<wbr>modules/@types/node/http2.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_inspector_d_.html">"node_<wbr>modules/@types/node/inspector.d"</a>
+						<a href="modules/_node_modules__types_node_https_d_.html">&quot;node_<wbr>modules/@types/node/https.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_module_d_.html">"node_<wbr>modules/@types/node/module.d"</a>
+						<a href="modules/_node_modules__types_node_inspector_d_.html">&quot;node_<wbr>modules/@types/node/inspector.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_net_d_.html">"node_<wbr>modules/@types/node/net.d"</a>
+						<a href="modules/_node_modules__types_node_module_d_.html">&quot;node_<wbr>modules/@types/node/module.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_os_d_.html">"node_<wbr>modules/@types/node/os.d"</a>
+						<a href="modules/_node_modules__types_node_net_d_.html">&quot;node_<wbr>modules/@types/node/net.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_path_d_.html">"node_<wbr>modules/@types/node/path.d"</a>
+						<a href="modules/_node_modules__types_node_os_d_.html">&quot;node_<wbr>modules/@types/node/os.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_perf_hooks_d_.html">"node_<wbr>modules/@types/node/perf_<wbr>hooks.d"</a>
+						<a href="modules/_node_modules__types_node_path_d_.html">&quot;node_<wbr>modules/@types/node/path.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_process_d_.html">"node_<wbr>modules/@types/node/process.d"</a>
+						<a href="modules/_node_modules__types_node_perf_hooks_d_.html">&quot;node_<wbr>modules/@types/node/perf_<wbr>hooks.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_punycode_d_.html">"node_<wbr>modules/@types/node/punycode.d"</a>
+						<a href="modules/_node_modules__types_node_process_d_.html">&quot;node_<wbr>modules/@types/node/process.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_querystring_d_.html">"node_<wbr>modules/@types/node/querystring.d"</a>
+						<a href="modules/_node_modules__types_node_punycode_d_.html">&quot;node_<wbr>modules/@types/node/punycode.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_readline_d_.html">"node_<wbr>modules/@types/node/readline.d"</a>
+						<a href="modules/_node_modules__types_node_querystring_d_.html">&quot;node_<wbr>modules/@types/node/querystring.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_repl_d_.html">"node_<wbr>modules/@types/node/repl.d"</a>
+						<a href="modules/_node_modules__types_node_readline_d_.html">&quot;node_<wbr>modules/@types/node/readline.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_stream_d_.html">"node_<wbr>modules/@types/node/stream.d"</a>
+						<a href="modules/_node_modules__types_node_repl_d_.html">&quot;node_<wbr>modules/@types/node/repl.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_string_decoder_d_.html">"node_<wbr>modules/@types/node/string_<wbr>decoder.d"</a>
+						<a href="modules/_node_modules__types_node_stream_d_.html">&quot;node_<wbr>modules/@types/node/stream.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_timers_d_.html">"node_<wbr>modules/@types/node/timers.d"</a>
+						<a href="modules/_node_modules__types_node_string_decoder_d_.html">&quot;node_<wbr>modules/@types/node/string_<wbr>decoder.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_tls_d_.html">"node_<wbr>modules/@types/node/tls.d"</a>
+						<a href="modules/_node_modules__types_node_timers_d_.html">&quot;node_<wbr>modules/@types/node/timers.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_trace_events_d_.html">"node_<wbr>modules/@types/node/trace_<wbr>events.d"</a>
+						<a href="modules/_node_modules__types_node_tls_d_.html">&quot;node_<wbr>modules/@types/node/tls.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_fs_d_.html">"node_<wbr>modules/@types/node/ts3.2/fs.d"</a>
+						<a href="modules/_node_modules__types_node_trace_events_d_.html">&quot;node_<wbr>modules/@types/node/trace_<wbr>events.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_globals_d_.html">"node_<wbr>modules/@types/node/ts3.2/globals.d"</a>
+						<a href="modules/_node_modules__types_node_ts3_2_fs_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/fs.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_index_d_.html">"node_<wbr>modules/@types/node/ts3.2/index.d"</a>
+						<a href="modules/_node_modules__types_node_ts3_2_globals_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/globals.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_util_d_.html">"node_<wbr>modules/@types/node/ts3.2/util.d"</a>
+						<a href="modules/_node_modules__types_node_ts3_2_index_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_tty_d_.html">"node_<wbr>modules/@types/node/tty.d"</a>
+						<a href="modules/_node_modules__types_node_ts3_2_util_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/util.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_url_d_.html">"node_<wbr>modules/@types/node/url.d"</a>
+						<a href="modules/_node_modules__types_node_tty_d_.html">&quot;node_<wbr>modules/@types/node/tty.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_util_d_.html">"node_<wbr>modules/@types/node/util.d"</a>
+						<a href="modules/_node_modules__types_node_url_d_.html">&quot;node_<wbr>modules/@types/node/url.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_v8_d_.html">"node_<wbr>modules/@types/node/v8.d"</a>
+						<a href="modules/_node_modules__types_node_util_d_.html">&quot;node_<wbr>modules/@types/node/util.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_vm_d_.html">"node_<wbr>modules/@types/node/vm.d"</a>
+						<a href="modules/_node_modules__types_node_v8_d_.html">&quot;node_<wbr>modules/@types/node/v8.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_worker_threads_d_.html">"node_<wbr>modules/@types/node/worker_<wbr>threads.d"</a>
+						<a href="modules/_node_modules__types_node_vm_d_.html">&quot;node_<wbr>modules/@types/node/vm.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_zlib_d_.html">"node_<wbr>modules/@types/node/zlib.d"</a>
+						<a href="modules/_node_modules__types_node_worker_threads_d_.html">&quot;node_<wbr>modules/@types/node/worker_<wbr>threads.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_range_parser_index_d_.html">"node_<wbr>modules/@types/range-<wbr>parser/index.d"</a>
+						<a href="modules/_node_modules__types_node_zlib_d_.html">&quot;node_<wbr>modules/@types/node/zlib.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_serve_static_index_d_.html">"node_<wbr>modules/@types/serve-<wbr>static/index.d"</a>
+						<a href="modules/_node_modules__types_range_parser_index_d_.html">&quot;node_<wbr>modules/@types/range-<wbr>parser/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_compose_middleware_lib_index_d_.html">"node_<wbr>modules/compose-<wbr>middleware/lib/index.d"</a>
+						<a href="modules/_node_modules__types_serve_static_index_d_.html">&quot;node_<wbr>modules/@types/serve-<wbr>static/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_compose_middleware_node_modules_array_flatten_array_flatten_d_.html">"node_<wbr>modules/compose-<wbr>middleware/node_<wbr>modules/array-<wbr>flatten/array-<wbr>flatten.d"</a>
+						<a href="modules/_node_modules__types_sinon_ts3_1_index_d_.html">&quot;node_<wbr>modules/@types/sinon/ts3.1/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_macaroons_js_lib_caveatpacket_d_.html">"node_<wbr>modules/macaroons.js/lib/<wbr>Caveat<wbr>Packet.d"</a>
+						<a href="modules/_node_modules__types_superagent_index_d_.html">&quot;node_<wbr>modules/@types/superagent/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_macaroons_js_lib_caveatpackettype_d_.html">"node_<wbr>modules/macaroons.js/lib/<wbr>Caveat<wbr>Packet<wbr>Type.d"</a>
+						<a href="modules/_node_modules__types_supertest_index_d_.html">&quot;node_<wbr>modules/@types/supertest/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_macaroons_js_lib_macaroon_d_.html">"node_<wbr>modules/macaroons.js/lib/<wbr>Macaroon.d"</a>
+						<a href="modules/_node_modules__types_uuid_index_d_.html">&quot;node_<wbr>modules/@types/uuid/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_collection_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.collection.d"</a>
+						<a href="modules/_node_modules__types_uuid_interfaces_d_.html">&quot;node_<wbr>modules/@types/uuid/interfaces.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_core_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.core.d"</a>
+						<a href="modules/_node_modules_compose_middleware_lib_index_d_.html">&quot;node_<wbr>modules/compose-<wbr>middleware/lib/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.d"</a>
+						<a href="modules/_node_modules_compose_middleware_node_modules_array_flatten_array_flatten_d_.html">&quot;node_<wbr>modules/compose-<wbr>middleware/node_<wbr>modules/array-<wbr>flatten/array-<wbr>flatten.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_generator_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.generator.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_caveat_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/caveat.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_iterable_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.iterable.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_identifier_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/identifier.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_promise_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.promise.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_index_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_proxy_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.proxy.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_lsat_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/lsat.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_reflect_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.reflect.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_types_index_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.symbol.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_types_lsat_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/lsat.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_wellknown_d_.html">"node_<wbr>modules/typescript/lib/lib.es2015.symbol.wellknown.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_types_macaroons_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/macaroons.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2016_array_include_d_.html">"node_<wbr>modules/typescript/lib/lib.es2016.array.include.d"</a>
+						<a href="modules/_node_modules_lsat_js_dist_types_satisfier_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/satisfier.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2016_d_.html">"node_<wbr>modules/typescript/lib/lib.es2016.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_dom_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.dom.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_collection_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.collection.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_intl_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.intl.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_core_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.core.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_object_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.object.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_sharedmemory_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.sharedmemory.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_generator_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.generator.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_string_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.string.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_iterable_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.iterable.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_typedarrays_d_.html">"node_<wbr>modules/typescript/lib/lib.es2017.typedarrays.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_promise_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.promise.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_asynciterable_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.asynciterable.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_proxy_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.proxy.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_reflect_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.reflect.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_intl_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.intl.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.symbol.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_promise_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.promise.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_wellknown_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.symbol.wellknown.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_regexp_d_.html">"node_<wbr>modules/typescript/lib/lib.es2018.regexp.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2016_array_include_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2016.array.include.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es5_d_.html">"node_<wbr>modules/typescript/lib/lib.es5.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2016_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2016.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_esnext_bigint_d_.html">"node_<wbr>modules/typescript/lib/lib.esnext.bigint.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_esnext_intl_d_.html">"node_<wbr>modules/typescript/lib/lib.esnext.intl.d"</a>
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_intl_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.intl.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_object_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.object.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_sharedmemory_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.sharedmemory.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_string_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.string.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2017_typedarrays_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.typedarrays.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_asyncgenerator_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.asyncgenerator.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_asynciterable_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.asynciterable.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_intl_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.intl.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_promise_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.promise.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es2018_regexp_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.regexp.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_es5_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es5.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_esnext_bigint_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.esnext.bigint.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_node_modules_typescript_lib_lib_esnext_intl_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.esnext.intl.d&quot;</a>
 					</li>
 				</ul>
 			</nav>
