@@ -1,9 +1,4 @@
-/**
- * @file An example server entry point that implements Boltwall for protected content
- * Developers can use this as a boilerplate for using Boltwall in their own application
- */
-
-import express from 'express'
+import express, { Response, Request, NextFunction } from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
 
@@ -18,8 +13,14 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  // eslint-disable-next-line no-console
+  console.log(`${req.method} ${req.path}`)
+  next()
+})
+
 // This route is before the boltwall and will not require payment
-app.get('/', (_req: any, res: express.Response) => {
+app.get('/', (_req, res: express.Response) => {
   res.json({ message: 'success!' })
   return
 })
@@ -41,12 +42,17 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 Any middleware our route passed after this point will be protected and require
 payment
 ******/
-
-app.get('/protected', (_req, res: express.Response) =>
+export const protectedRoute = '/protected'
+app.get(protectedRoute, (_req, res: express.Response) =>
   res.json({
     message:
       'Protected route! This message will only be returned if an invoice has been paid',
   })
 )
-const port = process.env.PORT || 5000
-app.listen(port, () => console.log(`listening on port ${port}!`))
+
+app.set('port', process.env.PORT || 5000)
+
+app.listen(app.get('port'), () => {
+  //eslint-disable-next-line
+  console.log(`listening on port ${app.get('port')}!`)
+})

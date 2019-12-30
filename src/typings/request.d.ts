@@ -1,22 +1,15 @@
-import { Request } from 'express'
-import { BoltwallConfig } from '.'
-
-export interface LndRequest extends Request {
-  lnd?: any
-  opennode?: any
-  hostname: string
-  boltwallConfig?: BoltwallConfig
-}
-
 /**
- * @description This describes the body for a request to create an invoice.
- * It includes optional paymentHash prop needed for hodl invoices
+ * @description Extends express's Request object to include
+ * custom objects used in boltwall such as a config, logger,
+ * and authenticated lnd object
  */
-export interface InvoiceBody {
-  time?: string
-  amount?: string | number
-  expiresAt?: string
-  description?: string
-  paymentHash?: string
-  cltvDelta?: string | number
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare namespace Express {
+  export interface Request {
+    logger: import('./logger').LoggerInterface
+    boltwallConfig?: import('./configs').BoltwallConfig
+    lnd?: any
+    opennode?: any
+    hostname: string
+  }
 }

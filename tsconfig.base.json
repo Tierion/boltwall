@@ -3,7 +3,6 @@
     "target": "es6",
     "module": "commonjs",
     "lib": ["es2017"],
-    "outDir": "dist",
     "strict": true,
     "baseUrl": ".",
     "esModuleInterop": true,
@@ -12,6 +11,5 @@
     "noUnusedParameters": true,
     "noUnusedLocals": true,
     "allowJs": true
-  },
-  "exclude": ["./src/server.ts"]
+  }
 }

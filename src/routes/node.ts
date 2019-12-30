@@ -1,18 +1,19 @@
-import express, { Response, Router, NextFunction } from 'express'
-const lnService = require('ln-service')
+import express, { Response, Request, Router, NextFunction } from 'express'
+import lnService from 'ln-service'
 
-import { LndRequest, NodeInfo } from '../typings'
+import { NodeInfo } from '../typings'
 
 const router: Router = express.Router()
 
 /**
- * Retrieve relevant connection info about lightning node
- * @param {LndRequest} req - expressjs request object decorated for middleware
+ * ## Route GET /node
+ * @description Retrieve relevant connection info about lightning node
+ * @param {Request} req - expressjs request object decorated for middleware
  * @param {Response} res - expressjs response object
  * @returns {Promise<NodeInfo>} returns an express response with the node information
  */
-const getNodeInfo = async (
-  req: LndRequest,
+export const getNodeInfo = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> => {
@@ -54,7 +55,7 @@ const getNodeInfo = async (
     res.status(200)
     return res.json(nodeInfo)
   } catch (e) {
-    console.error('Problem connecting to node:', e)
+    req.logger.error('Problem connecting to node:', e)
     res.status(500)
     return next({
       message: 'Problem connecting to lightning node provider.',

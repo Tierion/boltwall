@@ -1,0 +1,290 @@
+openapi: 3.0.2
+info:
+  title: Boltwall API
+  description:
+    API Documentation for Boltwall - A middleware to enable self-sovereign
+    paywalls for the new internet
+  contact:
+    email: buck@tierion.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  version: 2.0.0-beta-oas3
+externalDocs:
+  url: https://tierion.github.io/boltwall/
+servers:
+  - url: https://tierion-boltwall.tierion.now.sh/
+paths:
+  /api/node:
+    get:
+      summary: get information about the node
+      description: |
+        Get information about the lightning node that is receiving payments. This is useful to get p2p level information, e.g. to create a direct channel with the node.
+      operationId: getNodeInfo
+      responses:
+        "200":
+          description: Useful information about the node.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeInfo"
+  /api/invoice:
+    get:
+      summary: get status of a given invoice based on request LSAT
+      description: |
+        Given an LSAT and invoice id, get the status of an invoice (i.e. is it paid or not)
+      operationId: getInvoice
+      parameters:
+        - name: id
+          in: header
+          description: |
+            Hex encoded string of invoice id. Can be optional if request has a cookie that contains a root macaroon attached which should include data referencing an invoice id.
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Status of invoice and payreq string for reference
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceResponse"
+        "400":
+          description: Missing invoice id, problem getting invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "401":
+          description: Request sent with an invalid LSAT
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "404":
+          description: Invoice with given ID does not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+    post:
+      summary: generate a new lightning invoice
+      description: |
+        Given a set of metadata and a price, generate a new lightning invoice for sending a payment to.
+      operationId: generateInvoice
+      requestBody:
+        description: creates a new invoice in our lightning node
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/body"
+      responses:
+        "200":
+          description: A valid Invoice Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceResponse"
+        "400":
+          description: error creating the invoice against a lightning node
+  /[protected]:
+    get:
+      summary: protected path (applies to all method verbs- GET/PUT/POST/DELETE)
+      security:
+        - http: [LSAT]
+      description: |
+        A middleware that checks for a valid authorizing LSAT on all requests. Any middleware or router that comes _after_ boltwall will have this check performed on it. 
+        Invoice information will be contained in the LSAT WWW-Authenticate header. When an invoice is paid, a valid LSAT can usually
+        be constructed (depending on if there are other caveats on the macaroon)
+
+        **NOTE: The invoice can be paid by anyone from any node**. While authorization itself is tied to the specific session, payment is not. This allows for _accountless_ authorization.
+      responses:
+        "200":
+          description:
+            This is just a dummy response. In reality it depends on whatever
+            endpoints the developer is protecting.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/inline_response_200"
+        "400":
+          description: Problem checking authorization in macaroon or checking invoice
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "401":
+          description:
+            Provided LSAT is unauthorized for access e.g. due to expiration
+            or caveat validation error
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/UnauthorizedError"
+        "402":
+          description: |
+            Payment required. Request has not been authorized with payment yet. Sent when a authorization is missing or somehow invalid.
+          headers:
+            X-WWW-Authenticate:
+              schema:
+                $ref: "#/components/schemas/LSAT-Challenge"
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/PaymentRequiredError"
+        "500":
+          description: Server side error
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+components:
+  securitySchemes:
+    LSAT:
+      type: http
+      scheme: bearer
+      bearerFormat: "LSAT macaroon:secret"
+      description: "LSAT Authorization header which requires prefix 'LSAT' followed by base64 encoded macaroon and the
+       proof of payment (invoice preimage), separated by a colon"
+      x-lsat:
+        $ref: "#/components/schemas/LSAT"
+  schemas:
+    LSAT-Challenge:
+      type: string
+      format: base64
+      description: "The challenge issued by boltwall with a 402 Response in a WWW-Authenticate header, base64 encoded 
+      with macaroon and invoice to be paid"
+      example: "LSAT bWFjYXJvb249TURBeE4yeHZZMkYwYVc5dUlERXlOeTR3TGpBdU1Rb3dNRGswYVdSbGJuUnBabWxsY2lBd01EQXdOMk5sWmpre
+      lpqSmpOVEZoWVRZMU1qQTRZbVZqTVRRME4yWmpNemhtWXpVNFpEbGlZMlV4TXpjMVlUVXpNbVZrWWpCa1kyUXlPVEJoTW1Nek16QmhaVE5pWVdJM
+      E1qRmhZVFV4TW1ZNVpHVXdPV1kzTmpObU1XUTNOVEZoTnpJNFlqbGhPVGt5TlRjeE1UZGtNV0U1WVRjMllXWTVaRGszWmpVek9Ea3pNRFVLTURBe
+      VpuTnBaMjVoZEhWeVpTQlVkd0hXTGxkbXVZMnlLYldjektQOFRxVVg3Yk1TNDN4UXU0enF6UFNBLWdvLCBpbnZvaWNlPWxudGIxMHUxcHc3a2ZtO
+      HBwNTBuaGU4dWs5cjJuOXl6OTdjOXo4bHN1MGNreGVobnNud2tqbjltZHNtbmZmcGdrcnh6aHFkcTV3M2poeGFwcWQ5aDh2bW1mdmRqc2NxenBnb
+      GxxMnF2ZGxna2xsYzI3a3BkODdsejhwZGZzZm10dGV5YzNrd3E3MzRqcHdudnF0OTZlNG51eTB5YXV6ZHJ0a3VteHN2YXdnZGE4ZGxsanh1M25ua
+      mxoczZ3NzUzOTB3eTd1a2o2Y3BmbXlnYWg="
+    LSAT:
+      type: string
+      format: base64
+      description: "Base64 encoded LSAT token, prefixed with the type (LSAT) and a macaroon and optional secret, separated with a colon"
+      example:
+        "LSAT MDAxNmxvY2F0aW9uIGxvY2F0aW9uCjAwOTRpZGVudGlmaWVyIDAwMDA3Y2VmOTNmMmM1MWFhNjUyMDhiZWMxNDQ3ZmMzOGZjNThkOWJjZTEzNzVhNTMyZWRiMGRjZDI5MGEyYz
+        MzMGFlOWMzMzNjOGM3N2MyNzU0YmI4NWJjMDc4YmY5N2Y2NGE5NTBjNDRhYjg0NTFjM2VmZmIyZTk0OTQ5MmQ0ZjRmZgowMDJmc2lnbmF0dXJlIJ0cCih9DapeVzWrq5AGX643eJC4y9
+        OdIF-yde_va0HjCg:2ca931a1c36b48f54948b898a271a53ed91ff7d0081939a5fa511249e81cba5c"
+    NodeInfo:
+      required:
+        - pubKey
+        - socket
+      type: object
+      properties:
+        pubKey:
+          type: string
+          example: 03cb9e0a30f17a7b75f3ac9e9f39909811805be22ad6044953220a3c35d2809418
+        alias:
+          type: string
+          description: Alias of lightning node
+          example: foobar node
+        socket:
+          type: string
+          description: host and port where node can be reached
+          example: 123.45.67.87:10009
+        activeChannelsCount:
+          type: number
+          description: Active channels on the node
+          example: 2
+        peersCount:
+          type: number
+          description: total number of peers connected to node
+          example: 1
+    PaymentRequest:
+      type: string
+      format: <BOLT 11 Encoded Payment Request String>
+      example: "lntb10u1pw7kfm8pp50nhe8uk9r2n9yz97c9z8lsu0ckxehnsnwkjn9mdsmnffpgkrxzhqdq5w3jhxapqd9h8vmmfvdjscqzpg
+      llq2qvdlgkllc27kpd87lz8pdfsfmtteyc3kwq734jpwnvqt96e4nuy0yauzdrtkumxsvawgda8dlljxu3nnjlhs6w75390wy7ukj6cpfmygah"
+    PaymentRequiredError:
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: Payment required
+    UnauthorizedError:
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthorized: LSAT invalid"
+    ErrorMessage:
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: _generic error message_
+    InvoiceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: |
+            Payment hash hex string
+          format: hex
+          example: 7cef93f2c51aa65208bec1447fc38fc58d9bce1375a532edb0dcd290a2c330ae
+        payreq:
+          $ref: "#/components/schemas/PaymentRequest"
+        createdAt:
+          type: string
+          format: date-time
+          example: 2016-08-29T09:12:33.001Z
+        amount:
+          type: integer
+          description: Amount (in satoshis) of payment
+          example: 30
+        status:
+          type: string
+          description: One of "paid", "unpaid", or "held"
+          example: paid
+        description:
+          type: string
+          example: example invoice description
+    body:
+      required:
+        - amount
+      type: object
+      properties:
+        title:
+          type: string
+          description: |
+            Title of data being requested. Will be used in invoice metadata
+        amount:
+          type: integer
+        time:
+          type: integer
+          description: |
+            For time based APIs. Can be superceded by the `amount` property
+        expiresAt:
+          type: string
+          description: |
+            Optional expiry for the invoice to timeout at in valid UTC string format.
+        appName:
+          type: string
+          description: |
+            Optional name for identifying the app that is requesting the invoice.
+    inline_response_200:
+      type: object
+      properties:
+        message:
+          type: string
+          example:
+            I am protected content. You can only see me if you've paid the
+            price.
+    inline_response_402:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Payment required

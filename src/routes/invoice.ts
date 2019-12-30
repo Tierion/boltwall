@@ -1,131 +1,128 @@
-import { Response, Router, NextFunction } from 'express'
-
-import { LndRequest, InvoiceResponse } from '../typings'
 import {
-  createInvoice,
-  checkInvoiceStatus,
-  getDischargeMacaroon,
-  getLocation,
-  getFirstPartyCaveatFromMacaroon,
-  createRootMacaroon,
-} from '../helpers'
+  Response,
+  Request,
+  Router,
+  NextFunction,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  Handler,
+} from 'express'
 
+import { InvoiceResponse } from '../typings'
+import { Lsat } from 'lsat-js'
+import { createInvoice, checkInvoiceStatus } from '../helpers'
+import { validateLsat } from '.'
 const router: Router = Router()
 
 /**
- * ## Route: PUT /invoice
- * Checks the status of an invoice based on a specific id in the query parameter.
- * If the invoice is paid then a discharge macaroon will be attached to the session.
- * The discharge macaroon can have a custom caveat set on it based on configs passed into
- * Boltwall on initialization of the middleware.
- * (Formerly GET /invoice which is still supported but PUT is preferred when a body is sent)
+ * ## Route: GET /invoice
+ * @description Get information about an invoice including status and secret. Request must be
+ * authenticated with a macaroon. The handler will check for an LSAT and reject requests
+ * without one since this is where the invoice id is extracted from.
+ * @type {Handler}
  */
-async function updateInvoiceStatus(
-  req: LndRequest,
+async function getInvoice(
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
-  let invoiceId = req.query.id
+  const { headers } = req
 
-  // if the query doesn't have an id, but we have a root macaroon, we can
-  // get the id from that
-  if (!invoiceId && req.session && req.session.macaroon) {
-    invoiceId = getFirstPartyCaveatFromMacaroon(req.session.macaroon)
-  } else if (!invoiceId) {
-    res.status(404)
-    return next({ message: 'Missing invoiceId in request' })
-  }
-
-  try {
-    console.log('Checking status of invoice:', invoiceId)
-    const { lnd, opennode } = req
-    const invoice = await checkInvoiceStatus(lnd, opennode, invoiceId)
-    const { status } = invoice
-    // a held invoice is technically properly paid
-    // so we can treat it as such to at least pass it through the paywall
-    // it is up to the middleware implementer to decide what to do with a
-    // held invoice, discharge macaroon passed however allowing requests through paywall
-    if (status === 'paid' || status === 'held') {
-      const location = getLocation(req)
-
-      let caveat: string | undefined
-      if (req.boltwallConfig && req.boltwallConfig.getCaveat)
-        caveat = await req.boltwallConfig.getCaveat(req, invoice)
-
-      const macaroon = getDischargeMacaroon(invoiceId, location, caveat)
-
-      // save discharge macaroon in a cookie. Request should have two macaroons now
-      if (req.session) req.session.dischargeMacaroon = macaroon // tslint-disable-line
-
-      console.log(`Invoice ${invoiceId} has been paid`)
-
-      res.status(200)
-      return res.json({ status, discharge: macaroon })
-    } else if (status === 'processing' || status === 'unpaid') {
-      console.log('Still processing invoice %s...', invoiceId)
-      res.status(202)
-      return res.json(invoice)
-    } else {
-      res.status(400)
-      return next({ message: `Unknown invoice status ${status}` })
-    }
-  } catch (error) {
-    console.error('Error getting invoice:', error)
+  if (!headers.authorization || !headers.authorization.includes('LSAT')) {
+    req.logger.info(
+      `Unauthorized request made without macaroon for ${req.originalUrl} from ${req.hostname}`
+    )
     res.status(400)
-    return next({ message: error })
+    return next({
+      message: 'Bad Request: Missing LSAT authorization header',
+    })
   }
-  return next()
+
+  // get the lsat from the auth header
+  const lsat = Lsat.fromToken(headers.authorization)
+
+  if (lsat.isExpired()) {
+    req.logger.debug(
+      `Request made with expired macaroon for ${req.originalUrl} from ${req.hostname}`
+    )
+    res.status(401)
+    return next({
+      message: 'Unauthorized: LSAT expired',
+    })
+  }
+
+  // validation happens in validateLsat middleware
+  // all this route has to do is confirm that the invoice exists
+  let invoice
+  try {
+    invoice = await checkInvoiceStatus(
+      lsat.paymentHash,
+      req.lnd,
+      req.opennode,
+      true
+    )
+  } catch (e) {
+    // handle ln-service errors
+    if (Array.isArray(e)) {
+      req.logger.error(`Problem looking up invoice:`, ...e)
+      if (e[0] === 503) {
+        res.status(404)
+        return res.send({
+          error: { message: 'Unable to find invoice with that id' },
+        })
+      } else {
+        res.status(500)
+        return res.send({
+          error: { message: 'Unknown error when looking up invoice' },
+        })
+      }
+    }
+  }
+
+  res.status(200)
+  return res.send(invoice)
 }
 
 /**
  * ## Route: POST /invoice
- * Generate a new invoice based on a given request.
- * This will also create a new root macaroon to associate with the session.
- * The root macaroon and associated 3rd party caveat must be satisfied
- * before access to the protected route will be granted
+ * @description Generate a new invoice based on a given request. No LSAT services
+ * provided, so this endpoint should be used sparingly since a payment made will
+ * not authenticate a request automatically (since there's no associated lsat or macaroon)
+ * @type {Handler}
  */
 async function postNewInvoice(
-  req: LndRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
-  console.log('Request to create a new invoice')
+  req.logger.info('Request to create a new invoice')
   try {
-    const location: string = getLocation(req)
-
     // create an invoice
     const invoice: InvoiceResponse = await createInvoice(req)
-
-    // create a root macaroon with the associated id
-    // NOTE: Root macaroon does not authenticate access
-    // it only indicates that the payment process has been initiated
-    // and associates the given invoice with the current session
-
-    // check if we need to also add a third party caveat to macaroon
-    let has3rdPartyCaveat =
-      req.boltwallConfig && req.boltwallConfig.getCaveat ? true : false
-
-    const macaroon = await createRootMacaroon(
-      invoice.id,
-      location,
-      has3rdPartyCaveat
-    )
-
-    // and send back macaroon and invoice info back in response
-    if (req.session) req.session.macaroon = macaroon
     res.status(200)
     return res.json(invoice)
-  } catch (error) {
-    console.error('Error getting invoice:', error)
+  } catch (e) {
+    if (Array.isArray(e)) {
+      req.logger.error(`Problem creating invoice:`, ...e)
+      if (e[0] === 400) {
+        res.status(404)
+        return next({ message: e[1] })
+      } else {
+        res.status(500)
+        return res.send({
+          error: { message: 'Unknown error when looking up invoice' },
+        })
+      }
+    }
+    req.logger.error('Error getting invoice:', e)
     res.status(400)
-    return next({ message: error.message })
+    return next({ message: e.message })
   }
 }
 
 router
   .route('*/invoice')
   .post(postNewInvoice)
-  .put(updateInvoiceStatus)
-  .get(updateInvoiceStatus)
+  .all(validateLsat)
+  .get(getInvoice)
 
 export default router
