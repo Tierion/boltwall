@@ -2,6 +2,8 @@
 
 Bitcoin Lightning paywall and authentication using LSATs. Charge to access your API without requiring user accounts, API keys, credit cards, or storing any user data. All you need is a lightning node and a single line of code in your server. Built with [LND](https://lightning.engineering/), Nodejs, and Typescript.
 
+All you need to put a paywall in front of a route on your server is this one line of code:
+
 ```js
 app.use(boltwall())
 ```
@@ -326,17 +328,19 @@ it will be `paid` and therefore "expired".
 
 ## 3rd Party Caveats and Discharge Macaroons
 
->**NOTE:**
+**NOTE:**
 Boltwall's upgrade to support LSATs _deprecated_ previous support for 3rd party caveats
 and OAuth-like constructions. This will be re-introduced in a future release,
 however the API will likely be different, including an improvement that will
 remove the need for coordination between the root macaroon and discharge macaroon (lightning node) 
 issuers and the need for a `CAVEAT_KEY`.
->
-> To read more about the proposal for 3rd party caveats in LSATs,
+
+To read more about the proposal for 3rd party caveats in LSATs,
 see [this comment](https://github.com/lightningnetwork/lnd/issues/288#issuecomment-559896636)
 on a pending issue in lnd. The ideas laid out below will still mostly apply and are a huge
 part of the value add of LSATs and macaroons more generally for an ecosystem of self-sovereign paywalls.
+
+_**** DEPRECATED ****_
 
 The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
 in the section above covering the configurations, `boltwall`'s API also enables authorization schemes 
