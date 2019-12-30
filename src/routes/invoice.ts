@@ -1,11 +1,4 @@
-import {
-  Response,
-  Request,
-  Router,
-  NextFunction,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Handler,
-} from 'express'
+import { Response, Request, Router, NextFunction } from 'express'
 
 import { InvoiceResponse } from '../typings'
 import { Lsat } from 'lsat-js'
@@ -18,7 +11,6 @@ const router: Router = Router()
  * @description Get information about an invoice including status and secret. Request must be
  * authenticated with a macaroon. The handler will check for an LSAT and reject requests
  * without one since this is where the invoice id is extracted from.
- * @type {Handler}
  */
 async function getInvoice(
   req: Request,
