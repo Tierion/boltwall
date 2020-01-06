@@ -7,6 +7,9 @@
   "author": "Buck Perley <bucko.perley@gmail.com>",
   "license": "AGPL-3.0",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "btcpay-config": "./bin/parse_btcpay_config.js"
+  },
   "scripts": {
     "start": "nodemon",
     "build": "tsc --project tsconfig.build.json",
@@ -17,7 +20,8 @@
     "prepare": "npm run build",
     "docs": "./docs.sh",
     "prepublishOnly": "npm run docs",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "build:config": "./bin/parse_btcpay_config.js"
   },
   "dependencies": {
     "binet": "^0.3.5",
