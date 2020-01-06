@@ -156,13 +156,7 @@ components:
       format: base64
       description: "The challenge issued by boltwall with a 402 Response in a WWW-Authenticate header, base64 encoded 
       with macaroon and invoice to be paid"
-      example: "LSAT bWFjYXJvb249TURBeE4yeHZZMkYwYVc5dUlERXlOeTR3TGpBdU1Rb3dNRGswYVdSbGJuUnBabWxsY2lBd01EQXdOMk5sWmpre
-      lpqSmpOVEZoWVRZMU1qQTRZbVZqTVRRME4yWmpNemhtWXpVNFpEbGlZMlV4TXpjMVlUVXpNbVZrWWpCa1kyUXlPVEJoTW1Nek16QmhaVE5pWVdJM
-      E1qRmhZVFV4TW1ZNVpHVXdPV1kzTmpObU1XUTNOVEZoTnpJNFlqbGhPVGt5TlRjeE1UZGtNV0U1WVRjMllXWTVaRGszWmpVek9Ea3pNRFVLTURBe
-      VpuTnBaMjVoZEhWeVpTQlVkd0hXTGxkbXVZMnlLYldjektQOFRxVVg3Yk1TNDN4UXU0enF6UFNBLWdvLCBpbnZvaWNlPWxudGIxMHUxcHc3a2ZtO
-      HBwNTBuaGU4dWs5cjJuOXl6OTdjOXo4bHN1MGNreGVobnNud2tqbjltZHNtbmZmcGdrcnh6aHFkcTV3M2poeGFwcWQ5aDh2bW1mdmRqc2NxenBnb
-      GxxMnF2ZGxna2xsYzI3a3BkODdsejhwZGZzZm10dGV5YzNrd3E3MzRqcHdudnF0OTZlNG51eTB5YXV6ZHJ0a3VteHN2YXdnZGE4ZGxsanh1M25ua
-      mxoczZ3NzUzOTB3eTd1a2o2Y3BmbXlnYWg="
+      example: "LSAT macaroon=\"MDAyM2xvY2F0aW9uIGh0dHA6Ly9sb2NhbGhvc3Q6MzAwMAowMDk0aWRlbnRpZmllciAwMDAwN2NlZjkzZjJjNTFhYTY1MjA4YmVjMTQ0N2ZjMzhmYzU4ZDliY2UxMzc1YTUzMmVkYjBkY2QyOTBhMmMzMzBhZWVhNDM5YWU1ZTg2Mjk1YTUwZmQ4MTRiODMyZTQ3NjRjNWMyYTRmM2YzYzUzZGNiOTRlNmM1ZTIwMjllNWRhNjcKMDAyZnNpZ25hdHVyZSAT8u5IrVmkydhKyFw3RzHNjL3FOzUsU33p6ghPVxZ83Ao\", invoice=\"lntb10u1pw7kfm8pp50nhe8uk9r2n9yz97c9z8lsu0ckxehnsnwkjn9mdsmnffpgkrxzhqdq5w3jhxapqd9h8vmmfvdjscqzpgllq2qvdlgkllc27kpd87lz8pdfsfmtteyc3kwq734jpwnvqt96e4nuy0yauzdrtkumxsvawgda8dlljxu3nnjlhs6w75390wy7ukj6cpfmygah\""
     LSAT:
       type: string
       format: base64

@@ -8,11 +8,12 @@
   "license": "AGPL-3.0",
   "types": "./dist/index.d.ts",
   "bin": {
-    "btcpay-config": "./bin/parse_btcpay_config.js"
+    "btcpay-config": "./bin/parse_btcpay_config.js",
+    "boltwall": "./bin/boltwall"
   },
   "scripts": {
     "start": "nodemon",
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsc --project tsconfig.build.json && ncc build src/server.ts -o bin/boltwall -m",
     "clean": "rm -rf dist && mkdir dist",
     "lint": "tsc --noEmit --project tsconfig.json && eslint --ext .ts src --quiet",
     "test": "LOG_LEVEL=none ts-mocha -p tsconfig.json tests/**/*.spec.ts",
@@ -24,13 +25,14 @@
     "build:config": "./bin/parse_btcpay_config.js"
   },
   "dependencies": {
+    "@zeit/ncc": "^0.21.0",
     "binet": "^0.3.5",
     "blgr": "^0.1.7",
     "compose-middleware": "5.0.1",
     "dotenv": "8.0.0",
     "express": "4.17.1",
     "ln-service": "https://github.com/bucko13/ln-service#path",
-    "lsat-js": "^1.0.1",
+    "lsat-js": "^1.0.2",
     "macaroons.js": "0.3.8",
     "opennode": "1.1.1"
   },
