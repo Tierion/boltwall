@@ -11,7 +11,7 @@ import crypto from 'crypto'
 import lnService from 'ln-service'
 import binet from 'binet'
 
-import { InvoiceResponse, CaveatGetter } from './typings'
+import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
 import { Lsat, Identifier } from 'lsat-js'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
@@ -65,8 +65,9 @@ export function getEnvVars(): EnvVars {
 /**
  * @description evaluates environment variables and throws errors
  * based on what might be missing but required
+ * @property {Request.logger} logger - logger object for returning messages
  */
-export function testEnvVars(): boolean | Error {
+export function testEnvVars(logger: LoggerInterface): boolean | Error {
   const {
     OPEN_NODE_KEY,
     LND_TLS_CERT,
@@ -86,19 +87,29 @@ export function testEnvVars(): boolean | Error {
 
   // next check lnd configs
   const lndConfigs = [LND_TLS_CERT, LND_MACAROON, LND_SOCKET]
-  // if we have all lndConfigs then return true
 
+  // if we have all lndConfigs then return true
   if (lndConfigs.every(config => config !== undefined)) return true
 
   // if we have no lnd configs but an OPEN_NODE_KEY then return true
   if (lndConfigs.every(config => config === undefined) && OPEN_NODE_KEY)
     return true
 
-  // if we have some lnd configs but not all, throw that we're missing some
-  if (lndConfigs.some(config => config === undefined))
+  // if missing LND_SOCKET then throw an error since this is bare minimum needed to make connection
+  if (lndConfigs.some(config => config === undefined) && !LND_SOCKET)
     throw new Error(
-      'Missing configs to connect to LND node. Need LND_TLS_CERT, LND_MACAROON, LND_SOCKET.'
+      'Missing configs for making LND connection. Require at least LND_SOCKET or OPEN_NODE_KEY'
     )
+
+  // Can make a connection w/ lnd_socket only if node is configured to accept connections
+  if (LND_SOCKET) {
+    logger.debug(
+      `Missing configs could cause connection issues: ${
+        LND_TLS_CERT ? '' : 'LND_TLS_CERT '
+      }${LND_MACAROON ? '' : 'LND_MACAROON'}`
+    )
+    return true
+  }
 
   // otherwise we have no lnd configs and no OPEN_NODE_KEY
   // throw that there are no ln configs

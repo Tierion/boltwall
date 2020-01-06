@@ -9,7 +9,7 @@ export default function parseEnv(
   next: NextFunction
 ): void {
   try {
-    testEnvVars()
+    testEnvVars(req.logger)
     const {
       OPEN_NODE_KEY,
       LND_TLS_CERT,

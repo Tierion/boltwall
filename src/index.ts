@@ -35,7 +35,7 @@ export function boltwall(
     next: NextFunction
   ): Promise<void | Response> => {
     // if logger was not passed in then we use default blgr
-    if (!logger) req.logger = await getLogger(process.env.LOG_LEVEL)
+    if (!logger) req.logger = await getLogger(process.env.LOG_LEVEL || 'info')
     else req.logger = logger
     req.boltwallConfig = config
     return compose([
