@@ -247,8 +247,8 @@ $ yarn start</code></pre>
 				<p>There are three main stages to the authentication flow with LSATS:</p>
 				<ol>
 					<li><p>When a request is made to protected route, a <code>402 Payment Required</code> response is sent back.
-							This includes a <code>WWW-Authenticate</code> header with an LSAT. This is a base64-encoded &quot;challenge&quot;
-						that includes a macaroon (read more below to learn how these work) and an invoice.</p>
+							This includes a <code>WWW-Authenticate</code> header with an LSAT. This is an encoded &quot;challenge&quot;
+						that includes a macaroon (read more below to learn how these work) and an invoice value.</p>
 					</li>
 					<li><p>The consumer of the API extracts and pays the invoice from the LSAT. After payment, a payment preimage
 						should be revealed that acts as a cryptographically verifiable proof of payment.</p>
@@ -337,17 +337,17 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
 })
 app.use(boltwall{ <span class="hljs-attr">hodl</span>: <span class="hljs-literal">true</span> })
 <span class="hljs-comment">// all routes after this will require payment to a hodl invoice</span>
-app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send(<span class="hljs-string">'This route is protected'</span>)) </code></pre>
+app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send(<span class="hljs-string">'This route is protected'</span>))</code></pre>
 				<ol>
 					<li>The initial request for the route <em>requires</em> a paymentHash in the request body. This is
 						how a hodl invoice is created. The payment hash can either be provided by the client
 					or added in a middleware before <code>boltwall</code> is initialized (as in the example above).</li>
 					<li>Boltwall will return an LSAT challenge in the <code>WWW-Authenticate</code> header as normal</li>
-					<li>The client should pay the invoice. </li>
+					<li>The client should pay the invoice.</li>
 					<li>Since this is a hodl invoice, the client won&#39;t get a <code>preimage</code> until the invoice settles.
 						How this is managed is up to the implementor and the architecture of the application. If the
 						server is storing the secret, or retrieving it by some other means (such as with split payments),
-					it can add it to the LSAT when it wants to invalidate <em>future</em> requests. </li>
+					it can add it to the LSAT when it wants to invalidate <em>future</em> requests.</li>
 					<li>Once the invoice settles and has a status of <code>paid</code> (instead of <code>held</code>) the LSAT is considered
 					expired and future requests will be <code>Unauthorized</code></li>
 				</ol>
@@ -380,7 +380,7 @@ app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send
 				<p>Boltwall&#39;s default behavior for handling HODL LSAT requests is to settle an invoice when
 					the secret is provided in the LSAT <em>after</em> the request has been authorized. This means
 					that a request with the secret will be the <em>last</em> request for that LSAT since afterwards
-				it will be <code>paid</code> and therefore &quot;expired&quot;. </p>
+				it will be <code>paid</code> and therefore &quot;expired&quot;.</p>
 				<a href="#3rd-party-caveats-and-discharge-macaroons" id="3rd-party-caveats-and-discharge-macaroons" style="color: inherit; text-decoration: none;">
 					<h2>3rd Party Caveats and Discharge Macaroons</h2>
 				</a>
@@ -394,7 +394,7 @@ app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send
 					see <a href="https://github.com/lightningnetwork/lnd/issues/288#issuecomment-559896636">this comment</a>
 					on a pending issue in lnd. The ideas laid out below will still mostly apply and are a huge
 				part of the value add of LSATs and macaroons more generally for an ecosystem of self-sovereign paywalls.</p>
-				<p><em><strong>** API DEPRECATED **</strong></em></p>
+				<p><em>*<strong>* API DEPRECATED **</strong></em></p>
 				<p>The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
 					in the section above covering the configurations, <code>boltwall</code>&#39;s API also enables authorization schemes
 				with 3rd parties or as a 3rd party itself.</p>
@@ -422,7 +422,7 @@ app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send
 					One important part of this is the ability to create custom macaroon caveats and the satisfiers
 					your server will use to evaluate their validity. The <code>TIME</code> and <code>ORIGIN</code> configs described above
 					are just two examples of these. Note that each caveat must have a corresponding satisfier
-				in order for a macaroon to validate. </p>
+				in order for a macaroon to validate.</p>
 				<p>The properties that can be passed (none are required) to the boltwall config object are:</p>
 				<ul>
 					<li><code>getCaveats</code>: function or array of functions to generate caveats attached to LSAT macaroons</li>
@@ -457,391 +457,397 @@ app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send
 						<span>Internals</span>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_configs_index_.html">&quot;src/configs/index&quot;</a>
+						<a href="modules/_boltwall_src_configs_index_.html">&quot;boltwall/src/configs/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_configs_origin_.html">&quot;src/configs/origin&quot;</a>
+						<a href="modules/_boltwall_src_configs_origin_.html">&quot;boltwall/src/configs/origin&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_configs_satisfiers_.html">&quot;src/configs/satisfiers&quot;</a>
+						<a href="modules/_boltwall_src_configs_satisfiers_.html">&quot;boltwall/src/configs/satisfiers&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_configs_time_.html">&quot;src/configs/time&quot;</a>
+						<a href="modules/_boltwall_src_configs_time_.html">&quot;boltwall/src/configs/time&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_helpers_.html">&quot;src/helpers&quot;</a>
+						<a href="modules/_boltwall_src_helpers_.html">&quot;boltwall/src/helpers&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_index_.html">&quot;src/index&quot;</a>
+						<a href="modules/_boltwall_src_index_.html">&quot;boltwall/src/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_index_.html">&quot;src/routes/index&quot;</a>
+						<a href="modules/_boltwall_src_routes_index_.html">&quot;boltwall/src/routes/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_invoice_.html">&quot;src/routes/invoice&quot;</a>
+						<a href="modules/_boltwall_src_routes_invoice_.html">&quot;boltwall/src/routes/invoice&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_node_.html">&quot;src/routes/node&quot;</a>
+						<a href="modules/_boltwall_src_routes_node_.html">&quot;boltwall/src/routes/node&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_parseenv_.html">&quot;src/routes/parse<wbr>Env&quot;</a>
+						<a href="modules/_boltwall_src_routes_parseenv_.html">&quot;boltwall/src/routes/parse<wbr>Env&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_paywall_.html">&quot;src/routes/paywall&quot;</a>
+						<a href="modules/_boltwall_src_routes_paywall_.html">&quot;boltwall/src/routes/paywall&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_routes_validate_.html">&quot;src/routes/validate&quot;</a>
+						<a href="modules/_boltwall_src_routes_validate_.html">&quot;boltwall/src/routes/validate&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_server_.html">&quot;src/server&quot;</a>
+						<a href="modules/_boltwall_src_server_.html">&quot;boltwall/src/server&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_configs_d_.html">&quot;src/typings/configs.d&quot;</a>
+						<a href="modules/_boltwall_src_typings_configs_d_.html">&quot;boltwall/src/typings/configs.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_index_.html">&quot;src/typings/index&quot;</a>
+						<a href="modules/_boltwall_src_typings_index_.html">&quot;boltwall/src/typings/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_invoice_d_.html">&quot;src/typings/invoice.d&quot;</a>
+						<a href="modules/_boltwall_src_typings_invoice_d_.html">&quot;boltwall/src/typings/invoice.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_logger_d_.html">&quot;src/typings/logger.d&quot;</a>
+						<a href="modules/_boltwall_src_typings_logger_d_.html">&quot;boltwall/src/typings/logger.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_modules_d_.html">&quot;src/typings/modules.d&quot;</a>
+						<a href="modules/_boltwall_src_typings_modules_d_.html">&quot;boltwall/src/typings/modules.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_node_d_.html">&quot;src/typings/node.d&quot;</a>
+						<a href="modules/_boltwall_src_typings_node_d_.html">&quot;boltwall/src/typings/node.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_src_typings_request_d_.html">&quot;src/typings/request.d&quot;</a>
+						<a href="modules/_boltwall_src_typings_request_d_.html">&quot;boltwall/src/typings/request.d&quot;</a>
 					</li>
 					<li class="label tsd-is-external">
 						<span>Externals</span>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_body_parser_index_d_.html">&quot;node_<wbr>modules/@types/body-<wbr>parser/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_bn_js_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/bn.js/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_bytebuffer_index_d_.html">&quot;node_<wbr>modules/@types/bytebuffer/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_body_parser_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/body-<wbr>parser/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_chai_index_d_.html">&quot;node_<wbr>modules/@types/chai/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_bytebuffer_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/bytebuffer/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_connect_index_d_.html">&quot;node_<wbr>modules/@types/connect/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_chai_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/chai/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_cookiejar_index_d_.html">&quot;node_<wbr>modules/@types/cookiejar/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_connect_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/connect/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_cors_index_d_.html">&quot;node_<wbr>modules/@types/cors/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_cookiejar_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/cookiejar/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_cors_node_modules__types_express_index_d_.html">&quot;node_<wbr>modules/@types/cors/node_<wbr>modules/@types/express/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_cors_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/cors/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_debug_index_d_.html">&quot;node_<wbr>modules/@types/debug/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_cors_node_modules__types_express_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/cors/node_<wbr>modules/@types/express/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_dotenv_index_d_.html">&quot;node_<wbr>modules/@types/dotenv/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_debug_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/debug/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_eslint_visitor_keys_index_d_.html">&quot;node_<wbr>modules/@types/eslint-<wbr>visitor-<wbr>keys/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_dotenv_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/dotenv/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_express_serve_static_core_index_d_.html">&quot;node_<wbr>modules/@types/express-<wbr>serve-<wbr>static-<wbr>core/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_eslint_visitor_keys_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/eslint-<wbr>visitor-<wbr>keys/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_express_index_d_.html">&quot;node_<wbr>modules/@types/express/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_express_serve_static_core_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/express-<wbr>serve-<wbr>static-<wbr>core/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_json_schema_index_d_.html">&quot;node_<wbr>modules/@types/json-<wbr>schema/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_express_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/express/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_json5_index_d_.html">&quot;node_<wbr>modules/@types/json5/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_json_schema_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/json-<wbr>schema/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_long_index_d_.html">&quot;node_<wbr>modules/@types/long/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_json5_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/json5/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_mime_index_d_.html">&quot;node_<wbr>modules/@types/mime/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_long_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/long/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_minimatch_index_d_.html">&quot;node_<wbr>modules/@types/minimatch/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_mime_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/mime/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_mocha_index_d_.html">&quot;node_<wbr>modules/@types/mocha/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_minimatch_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/minimatch/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_assert_d_.html">&quot;node_<wbr>modules/@types/node/assert.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_mocha_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/mocha/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_async_hooks_d_.html">&quot;node_<wbr>modules/@types/node/async_<wbr>hooks.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_assert_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/assert.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_base_d_.html">&quot;node_<wbr>modules/@types/node/base.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_async_hooks_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/async_<wbr>hooks.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_buffer_d_.html">&quot;node_<wbr>modules/@types/node/buffer.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_base_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/base.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_child_process_d_.html">&quot;node_<wbr>modules/@types/node/child_<wbr>process.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_buffer_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/buffer.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_cluster_d_.html">&quot;node_<wbr>modules/@types/node/cluster.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_child_process_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/child_<wbr>process.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_console_d_.html">&quot;node_<wbr>modules/@types/node/console.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_cluster_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/cluster.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_constants_d_.html">&quot;node_<wbr>modules/@types/node/constants.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_console_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/console.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_crypto_d_.html">&quot;node_<wbr>modules/@types/node/crypto.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_constants_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/constants.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_dgram_d_.html">&quot;node_<wbr>modules/@types/node/dgram.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_crypto_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/crypto.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_dns_d_.html">&quot;node_<wbr>modules/@types/node/dns.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_dgram_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/dgram.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_domain_d_.html">&quot;node_<wbr>modules/@types/node/domain.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_dns_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/dns.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_events_d_.html">&quot;node_<wbr>modules/@types/node/events.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_domain_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/domain.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_fs_d_.html">&quot;node_<wbr>modules/@types/node/fs.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_events_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/events.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_globals_d_.html">&quot;node_<wbr>modules/@types/node/globals.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_fs_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/fs.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_http_d_.html">&quot;node_<wbr>modules/@types/node/http.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_globals_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/globals.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_http2_d_.html">&quot;node_<wbr>modules/@types/node/http2.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_http_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/http.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_https_d_.html">&quot;node_<wbr>modules/@types/node/https.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_http2_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/http2.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_inspector_d_.html">&quot;node_<wbr>modules/@types/node/inspector.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_https_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/https.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_module_d_.html">&quot;node_<wbr>modules/@types/node/module.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_inspector_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/inspector.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_net_d_.html">&quot;node_<wbr>modules/@types/node/net.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_module_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/module.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_os_d_.html">&quot;node_<wbr>modules/@types/node/os.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_net_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/net.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_path_d_.html">&quot;node_<wbr>modules/@types/node/path.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_os_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/os.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_perf_hooks_d_.html">&quot;node_<wbr>modules/@types/node/perf_<wbr>hooks.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_path_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/path.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_process_d_.html">&quot;node_<wbr>modules/@types/node/process.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_perf_hooks_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/perf_<wbr>hooks.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_punycode_d_.html">&quot;node_<wbr>modules/@types/node/punycode.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_process_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/process.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_querystring_d_.html">&quot;node_<wbr>modules/@types/node/querystring.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_punycode_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/punycode.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_readline_d_.html">&quot;node_<wbr>modules/@types/node/readline.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_querystring_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/querystring.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_repl_d_.html">&quot;node_<wbr>modules/@types/node/repl.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_readline_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/readline.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_stream_d_.html">&quot;node_<wbr>modules/@types/node/stream.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_repl_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/repl.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_string_decoder_d_.html">&quot;node_<wbr>modules/@types/node/string_<wbr>decoder.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_stream_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/stream.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_timers_d_.html">&quot;node_<wbr>modules/@types/node/timers.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_string_decoder_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/string_<wbr>decoder.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_tls_d_.html">&quot;node_<wbr>modules/@types/node/tls.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_timers_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/timers.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_trace_events_d_.html">&quot;node_<wbr>modules/@types/node/trace_<wbr>events.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_tls_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/tls.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_fs_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/fs.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_trace_events_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/trace_<wbr>events.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_globals_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/globals.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_ts3_2_fs_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/ts3.2/fs.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_index_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_ts3_2_globals_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/ts3.2/globals.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_ts3_2_util_d_.html">&quot;node_<wbr>modules/@types/node/ts3.2/util.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_ts3_2_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/ts3.2/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_tty_d_.html">&quot;node_<wbr>modules/@types/node/tty.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_ts3_2_util_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/ts3.2/util.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_url_d_.html">&quot;node_<wbr>modules/@types/node/url.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_tty_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/tty.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_util_d_.html">&quot;node_<wbr>modules/@types/node/util.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_url_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/url.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_v8_d_.html">&quot;node_<wbr>modules/@types/node/v8.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_util_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/util.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_vm_d_.html">&quot;node_<wbr>modules/@types/node/vm.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_v8_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/v8.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_worker_threads_d_.html">&quot;node_<wbr>modules/@types/node/worker_<wbr>threads.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_vm_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/vm.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_node_zlib_d_.html">&quot;node_<wbr>modules/@types/node/zlib.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_worker_threads_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/worker_<wbr>threads.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_range_parser_index_d_.html">&quot;node_<wbr>modules/@types/range-<wbr>parser/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_node_zlib_d_.html">&quot;boltwall/node_<wbr>modules/@types/node/zlib.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_serve_static_index_d_.html">&quot;node_<wbr>modules/@types/serve-<wbr>static/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_range_parser_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/range-<wbr>parser/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_sinon_ts3_1_index_d_.html">&quot;node_<wbr>modules/@types/sinon/ts3.1/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_serve_static_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/serve-<wbr>static/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_superagent_index_d_.html">&quot;node_<wbr>modules/@types/superagent/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_sinon_ts3_1_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/sinon/ts3.1/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_supertest_index_d_.html">&quot;node_<wbr>modules/@types/supertest/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_superagent_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/superagent/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_uuid_index_d_.html">&quot;node_<wbr>modules/@types/uuid/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_supertest_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/supertest/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules__types_uuid_interfaces_d_.html">&quot;node_<wbr>modules/@types/uuid/interfaces.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_uuid_index_d_.html">&quot;boltwall/node_<wbr>modules/@types/uuid/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_compose_middleware_lib_index_d_.html">&quot;node_<wbr>modules/compose-<wbr>middleware/lib/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules__types_uuid_interfaces_d_.html">&quot;boltwall/node_<wbr>modules/@types/uuid/interfaces.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_compose_middleware_node_modules_array_flatten_array_flatten_d_.html">&quot;node_<wbr>modules/compose-<wbr>middleware/node_<wbr>modules/array-<wbr>flatten/array-<wbr>flatten.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_compose_middleware_lib_index_d_.html">&quot;boltwall/node_<wbr>modules/compose-<wbr>middleware/lib/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_caveat_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/caveat.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_compose_middleware_node_modules_array_flatten_array_flatten_d_.html">&quot;boltwall/node_<wbr>modules/compose-<wbr>middleware/node_<wbr>modules/array-<wbr>flatten/array-<wbr>flatten.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_identifier_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/identifier.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_dom_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.dom.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_index_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_collection_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.collection.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_lsat_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/lsat.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_core_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.core.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_types_index_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/index.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_types_lsat_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/lsat.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_generator_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.generator.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_types_macaroons_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/macaroons.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_iterable_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.iterable.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_lsat_js_dist_types_satisfier_d_.html">&quot;node_<wbr>modules/lsat-<wbr>js/dist/types/satisfier.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_promise_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.promise.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_dom_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.dom.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_proxy_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.proxy.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_collection_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.collection.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_reflect_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.reflect.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_core_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.core.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_symbol_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.symbol.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2015_symbol_wellknown_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2015.symbol.wellknown.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_generator_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.generator.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2016_array_include_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2016.array.include.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_iterable_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.iterable.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2016_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2016.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_promise_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.promise.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2017_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2017.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_proxy_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.proxy.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2017_intl_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2017.intl.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_reflect_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.reflect.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2017_object_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2017.object.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.symbol.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2017_sharedmemory_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2017.sharedmemory.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2015_symbol_wellknown_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2015.symbol.wellknown.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2017_string_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2017.string.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2016_array_include_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2016.array.include.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2017_typedarrays_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2017.typedarrays.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2016_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2016.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2018_asyncgenerator_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2018.asyncgenerator.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2018_asynciterable_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2018.asynciterable.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_intl_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.intl.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2018_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2018.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_object_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.object.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2018_intl_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2018.intl.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_sharedmemory_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.sharedmemory.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2018_promise_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2018.promise.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_string_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.string.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es2018_regexp_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es2018.regexp.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2017_typedarrays_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2017.typedarrays.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_es5_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.es5.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_asyncgenerator_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.asyncgenerator.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_esnext_bigint_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.esnext.bigint.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_asynciterable_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.asynciterable.d&quot;</a>
+						<a href="modules/_boltwall_node_modules_typescript_lib_lib_esnext_intl_d_.html">&quot;boltwall/node_<wbr>modules/typescript/lib/lib.esnext.intl.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.d&quot;</a>
+						<a href="modules/_lsat_js_dist_caveat_d_.html">&quot;lsat-<wbr>js/dist/caveat.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_intl_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.intl.d&quot;</a>
+						<a href="modules/_lsat_js_dist_identifier_d_.html">&quot;lsat-<wbr>js/dist/identifier.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_promise_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.promise.d&quot;</a>
+						<a href="modules/_lsat_js_dist_index_d_.html">&quot;lsat-<wbr>js/dist/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es2018_regexp_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es2018.regexp.d&quot;</a>
+						<a href="modules/_lsat_js_dist_lsat_d_.html">&quot;lsat-<wbr>js/dist/lsat.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_es5_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.es5.d&quot;</a>
+						<a href="modules/_lsat_js_dist_satisfiers_d_.html">&quot;lsat-<wbr>js/dist/satisfiers.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_esnext_bigint_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.esnext.bigint.d&quot;</a>
+						<a href="modules/_lsat_js_dist_types_index_d_.html">&quot;lsat-<wbr>js/dist/types/index.d&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module tsd-is-external">
-						<a href="modules/_node_modules_typescript_lib_lib_esnext_intl_d_.html">&quot;node_<wbr>modules/typescript/lib/lib.esnext.intl.d&quot;</a>
+						<a href="modules/_lsat_js_dist_types_lsat_d_.html">&quot;lsat-<wbr>js/dist/types/lsat.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_lsat_js_dist_types_macaroons_d_.html">&quot;lsat-<wbr>js/dist/types/macaroons.d&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module tsd-is-external">
+						<a href="modules/_lsat_js_dist_types_satisfier_d_.html">&quot;lsat-<wbr>js/dist/types/satisfier.d&quot;</a>
 					</li>
 				</ul>
 			</nav>
