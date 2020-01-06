@@ -10,8 +10,7 @@ import {
   CaveatGetter,
   DescriptionGetter,
 } from '../typings'
-import { Caveat } from 'lsat-js'
-import { expirationSatisfier } from '.'
+import { Caveat, expirationSatisfier } from 'lsat-js'
 
 /**
  * @type {CaveatGetter}

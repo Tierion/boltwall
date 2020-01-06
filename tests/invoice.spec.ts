@@ -4,9 +4,8 @@ import * as sinon from 'sinon'
 import { Application } from 'express'
 import { parsePaymentRequest } from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'
+import { Lsat, expirationSatisfier } from 'lsat-js'
 
-import { expirationSatisfier } from '../src/configs'
-import { Lsat } from 'lsat-js'
 import getApp from './mockApp'
 
 import {
