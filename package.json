@@ -18,7 +18,7 @@
     "lint": "tsc --noEmit --project tsconfig.json && eslint --ext .ts src --quiet",
     "test": "LOG_LEVEL=none ts-mocha -p tsconfig.json tests/**/*.spec.ts",
     "test:watch": "LOG_LEVEL=none ts-mocha -p tsconfig.json --reporter spec --watch --watch-extensions ts tests/**/*.spec.ts",
-    "prepare": "npm run build",
+    "prepare": "npm run clean && npm run build",
     "docs": "./docs.sh",
     "prepublishOnly": "npm run docs",
     "postversion": "git push && git push --tags",

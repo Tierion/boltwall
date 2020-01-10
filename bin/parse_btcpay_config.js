@@ -30,7 +30,7 @@ rl.question('What is the URL of the config? ', function(configUrl) {
     config = JSON.parse(config.toString())
   } catch (e) {
     console.error(
-      'Problem reading config at that URL. Make sure it still exists'
+      'Problem reading config at that URL. Make sure the URL is still valid'
     )
     return rl.close()
   }
@@ -44,7 +44,10 @@ rl.question('What is the URL of the config? ', function(configUrl) {
     return rl.close()
   }
 
-  const configPath = path.join(__dirname, '.env')
+  const configPath = path.join(process.cwd(), '.env')
+  console.log(
+    `Environment variables will be written to ${configPath}. Manually move this to project root if not already`
+  )
   const SESSION_SECRET = crypto.randomBytes(32).toString('hex')
   const env = `LND_SOCKET=${config.host}:${config.port}
 LND_MACAROON=${config.adminMacaroon}
