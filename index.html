@@ -86,8 +86,8 @@
 							<li><a href="#authentication-flow">Authentication Flow</a></li>
 							<li><a href="#custom-authorization-w-macaroons">Custom Authorization w/ Macaroons</a></li>
 							<li><a href="#pre-built-configs">Pre-built Configs</a><ul>
-									<li><a href="#timecaveatconfigs">TIME_CAVEAT_CONFIGS</a></li>
-									<li><a href="#origincaveatconfigs">ORIGIN_CAVEAT_CONFIGS</a></li>
+									<li><a href="#timecaveatconfigs"><strong><code>TIME_CAVEAT_CONFIGS</code></strong></a></li>
+									<li><a href="#origincaveatconfigs"><strong><code>ORIGIN_CAVEAT_CONFIGS</code></strong></a></li>
 									<li><a href="#hodl-invoices">HODL Invoices</a></li>
 								</ul>
 							</li>
@@ -95,13 +95,13 @@
 							<li><a href="#generation">Generation</a></li>
 							<li><a href="#authorization-flows">Authorization Flows</a></li>
 							<li><a href="#making-the-payment">Making the Payment</a></li>
-							<li><a href="#a-held-invoice-is-a-paid-invoice">A held Invoice is a Paid Invoice</a><ul>
+							<li><a href="#a-held-invoice-is-a-paid-invoice">A <code>held</code> Invoice is a Paid Invoice</a><ul>
 									<li><a href="#3rd-party-caveats-and-discharge-macaroons">3rd Party Caveats and Discharge Macaroons</a></li>
-									<li><a href="#authentication-flow">Authentication flow</a></li>
+									<li><a href="#authentication-flow-1">Authentication flow</a></li>
 									<li><a href="#documentation">Documentation</a></li>
 								</ul>
 							</li>
-							<li><a href="#custom-configs-amp-caveats">Custom Configs &amp; Caveats</a></li>
+							<li><a href="#custom-configs--caveats">Custom Configs &amp; Caveats</a></li>
 							<li><a href="#rest-api">REST API</a></li>
 							<li><a href="#full-api-documentation">Full API Documentation</a></li>
 						</ul>
@@ -187,8 +187,9 @@ $ yarn start</code></pre>
 					<li><p><code>GET http://localhost:5000/node</code> to get connection information about your lightning node
 						(no payment required).</p>
 					</li>
-					<li><p><code>GET http://localhost:5000/protected</code> will return a <code>402</code> error for payment required. An LSAT challenge
-						will be available in the returned <code>WWW-Authenticate</code> header. Decode base64 to get invoice information</p>
+					<li><p><code>GET http://localhost:5000/protected?amount=[amount]</code> will return a <code>402</code> error for payment required. An LSAT challenge
+							will be available in the returned <code>WWW-Authenticate</code> header. Decode LSAT to get full invoice information. Amount in query string will be used in invoice generation unless below
+						minAmount configured in boltwall. If no amount is set, then minAmount will be used.</p>
 					</li>
 					<li><p><code>GET http://localhost:5000/protected</code> with appropriate LSAT in Authorization header (including
 						preimage) will return the response from the protected route</p>
