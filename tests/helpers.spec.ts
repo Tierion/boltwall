@@ -2,10 +2,17 @@ import { expect } from 'chai'
 import { Request } from 'express'
 import { MacaroonsBuilder } from 'macaroons.js'
 import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
+import { parsePaymentRequest } from 'ln-service'
 
 import { invoiceResponse } from './data'
-import { createLsatFromInvoice, getOriginFromRequest } from '../src/helpers'
+import {
+  createLsatFromInvoice,
+  getOriginFromRequest,
+  createInvoice,
+} from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
+import { invoice } from './data'
+import { getLnStub } from './utilities'
 
 describe('helper functions', () => {
   describe('getOriginFromRequest', () => {
@@ -182,6 +189,59 @@ describe('helper functions', () => {
             `generated lsat macaroon should have had caveats from custom ${name}`
           ).to.be.true
       }
+    })
+  })
+
+  describe('createInvoice', () => {
+    interface InvoiceResponseStub {
+      request: string
+      is_confirmed: boolean
+      id: string
+      secret: string
+      tokens: number
+      created_at: string
+      description: string
+    }
+    let createInvStub: sinon.SinonStub, invoiceResponse: InvoiceResponseStub
+
+    beforeEach(() => {
+      const request = parsePaymentRequest({ request: invoice.payreq })
+      // stubbed response for invoice related requests made through ln-service
+      invoiceResponse = {
+        request: invoice.payreq,
+        is_confirmed: true,
+        id: request.id,
+        secret: invoice.secret,
+        tokens: 30,
+        created_at: '2016-08-29T09:12:33.001Z',
+        description: request.description,
+      }
+
+      createInvStub = getLnStub('createInvoice', {
+        ...invoiceResponse,
+        is_confirmed: false,
+      })
+    })
+    afterEach(() => {
+      createInvStub.restore()
+    })
+
+    it('should create an invoice using the amount provided in a request query', async () => {
+      const request = { lnd: {}, query: { amount: 50 }, body: {} }
+
+      createInvStub
+        .withArgs({
+          lnd: request.lnd,
+          tokens: request.query.amount,
+          description: undefined,
+          expires_at: undefined,
+        })
+        .returns({ ...invoiceResponse, tokens: request.query.amount })
+
+      const result = await createInvoice((request as unknown) as Request)
+
+      expect(createInvStub.called).to.be.true
+      expect(result.amount).to.equal(request.query.amount)
     })
   })
 })

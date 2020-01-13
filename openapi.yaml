@@ -94,6 +94,12 @@ paths:
       summary: protected path (applies to all method verbs- GET/PUT/POST/DELETE)
       security:
         - http: [LSAT]
+      parameters:
+        - in: query
+          name: amount
+          schema:
+            type: number
+          description: The amount that you would like to pay in the invoice. If this is below the minimum threshold set by the server, the request will be rejected
       description: |
         A middleware that checks for a valid authorizing LSAT on all requests. Any middleware or router that comes _after_ boltwall will have this check performed on it. 
         Invoice information will be contained in the LSAT WWW-Authenticate header. When an invoice is paid, a valid LSAT can usually
@@ -110,7 +116,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/inline_response_200"
         "400":
-          description: Problem checking authorization in macaroon or checking invoice
+          description: Problem checking authorization in macaroon, checking invoice, or generating invoice (e.g. amount requested to pay was below minAmount)
           content:
             "*/*":
               schema:

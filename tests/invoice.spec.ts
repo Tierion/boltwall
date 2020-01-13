@@ -1,6 +1,6 @@
 import * as request from 'supertest'
 import { expect } from 'chai'
-import * as sinon from 'sinon'
+import sinon from 'sinon'
 import { Application } from 'express'
 import { parsePaymentRequest } from 'ln-service'
 import { MacaroonsBuilder } from 'macaroons.js'

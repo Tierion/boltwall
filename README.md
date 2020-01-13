@@ -19,18 +19,18 @@ app.use(boltwall())
     - [Authentication Flow](#authentication-flow)
     - [Custom Authorization w/ Macaroons](#custom-authorization-w-macaroons)
     - [Pre-built Configs](#pre-built-configs)
-      - [TIME_CAVEAT_CONFIGS](#timecaveatconfigs)
-      - [ORIGIN_CAVEAT_CONFIGS](#origincaveatconfigs)
+      - [**`TIME_CAVEAT_CONFIGS`**](#timecaveatconfigs)
+      - [**`ORIGIN_CAVEAT_CONFIGS`**](#origincaveatconfigs)
   - [HODL Invoices](#hodl-invoices)
     - [Example Implementation and Access Flow](#example-implementation-and-access-flow)
     - [Generation](#generation)
     - [Authorization Flows](#authorization-flows)
     - [Making the Payment](#making-the-payment)
-    - [A held Invoice is a Paid Invoice](#a-held-invoice-is-a-paid-invoice)
+    - [A `held` Invoice is a Paid Invoice](#a-held-invoice-is-a-paid-invoice)
   - [3rd Party Caveats and Discharge Macaroons](#3rd-party-caveats-and-discharge-macaroons)
-      - [Authentication flow](#authentication-flow)
+      - [Authentication flow](#authentication-flow-1)
   - [Documentation](#documentation)
-    - [Custom Configs &amp; Caveats](#custom-configs-amp-caveats)
+    - [Custom Configs & Caveats](#custom-configs--caveats)
     - [REST API](#rest-api)
     - [Full API Documentation](#full-api-documentation)
 
@@ -120,8 +120,9 @@ Once the server is running, you can test the API:
 1. `GET http://localhost:5000/node` to get connection information about your lightning node
    (no payment required).
 
-2. `GET http://localhost:5000/protected` will return a `402` error for payment required. An LSAT challenge
-   will be available in the returned `WWW-Authenticate` header. Decode base64 to get invoice information
+2. `GET http://localhost:5000/protected?amount=[amount]` will return a `402` error for payment required. An LSAT challenge
+   will be available in the returned `WWW-Authenticate` header. Decode LSAT to get full invoice information. Amount in query string will be used in invoice generation unless below
+   minAmount configured in boltwall. If no amount is set, then minAmount will be used.
 
 3. `GET http://localhost:5000/protected` with appropriate LSAT in Authorization header (including
    preimage) will return the response from the protected route

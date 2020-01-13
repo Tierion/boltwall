@@ -188,10 +188,10 @@ export function createLsatFromInvoice(
  * @returns {InvoiceResponse} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
 export async function createInvoice(req: Request): Promise<InvoiceResponse> {
-  const { lnd, opennode, body, boltwallConfig } = req
-  const { time, expiresAt, amount } = body // time in seconds
+  const { lnd, opennode, body, boltwallConfig, query } = req
+  const { expiresAt, amount } = body // time in seconds
 
-  let tokens = time || amount
+  let tokens = query.amount || amount
 
   // if no amount is sent in the request then we use the min amount
   if (boltwallConfig && boltwallConfig.minAmount && !tokens)
@@ -218,13 +218,14 @@ This means payer can pay whatever they want for access.'
   let _description
 
   if (boltwallConfig && boltwallConfig.getInvoiceDescription)
-    _description = await boltwallConfig.getInvoiceDescription(req)
+    _description = boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
   if (lnd) {
     let invoiceFunction = lnService.createInvoice
     if (boltwallConfig && boltwallConfig.hodl)
       invoiceFunction = lnService.createHodlInvoice
+
     const {
       request: payreq,
       id,
@@ -256,7 +257,6 @@ This means payer can pay whatever they want for access.'
       'No lightning node information configured on request object'
     )
   }
-
   return invoice
 }
 
