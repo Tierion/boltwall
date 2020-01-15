@@ -23,7 +23,7 @@ export default async function validateLsat(
   if (
     req.boltwallConfig &&
     req.boltwallConfig.hodl &&
-    !req.body.paymentHash &&
+    !req.body?.paymentHash &&
     (!headers.authorization || !headers.authorization.includes('LSAT'))
   ) {
     req.logger.debug(

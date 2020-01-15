@@ -1,9 +1,10 @@
 import * as request from 'supertest'
 import { expect } from 'chai'
+import sinon from 'sinon'
 import { Application, Request } from 'express'
 import { Caveat, Lsat } from 'lsat-js'
 
-import { invoiceResponse } from './data'
+import { invoiceResponse, secondInvoice } from './data'
 import {
   getLnStub,
   getTestBuilder,
@@ -12,7 +13,8 @@ import {
   setSessionSecret,
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
-import { BoltwallConfig } from '../src/typings'
+import { BoltwallConfig, InvoiceResponse } from '../src/typings'
+import * as helpers from '../src/helpers'
 
 describe('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,
@@ -22,7 +24,9 @@ describe('paywall', () => {
     builder: BuilderInterface,
     app: Application,
     lsat: Lsat,
-    macaroon: string
+    macaroon: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    checkInvoiceStub: sinon.SinonStub<any>
 
   beforeEach(() => {
     sessionSecret = setSessionSecret()
@@ -41,6 +45,8 @@ describe('paywall', () => {
     lndGrpcStub.restore()
     createInvStub.restore()
     getInvStub.restore()
+    if (checkInvoiceStub)
+      checkInvoiceStub.restore()
   })
 
   it('should return 402 with WWW-Authenticate LSAT header if no LSAT present', async () => {
@@ -181,5 +187,21 @@ describe('paywall', () => {
       .set('Authorization', lsat.toToken())
       .send({ middlename })
       .expect(200)
+  })
+
+  it('should return 404 if invoice on LSAT cannot be found', async () => {
+    checkInvoiceStub = sinon.stub(helpers, 'checkInvoiceStatus')
+    checkInvoiceStub.withArgs(secondInvoice.paymentHash).throws([503, 'UnexpectedLookupInvoiceErr'])
+    const invoiceObj = {
+      id: secondInvoice.paymentHash,
+      payreq: secondInvoice.payreq
+    }
+    const lsat = helpers.createLsatFromInvoice({} as unknown as Request, invoiceObj as InvoiceResponse)
+    
+    await request
+      .agent(app)
+      .get(protectedRoute)
+      .set('Authorization', lsat.toToken())
+      .expect(404)
   })
 })

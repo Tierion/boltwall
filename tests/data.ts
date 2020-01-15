@@ -27,6 +27,14 @@ export const invoice = {
   secret: '2ca931a1c36b48f54948b898a271a53ed91ff7d0081939a5fa511249e81cba5c',
 }
 
+export const secondInvoice = {
+  payreq:
+    'lntb10u1p0p702kpp5va6qv60l4g8phlf5vrhw7m9ug3myjgyz8ra4ftmw9qpvvkwl9acsdqvw3jhxarfdenscqzpgxqyz5vqch6txesggwdup2qhyzkve6zfrms44upxdhth9grw8jggg59uc79sdh7qmlfcte7z84n5hkns95frq8z64f8dlce7vxq86vyahttal4spzqusxc',
+  secret: '2e5230eb0ce19caff7987e26f13eb706ea134c7207032c01985f43afbc9e51e3',
+  paymentHash:
+    '67740669ffaa0e1bfd3460eeef6cbc447649208238fb54af6e2802c659df2f71',
+}
+
 const request = parsePaymentRequest({ request: invoice.payreq })
 
 export interface InvoiceResponseStub {

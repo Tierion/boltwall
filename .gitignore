@@ -29,6 +29,7 @@ build/Release
 dist
 public/build
 docs
+bin
 
 # Dependency directories
 node_modules

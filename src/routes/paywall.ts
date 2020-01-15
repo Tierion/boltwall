@@ -66,14 +66,52 @@ export default async function paywall(
       `Request made from ${req.hostname} that requires payment. LSAT ID: ${lsat.id}`
     )
     return next({ message: 'Payment required' })
-  } else if (!lsat.paymentPreimage) {
-    // server received an lsat but it's not validated with preimage yet
-    const { payreq, status } = await checkInvoiceStatus(
+  }
+
+  // If we got here then we have an LSAT and we want to check on the
+  // status of the associated invoice, and return a 404 if it can't be found
+  let payreq: string, status: string | undefined
+  try {
+    const invoice = await checkInvoiceStatus(
       lsat.paymentHash,
       req.lnd,
       req.opennode
     )
+    payreq = invoice.payreq
+    status = invoice.status
+  } catch (e) {
+    // ln-service error
+    if (
+      Array.isArray(e) &&
+      e[0] === 503 &&
+      e[1] === 'UnexpectedLookupInvoiceErr'
+    ) {
+      res.status(404)
+      return next({ message: 'Unable to lookup invoice for that LSAT' })
+    } else if (Array.isArray(e)) {
+      req.logger.error(
+        'Problem looking up invoice %s: %s',
+        lsat.paymentHash,
+        e[2].err.details
+      )
+    }
+    res.status(500)
+    return next({
+      message:
+        'There was a server error when looking up the associated invoice.',
+    })
+  }
 
+  if (!payreq || !status) {
+    res.status(500)
+    return next({
+      message:
+        'There was a server error when looking up the associated invoice.',
+    })
+  }
+
+  // server received an lsat but it's not validated with preimage yet
+  if (!lsat.paymentPreimage) {
     // for hodl paywalls, held status and no preimage is valid
     // so we can pass it to the next handler
     if (status === 'held' && hodl) {
@@ -94,31 +132,26 @@ export default async function paywall(
       }
       // for non-hodl paywalls need to return a 402
       // or hodl paywalls that are not paid
-      lsat.invoice = payreq
+      lsat.addInvoice(payreq)
       res.status(402)
-      res.set({ 'WWW-Authenticate': lsat.toChallenge() })
-      return next()
-    }
-  }
 
-  // for hodl requests that have passed the prior conditions
-  // (has preimage in the LSAT or hodl invoice is not held)
-  if (hodl) {
-    const { status } = await checkInvoiceStatus(
-      lsat.paymentHash,
-      req.lnd,
-      req.opennode
-    )
-    // hodl lsat with paid/settled invoice is considered expired
+      res.set({
+        'WWW-Authenticate': lsat.toChallenge(),
+      })
+      return next({ message: 'Payment required' })
+    }
+  } else if (hodl) {
+    // for hodl requests that have passed the prior conditions
+    // (has preimage in the LSAT or hodl invoice is not held)
     if (status === 'paid') {
+      // hodl lsat with paid/settled invoice is considered expired
       res.status(401)
       return next({
         message: 'Unauthorized: HODL invoice paid and LSAT expired',
       })
-    }
-    // if status is held (i.e. paid but not settled) and LSAT contains preimage
-    // the invoice should be settled and the request authorized
-    else if (status === 'held' && lsat.paymentPreimage) {
+    } else if (status === 'held' && lsat.paymentPreimage) {
+      // if status is held (i.e. paid but not settled) and LSAT contains preimage
+      // the invoice should be settled and the request authorized
       try {
         await lnService.settleHodlInvoice({
           lnd: req.lnd,
