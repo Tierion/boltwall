@@ -15,7 +15,7 @@
     "start": "nodemon",
     "build:bin": " ncc build src/server.ts -o bin/boltwall -m",
     "build": "tsc --project tsconfig.build.json",
-    "clean": "rm -rf dist && mkdir dist",
+    "clean": "rm -rf dist && mkdir dist && rm -rf bin && mkdir bin",
     "lint": "tsc --noEmit --project tsconfig.json && eslint --ext .ts src --quiet",
     "test": "LOG_LEVEL=none ts-mocha -p tsconfig.json tests/**/*.spec.ts",
     "test:watch": "LOG_LEVEL=none ts-mocha -p tsconfig.json --reporter spec --watch --watch-extensions ts tests/**/*.spec.ts",
