@@ -68,9 +68,10 @@ export default async function paywall(
     return next({ message: 'Payment required' })
   }
 
+  // If we got here then we have an LSAT and we want to check on the
+  // status of the associated invoice, and return a 404 if it can't be found
   let payreq: string, status: string | undefined
   try {
-    // server received an lsat but it's not validated with preimage yet
     const invoice = await checkInvoiceStatus(
       lsat.paymentHash,
       req.lnd,
@@ -101,7 +102,7 @@ export default async function paywall(
     })
   }
 
-  if (!payreq) {
+  if (!payreq || !status) {
     res.status(500)
     return next({
       message:
@@ -109,6 +110,7 @@ export default async function paywall(
     })
   }
 
+  // server received an lsat but it's not validated with preimage yet
   if (!lsat.paymentPreimage) {
     // for hodl paywalls, held status and no preimage is valid
     // so we can pass it to the next handler
@@ -147,10 +149,9 @@ export default async function paywall(
       return next({
         message: 'Unauthorized: HODL invoice paid and LSAT expired',
       })
-    }
-    // if status is held (i.e. paid but not settled) and LSAT contains preimage
-    // the invoice should be settled and the request authorized
-    else if (status === 'held' && lsat.paymentPreimage) {
+    } else if (status === 'held' && lsat.paymentPreimage) {
+      // if status is held (i.e. paid but not settled) and LSAT contains preimage
+      // the invoice should be settled and the request authorized
       try {
         await lnService.settleHodlInvoice({
           lnd: req.lnd,
