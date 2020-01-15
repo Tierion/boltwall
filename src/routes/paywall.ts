@@ -74,6 +74,11 @@ export default async function paywall(
       req.opennode
     )
 
+    if (!payreq) {
+      res.status(404)
+      return next('Could not find invoice')
+    }
+
     // for hodl paywalls, held status and no preimage is valid
     // so we can pass it to the next handler
     if (status === 'held' && hodl) {
@@ -94,10 +99,13 @@ export default async function paywall(
       }
       // for non-hodl paywalls need to return a 402
       // or hodl paywalls that are not paid
-      lsat.invoice = payreq
+      lsat.addInvoice(payreq)
       res.status(402)
-      res.set({ 'WWW-Authenticate': lsat.toChallenge() })
-      return next()
+
+      res.set({
+        'WWW-Authenticate': lsat.toChallenge(),
+      })
+      return next({ message: 'Payment required' })
     }
   }
 
