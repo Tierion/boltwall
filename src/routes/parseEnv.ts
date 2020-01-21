@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
+import * as fs from 'fs'
+import isBase64 from 'is-base64'
 import lnService from 'ln-service'
 
 import { testEnvVars, getEnvVars } from '../helpers'
@@ -16,12 +18,22 @@ export default function parseEnv(
       LND_MACAROON,
       LND_SOCKET,
     } = getEnvVars()
+
+    // If LND vars aren't base64 strings, assume they are files
+    let mac:string = LND_MACAROON!
+    let lndCert:string = LND_TLS_CERT!
+    if (!isBase64(mac)) {
+      mac = new Buffer(fs.readFileSync(mac)).toString('base64')
+    }
+    if (!isBase64(lndCert)) {
+      lndCert = new Buffer(fs.readFileSync(lndCert)).toString('base64')
+    }
     // if the tests pass above and we don't have a
     // OPEN_NODE_KEY then we need to setup the lnd service
     if (!OPEN_NODE_KEY) {
       const { lnd } = lnService.authenticatedLndGrpc({
-        cert: LND_TLS_CERT,
-        macaroon: LND_MACAROON,
+        cert: lndCert,
+        macaroon: mac,
         socket: LND_SOCKET,
       })
       req.lnd = lnd
