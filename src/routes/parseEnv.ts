@@ -20,14 +20,15 @@ export default function parseEnv(
     } = getEnvVars()
 
     // If LND vars aren't base64 strings, assume they are files
-    let mac:string = LND_MACAROON!
-    let lndCert:string = LND_TLS_CERT!
-    if (!isBase64(mac)) {
+    let mac: string | undefined = LND_MACAROON
+    let lndCert: string | undefined = LND_TLS_CERT
+    if (mac && !isBase64(mac)) {
       mac = new Buffer(fs.readFileSync(mac)).toString('base64')
     }
-    if (!isBase64(lndCert)) {
+    if (lndCert && !isBase64(lndCert)) {
       lndCert = new Buffer(fs.readFileSync(lndCert)).toString('base64')
     }
+
     // if the tests pass above and we don't have a
     // OPEN_NODE_KEY then we need to setup the lnd service
     if (!OPEN_NODE_KEY) {
@@ -47,7 +48,7 @@ export default function parseEnv(
   } catch (e) {
     req.logger.error(
       'Problem with configs for connecting to lightning node:',
-      e.message
+      e.message || e
     )
     next("Could not connect to the paywall's lightning node.")
   }
