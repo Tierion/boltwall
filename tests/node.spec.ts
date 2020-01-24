@@ -4,23 +4,27 @@ import { Application } from 'express'
 
 import getApp from './mockApp'
 import { nodeInfo } from './data'
-import { getLnStub } from './utilities'
+import { getLnStub, getEnvStub } from './utilities'
 
 describe('/node', () => {
   let getInfoStub: sinon.SinonStub,
     lndGrpcStub: sinon.SinonStub,
-    app: Application
+    app: Application,
+    envStub: sinon.SinonStub
 
   before(() => {
     getInfoStub = getLnStub('getWalletInfo', nodeInfo)
     // stub authentication to speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
+    envStub = getEnvStub('super secret')
     app = getApp()
   })
   after(() => {
     getInfoStub.restore()
     lndGrpcStub.restore()
+    envStub.restore()
   })
+
   describe('GET /node', () => {
     it('should return expected information about the node', async () => {
       const response: request.Response = await request.agent(app).get('/node')

@@ -11,6 +11,7 @@ import {
   BuilderInterface,
   getExpirationCaveat,
   setSessionSecret,
+  getEnvStub
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
 import { BoltwallConfig, InvoiceResponse } from '../src/typings'
@@ -20,6 +21,7 @@ describe('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,
     createInvStub: sinon.SinonStub,
     getInvStub: sinon.SinonStub,
+    envStub: sinon.SinonStub,
     sessionSecret: string,
     builder: BuilderInterface,
     app: Application,
@@ -36,6 +38,7 @@ describe('paywall', () => {
     // need to stub this to avoid connection errors and speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     builder = getTestBuilder(sessionSecret)
+    envStub = getEnvStub(sessionSecret)
     app = getApp()
     macaroon = builder.getMacaroon().serialize()
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
@@ -45,6 +48,7 @@ describe('paywall', () => {
     lndGrpcStub.restore()
     createInvStub.restore()
     getInvStub.restore()
+    envStub.restore()
     if (checkInvoiceStub)
       checkInvoiceStub.restore()
   })
