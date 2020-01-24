@@ -3,7 +3,6 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application, Request } from 'express'
 import { Caveat, Lsat } from 'lsat-js'
-
 import { invoiceResponse, secondInvoice } from './data'
 import {
   getLnStub,
@@ -142,6 +141,58 @@ describe('paywall', () => {
       .get(protectedRoute)
       .set('Authorization', lsat.toToken())
       .expect(200)
+  })
+
+  it('should check all built in satisfiers by default', async () => {
+    const failedTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() - 1000 })
+    const validTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() + 10000 })
+    const secret = process.env.SESSION_SECRET || 'secret'
+    const failedTimeMacaroon = getTestBuilder(secret).add_first_party_caveat(failedTimeCaveat.encode()).getMacaroon()
+    const validTimeMacaroon = getTestBuilder(secret).add_first_party_caveat(validTimeCaveat.encode()).getMacaroon()
+
+    const failedOriginCaveat = new Caveat({ condition: 'ip', value: '1.2.3.4' })
+    const validOriginCaveat = new Caveat({ condition: 'ip', value: '::ffff:127.0.0.1' })
+    const failedOriginMacaroon = getTestBuilder(secret).add_first_party_caveat(failedOriginCaveat.encode()).getMacaroon()
+    const validOriginMacaroon = getTestBuilder(secret).add_first_party_caveat(validOriginCaveat.encode()).getMacaroon()
+  
+    const tests = [
+      {
+        name: 'expired time',
+        macaroon: failedTimeMacaroon,
+        caveat: failedTimeMacaroon,
+        expectation: 401
+      },
+      {
+        name: 'valid time',
+        macaroon: validTimeMacaroon,
+        caveat: validTimeMacaroon,
+        expectation: 200
+      },
+      {
+        name: 'invalid origin',
+        macaroon: failedOriginMacaroon,
+        caveat: failedOriginCaveat,
+        expectation: 401
+      },
+      {
+        name: 'valid origin',
+        macaroon: validOriginMacaroon,
+        caveat: validOriginCaveat,
+        expectation: 200
+      },
+    ]
+    
+    for (const test of tests) {
+      const lsat = Lsat.fromMacaroon(test.macaroon.serialize(), invoiceResponse.request)
+      lsat.setPreimage(invoiceResponse.secret)
+
+      const resp: request.Response = await request
+      .agent(app)
+      .get(protectedRoute)
+      .set('Authorization', `${lsat.toToken()}`)
+      
+      expect(resp.status, `Unexpected status code ${resp.status} returned for ${test.name}.`).to.equal(test.expectation)
+    }
   })
 
   it('should support custom caveats and caveat satisfiers', async () => {
