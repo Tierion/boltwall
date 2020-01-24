@@ -7,7 +7,7 @@ import { Request } from 'express'
 import { BoltwallConfig, DescriptionGetter, CaveatGetter } from '../typings'
 
 import { Caveat } from 'lsat-js'
-import { originSatisfier } from '.'
+import { originSatisfier } from './satisfiers'
 import { getOriginFromRequest } from '../helpers'
 
 /**

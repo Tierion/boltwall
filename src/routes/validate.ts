@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
 
-import { Lsat, verifyFirstPartyMacaroon } from 'lsat-js'
+import { Lsat, verifyFirstPartyMacaroon, Satisfier } from 'lsat-js'
 import { getEnvVars, isHex } from '../helpers'
+import * as configs from '../configs'
+import { BoltwallConfig } from '../typings'
 
 /**
  * @description Middleware to test existence and validity of LSAT or LSAT request.
@@ -80,10 +82,33 @@ export default async function validateLsat(
   // verify macaroon
   const { SESSION_SECRET } = getEnvVars()
   const macaroon = lsat.getMacaroon()
+
+  type DefaultConfigs = {
+    [key:string]: BoltwallConfig
+  }
+
+  const defaultConfigs: DefaultConfigs = Object.assign(configs, {})
+  let satisfiers: Satisfier[] = []
+  
+  for (const key in defaultConfigs) {
+    const config = defaultConfigs[key]
+    if (config.caveatSatisfiers) {
+      const caveatSatisfiers = Array.isArray(config.caveatSatisfiers) ? config.caveatSatisfiers : [config.caveatSatisfiers]
+      satisfiers.push(...caveatSatisfiers)
+    }
+  }
+
+
+  if (req.boltwallConfig?.caveatSatisfiers) {
+    const caveatSatisfiers = Array.isArray(req.boltwallConfig?.caveatSatisfiers) ? req.boltwallConfig?.caveatSatisfiers : [req.boltwallConfig?.caveatSatisfiers]
+    satisfiers = [...satisfiers, ...caveatSatisfiers]
+  }
+
+
   const isValid = verifyFirstPartyMacaroon(
     macaroon.serialize(),
     SESSION_SECRET,
-    req.boltwallConfig?.caveatSatisfiers,
+    satisfiers,
     req
   )
 
