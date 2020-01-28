@@ -1,5 +1,6 @@
 import { expect } from 'chai'
 import { Request } from 'express'
+import sinon, { SinonStub } from 'sinon'
 import { MacaroonsBuilder } from 'macaroons.js'
 import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
 import { parsePaymentRequest } from 'ln-service'
@@ -9,10 +10,12 @@ import {
   createLsatFromInvoice,
   getOriginFromRequest,
   createInvoice,
+  createChallengeCaveat,
 } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
 import { invoice } from './data'
 import { getLnStub } from './utilities'
+import crypto from 'crypto'
 
 describe('helper functions', () => {
   describe('getOriginFromRequest', () => {
@@ -242,6 +245,35 @@ describe('helper functions', () => {
 
       expect(createInvStub.called).to.be.true
       expect(result.amount).to.equal(request.query.amount)
+    })
+  })
+
+  describe.only('createChallengeCaveat', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let bytes: Buffer,
+      bytesStub: sinon.SinonStub<Buffer[]> | sinon.SinonStub<any>
+    beforeEach(() => {
+      bytes = crypto.randomBytes(32)
+      bytesStub = sinon.stub(crypto, 'randomBytes')
+      bytesStub.returns(bytes)
+    })
+
+    afterEach(() => {
+      bytesStub.restore()
+    })
+    it('should return a properly encoded challenge caveat', () => {
+      const string = createChallengeCaveat(invoice.payreq)
+      const getCaveat = (): Caveat => Caveat.decode(string)
+      expect(getCaveat).to.not.throw()
+
+      const caveat = getCaveat()
+      expect(caveat.condition).to.equal('challenge')
+
+      const requestDetails = parsePaymentRequest({ request: invoice.payreq })
+      const expectedValue = `${bytes.toString('hex')}:${
+        requestDetails.destination
+      }:`
+      expect(caveat.value).to.equal(expectedValue)
     })
   })
 })

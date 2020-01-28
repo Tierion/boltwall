@@ -10,9 +10,11 @@ import dotenv from 'dotenv'
 import crypto from 'crypto'
 import lnService from 'ln-service'
 import binet from 'binet'
+import { parsePaymentRequest } from 'ln-service'
 
 import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
-import { Lsat, Identifier } from 'lsat-js'
+import { Lsat, Identifier, Caveat } from 'lsat-js'
+import { invoiceResponse } from 'tests/data'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
 
@@ -360,4 +362,20 @@ export function getOriginFromRequest(req: Request): string {
   }
 
   return origin
+}
+
+/**
+ * @description A utility function to create a caveat for use in first party macaroon
+ * based OAuth protocols
+ * @param payreq - BOLT11 payment request to generate challenge from
+ * @returns string encoded caveat of the form `challenge=[random 32 byte string]:[destination pubkey]`
+ */
+export function createChallengeCaveat(payreq: string): string {
+  const details = parsePaymentRequest({ request: payreq })
+  const challenge = crypto.randomBytes(32).toString('hex')
+  const caveat = new Caveat({
+    condition: 'challenge',
+    value: `${challenge}:${details.destination}:`,
+  })
+  return caveat.encode()
 }
