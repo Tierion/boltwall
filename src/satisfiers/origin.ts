@@ -1,8 +1,3 @@
-/**
- * @file This file provides predefined satisfiers that can be used to validate
- * commonly used caveats that can be added on a macaroon.
- */
-
 import { Satisfier, Caveat } from 'lsat-js'
 import { Request } from 'express'
 import { getOriginFromRequest } from '../helpers'
@@ -13,7 +8,7 @@ import { getOriginFromRequest } from '../helpers'
  * Does not allow for caveats with different ips otherwise anyone could add their own
  * @type Satisfier
  */
-export const originSatisfier: Satisfier = {
+const originSatisfier: Satisfier = {
   condition: 'ip',
   satisfyPrevious: (prev: Caveat, curr: Caveat) => {
     if (prev.condition !== 'ip' || curr.condition !== 'ip') return false
@@ -26,3 +21,5 @@ export const originSatisfier: Satisfier = {
     else return false
   },
 }
+
+export default originSatisfier

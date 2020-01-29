@@ -396,6 +396,12 @@ export interface TokenChallenge {
   signature?: string | undefined
 }
 
+/**
+ * @description parse a challenge caveat to retrieve its individual pieces:
+ * pubkey, challenge, and signature
+ * @param {String} c - encoded caveat string
+ * @returns {TokenChallenge}
+ */
 export function decodeChallengeCaveat(c: string): TokenChallenge {
   const caveat = Caveat.decode(c)
   assert(
