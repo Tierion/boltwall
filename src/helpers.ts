@@ -415,7 +415,6 @@ export function decodeChallengeCaveat(c: string): TokenChallenge {
   challenge = challenge.trim()
   pubkey = pubkey.trim()
   if (signature) signature = signature.trim()
-
   assert(
     challenge && challenge.length === 64,
     'Expected 32 byte challenge string'
