@@ -1,9 +1,11 @@
 import { expect } from 'chai'
 import { Request } from 'express'
-import sinon, { SinonStub } from 'sinon'
+import sinon from 'sinon'
 import { MacaroonsBuilder } from 'macaroons.js'
 import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
 import { parsePaymentRequest } from 'ln-service'
+import crypto from 'crypto'
+import { createPrivateKey, getPublicKey } from '@lntools/crypto'
 
 import { invoiceResponse } from './data'
 import {
@@ -11,11 +13,12 @@ import {
   getOriginFromRequest,
   createInvoice,
   createChallengeCaveat,
+  decodeChallengeCaveat,
+  TokenChallenge,
 } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
 import { invoice } from './data'
 import { getLnStub } from './utilities'
-import crypto from 'crypto'
 
 describe('helper functions', () => {
   describe('getOriginFromRequest', () => {
@@ -193,6 +196,26 @@ describe('helper functions', () => {
           ).to.be.true
       }
     })
+
+    it('should generate correct macaroon when oauth is enabled in config', () => {
+      request.boltwallConfig = {
+        oauth: true,
+      }
+      request.query = { auth_uri: 'https://my-boltwall.net' }
+
+      const lsat = createLsatFromInvoice(request as Request, invoice)
+      const macaroon = MacaroonsBuilder.deserialize(lsat.baseMacaroon)
+      const caveat = lsat.getCaveats().find(c => c.condition === 'challenge')
+      expect(
+        macaroon.location,
+        'macaroon location should be set to the auth_uri'
+      ).to.equal(request.query.auth_uri)
+      expect(caveat, 'No challenge caveat found on lsat macaroon').to.exist
+      if (caveat)
+        expect(caveat.value).to.include(
+          parsePaymentRequest({ request: invoiceResponse.request }).destination
+        )
+    })
   })
 
   describe('createInvoice', () => {
@@ -248,9 +271,9 @@ describe('helper functions', () => {
     })
   })
 
-  describe.only('createChallengeCaveat', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  describe('createChallengeCaveat', () => {
     let bytes: Buffer,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bytesStub: sinon.SinonStub<Buffer[]> | sinon.SinonStub<any>
     beforeEach(() => {
       bytes = crypto.randomBytes(32)
@@ -274,6 +297,35 @@ describe('helper functions', () => {
         requestDetails.destination
       }:`
       expect(caveat.value).to.equal(expectedValue)
+    })
+  })
+
+  describe('decodeChallengeCaveat', () => {
+    it('should correctly decode challenge caveat', () => {
+      const pk = createPrivateKey()
+      const pubkey = getPublicKey(pk)
+      const challenge = crypto.randomBytes(32).toString('hex')
+      const signature = crypto.randomBytes(32).toString('hex')
+
+      let caveat = `challenge=${challenge}:${pubkey.toString('hex')}:`
+
+      let decoded = decodeChallengeCaveat(caveat)
+      expect(decoded.pubkey).to.equal(pubkey.toString('hex'))
+      expect(decoded.challenge).to.equal(challenge)
+
+      caveat += signature
+      decoded = decodeChallengeCaveat(caveat)
+      expect(decoded.signature).to.equal(signature)
+
+      const malformed = [
+        `chall=${challenge}:${pubkey.toString('hex')}:`,
+        `challenge=12345:${pubkey.toString('hex')}:`,
+        `challenge=${challenge}:12345:`,
+      ]
+      for (const c of malformed) {
+        const decode = (): TokenChallenge => decodeChallengeCaveat(c)
+        expect(decode).to.throw()
+      }
     })
   })
 })

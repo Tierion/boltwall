@@ -1,5 +1,6 @@
 export { default as validateLsat } from './validate'
 export { default as node } from './node'
+export { default as token } from './token'
 export { default as invoice } from './invoice'
 export { default as paywall } from './paywall'
 export { default as parseEnv } from './parseEnv'

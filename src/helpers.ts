@@ -7,14 +7,13 @@ import { Request } from 'express'
 import assert from 'assert'
 import { MacaroonsBuilder, MacaroonsConstants } from 'macaroons.js'
 import dotenv from 'dotenv'
-import crypto from 'crypto'
+import crypto, { sign } from 'crypto'
 import lnService from 'ln-service'
 import binet from 'binet'
 import { parsePaymentRequest } from 'ln-service'
 
 import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
 import { Lsat, Identifier, Caveat } from 'lsat-js'
-import { invoiceResponse } from 'tests/data'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
 
@@ -122,6 +121,22 @@ See README for instructions: https://github.com/Tierion/boltwall'
 }
 
 /**
+ * @description A utility function to create a caveat for use in first party macaroon
+ * based OAuth protocols
+ * @param payreq - BOLT11 payment request to generate challenge from
+ * @returns string encoded caveat of the form `challenge=[random 32 byte string]:[destination pubkey]`
+ */
+export function createChallengeCaveat(payreq: string): string {
+  const details = parsePaymentRequest({ request: payreq })
+  const challenge = crypto.randomBytes(32).toString('hex')
+  const caveat = new Caveat({
+    condition: 'challenge',
+    value: `${challenge}:${details.destination}:`,
+  })
+  return caveat.encode()
+}
+
+/**
  * Utility function to get a location string to describe _where_ the server is.
  * useful for setting identifiers in macaroons
  * @param {Express.request} req - expressjs request object
@@ -156,7 +171,13 @@ export function createLsatFromInvoice(
     paymentHash: Buffer.from(id, 'hex'),
   })
   const { SESSION_SECRET } = getEnvVars()
-  const location = getLocation(req)
+  let location = getLocation(req)
+
+  if (req.boltwallConfig && req.boltwallConfig.oauth) {
+    if (!req.query.auth_uri)
+      throw new Error('Missing auth_uri in request query')
+    location = req.query.auth_uri
+  }
 
   const builder = new MacaroonsBuilder(
     location,
@@ -177,6 +198,11 @@ export function createLsatFromInvoice(
       const caveat = getCaveat(req, invoice)
       builder.add_first_party_caveat(caveat)
     }
+  }
+
+  if (req.boltwallConfig && req.boltwallConfig.oauth) {
+    const caveat = createChallengeCaveat(invoice.payreq)
+    builder.add_first_party_caveat(caveat)
   }
 
   const macaroon = builder.getMacaroon()
@@ -364,18 +390,33 @@ export function getOriginFromRequest(req: Request): string {
   return origin
 }
 
-/**
- * @description A utility function to create a caveat for use in first party macaroon
- * based OAuth protocols
- * @param payreq - BOLT11 payment request to generate challenge from
- * @returns string encoded caveat of the form `challenge=[random 32 byte string]:[destination pubkey]`
- */
-export function createChallengeCaveat(payreq: string): string {
-  const details = parsePaymentRequest({ request: payreq })
-  const challenge = crypto.randomBytes(32).toString('hex')
-  const caveat = new Caveat({
-    condition: 'challenge',
-    value: `${challenge}:${details.destination}:`,
-  })
-  return caveat.encode()
+export interface TokenChallenge {
+  pubkey: string
+  challenge: string
+  signature?: string | undefined
+}
+
+export function decodeChallengeCaveat(c: string): TokenChallenge {
+  const caveat = Caveat.decode(c)
+  assert(
+    caveat && caveat.condition === 'challenge',
+    'Expected to receive a token challenge caveat'
+  )
+  if (typeof caveat.value !== 'string')
+    throw new Error('Unknown value on challenge caveat')
+  let [challenge, pubkey, signature] = caveat.value.split(':')
+
+  challenge = challenge.trim()
+  pubkey = pubkey.trim()
+  if (signature) signature = signature.trim()
+
+  assert(
+    challenge && challenge.length === 64,
+    'Expected 32 byte challenge string'
+  )
+  assert(pubkey && pubkey.length === 66, 'Expected a 33-byte pubkey string')
+  const decoded = { challenge, pubkey }
+  if (signature && signature.length) return { ...decoded, signature }
+
+  return decoded
 }

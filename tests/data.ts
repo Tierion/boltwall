@@ -35,7 +35,7 @@ export const secondInvoice = {
     '67740669ffaa0e1bfd3460eeef6cbc447649208238fb54af6e2802c659df2f71',
 }
 
-const request = parsePaymentRequest({ request: invoice.payreq })
+export const invoiceDetails = parsePaymentRequest({ request: invoice.payreq })
 
 export interface InvoiceResponseStub {
   request: string
@@ -51,9 +51,9 @@ export interface InvoiceResponseStub {
 export const invoiceResponse: InvoiceResponseStub = {
   request: invoice.payreq,
   is_confirmed: true,
-  id: request.id,
+  id: invoiceDetails.id,
   secret: invoice.secret,
-  tokens: request.tokens,
+  tokens: invoiceDetails.tokens,
   created_at: '2016-08-29T09:12:33.001Z',
-  description: request.description,
+  description: invoiceDetails.description,
 }
