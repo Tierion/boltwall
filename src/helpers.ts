@@ -10,6 +10,8 @@ import dotenv from 'dotenv'
 import crypto from 'crypto'
 import lnService from 'ln-service'
 import binet from 'binet'
+import rp from 'request-promise-native'
+
 import { parsePaymentRequest } from 'ln-service'
 
 import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
@@ -249,6 +251,22 @@ This means payer can pay whatever they want for access.'
     _description = boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
+  if (boltwallConfig && boltwallConfig.oauth && !query.auth_uri) {
+    throw new Error('Missing auth_uri in request')
+  } else if (boltwallConfig && boltwallConfig.oauth && query.auth_uri) {
+    // dealing with auth_uri request
+    try {
+      const url = new URL(query.auth_uri)
+      if (!url.protocol.includes('http'))
+        throw new Error('unsupported protocol')
+    } catch (e) {
+      throw new Error('auth_uri invalid format')
+    }
+    const uri = new URL('/invoice', query.auth_uri)
+    const options = { uri: uri.href }
+    const invoice = await rp.post(options)
+    return invoice
+  }
   if (lnd) {
     let invoiceFunction = lnService.createInvoice
     if (boltwallConfig && boltwallConfig.hodl)

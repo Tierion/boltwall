@@ -78,14 +78,15 @@ describe('satisfiers', () => {
       }
     })
 
-    it('should satisfy final if the signature matches the pubkey', () => {
+    it('should satisfy final if the signature matches the pubkey and return false otherwise', () => {
       expect(challengeSatisfier).to.have.property('satisfyFinal')
 
       const { satisfyFinal } = challengeSatisfier
 
       // first run with a challenge without signature should pass
       let isValid = satisfyFinal(prev)
-      expect(isValid).to.be.true
+      expect(isValid, 'First run should pass even if no signature present').to
+        .be.true
 
       isValid = satisfyFinal(curr)
       expect(
@@ -93,20 +94,22 @@ describe('satisfiers', () => {
         'Satisfier should pass if final caveat has proper signature'
       ).to.be.true
 
-      // run once more for fake prev
-      satisfyFinal(prev)
-
       //run with a bad signature
       const invalidSig = new Caveat({
         condition: 'challenge',
         value: `${prev.value}${Buffer.alloc(64).toString('hex')}`,
       })
+
+      // run once more for fake prev since odd numbered runs always pass
+      satisfyFinal(prev)
+      // second run should fail if the signature is invalid
       isValid = satisfyFinal(invalidSig)
       expect(
         isValid,
         'Satisfier should fail if final caveat has invalid signature'
       ).to.be.false
 
+      // run twice both without signature to confirm failure with missing signature
       satisfyFinal(prev)
       isValid = satisfyFinal(prev)
       expect(

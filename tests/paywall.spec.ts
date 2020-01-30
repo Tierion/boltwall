@@ -17,7 +17,7 @@ import { BoltwallConfig, InvoiceResponse } from '../src/typings'
 import * as helpers from '../src/helpers'
 import { challengeSatisfier } from '../src/satisfiers'
 
-describe('paywall', () => {
+describe.only('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,
     createInvStub: sinon.SinonStub,
     getInvStub: sinon.SinonStub,
@@ -283,4 +283,10 @@ describe('paywall', () => {
       .set('Authorization', lsat.toToken())
       .expect(404)
   })
+
+  xit('should skip checkInvoice call if oauth is enabled', () => {
+    app = getApp({ oauth: true })
+  })
+
+  it('should return 400 when oauth is enabled and missing auth_uri and lsat in request')
 })

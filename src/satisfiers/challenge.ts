@@ -26,8 +26,8 @@ const challengeSatisfier: Satisfier = {
     )
 
     // first challenge caveat is not expected to have a signature
-    // but if any other instance does not have signature then it should fail
     if (!signature && callCount === 1) return true
+    // but if any other instance does not have signature then it should fail
     else if (!signature) {
       // when missing a signature, always keep count at 1 to indicate waiting
       // for the next challenge caveat with the signature
@@ -35,7 +35,7 @@ const challengeSatisfier: Satisfier = {
       return false
     }
 
-    // if we're checking a signature then we can reset the call count
+    // if we're checking a signature then we reset the call count
     callCount = 0
     return verifySig(
       Buffer.from(challenge, 'hex'),

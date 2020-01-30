@@ -6,6 +6,7 @@ import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
 import { parsePaymentRequest } from 'ln-service'
 import crypto from 'crypto'
 import { createPrivateKey, getPublicKey } from '@lntools/crypto'
+import rp from 'request-promise-native'
 
 import { invoiceResponse } from './data'
 import {
@@ -218,7 +219,7 @@ describe('helper functions', () => {
     })
   })
 
-  describe('createInvoice', () => {
+  describe.only('createInvoice', () => {
     interface InvoiceResponseStub {
       request: string
       is_confirmed: boolean
@@ -228,7 +229,10 @@ describe('helper functions', () => {
       created_at: string
       description: string
     }
-    let createInvStub: sinon.SinonStub, invoiceResponse: InvoiceResponseStub
+    let createInvStub: sinon.SinonStub,
+      invoiceResponse: InvoiceResponseStub,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      postStub: sinon.SinonStub<any>
 
     beforeEach(() => {
       const request = parsePaymentRequest({ request: invoice.payreq })
@@ -250,6 +254,7 @@ describe('helper functions', () => {
     })
     afterEach(() => {
       createInvStub.restore()
+      if (postStub) postStub.restore()
     })
 
     it('should create an invoice using the amount provided in a request query', async () => {
@@ -268,6 +273,46 @@ describe('helper functions', () => {
 
       expect(createInvStub.called).to.be.true
       expect(result.amount).to.equal(request.query.amount)
+    })
+
+    it('should return an error if oauth is true but missing auth_uri in request', async () => {
+      const request = {
+        query: {},
+        lnd: {},
+        boltwallConfig: { oauth: true },
+        body: { amount: 50 },
+      }
+
+      let thrown = false
+      try {
+        await createInvoice((request as unknown) as Request)
+      } catch (e) {
+        thrown = true
+      }
+      expect(thrown).to.be.true
+    })
+
+    it('should request a new invoice from auth_uri if oauth is enabled', async () => {
+      const authUri = 'http://my-boltwall.com/'
+      const uri = new URL('/invoice', authUri)
+
+      const request = {
+        query: {
+          auth_uri: authUri,
+        },
+        lnd: {},
+        body: { amount: 50 },
+        boltwallConfig: { oauth: true },
+      }
+      const options = { uri: uri.href }
+      postStub = sinon.stub(rp, 'post')
+
+      postStub.withArgs(sinon.match(options)).returns(invoiceResponse)
+
+      const invoice = await createInvoice((request as unknown) as Request)
+
+      expect(postStub.called).to.be.true
+      expect(invoice).to.equal(invoiceResponse)
     })
   })
 
