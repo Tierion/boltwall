@@ -4,6 +4,7 @@ import assert from 'assert'
 import { Lsat, verifyFirstPartyMacaroon, Satisfier } from 'lsat-js'
 import { getEnvVars, isHex } from '../helpers'
 import * as configs from '../configs'
+import { challengeSatisfier } from '../satisfiers'
 import { BoltwallConfig } from '../typings'
 
 /**
@@ -98,13 +99,15 @@ export default async function validateLsat(
     }
   }
 
-
+  if (req.boltwallConfig && req.boltwallConfig.oauth) {
+    satisfiers.push(challengeSatisfier)
+  }
+  
   if (req.boltwallConfig?.caveatSatisfiers) {
     const caveatSatisfiers = Array.isArray(req.boltwallConfig?.caveatSatisfiers) ? req.boltwallConfig?.caveatSatisfiers : [req.boltwallConfig?.caveatSatisfiers]
     satisfiers = [...satisfiers, ...caveatSatisfiers]
   }
-
-
+  
   const isValid = verifyFirstPartyMacaroon(
     macaroon.serialize(),
     SESSION_SECRET,

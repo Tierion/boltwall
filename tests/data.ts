@@ -37,6 +37,13 @@ export const secondInvoice = {
 
 export const invoiceDetails = parsePaymentRequest({ request: invoice.payreq })
 
+export const challenge = {
+  signature:
+    '9d6667dcac8aeab5f5b1ece3fdf6f63d98a5206e622d193b11b4c289849d4f04483f298aa4c202faa3df738ed65eced77a72ccaad3abdef75c5cbae04cb36718',
+  challenge: '34e3536072796350ff184dbf04110c8720a3ca537999fd1e49849d1ca4706b02',
+  pubkey: '023d489f8d4b91d66e4950acd1cdbc926212495477f84323168272e271f7445dcd',
+}
+
 export interface InvoiceResponseStub {
   request: string
   is_confirmed: boolean

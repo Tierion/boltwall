@@ -17,7 +17,8 @@ describe('satisfiers', () => {
     privkey = createPrivateKey()
     pubkey = getPublicKey(privkey)
     challenge = crypto.randomBytes(32)
-    signature = secp256k1.sign(challenge, privkey).signature
+    signature = secp256k1.ecdsaSign(challenge, privkey).signature
+    signature = Buffer.from(signature)
 
     prev = new Caveat({
       condition: 'challenge',
@@ -82,9 +83,31 @@ describe('satisfiers', () => {
 
       const { satisfyFinal } = challengeSatisfier
 
-      let isValid = satisfyFinal(curr)
+      // first run with a challenge without signature should pass
+      let isValid = satisfyFinal(prev)
       expect(isValid).to.be.true
 
+      isValid = satisfyFinal(curr)
+      expect(
+        isValid,
+        'Satisfier should pass if final caveat has proper signature'
+      ).to.be.true
+
+      // run once more for fake prev
+      satisfyFinal(prev)
+
+      //run with a bad signature
+      const invalidSig = new Caveat({
+        condition: 'challenge',
+        value: `${prev.value}${Buffer.alloc(64).toString('hex')}`,
+      })
+      isValid = satisfyFinal(invalidSig)
+      expect(
+        isValid,
+        'Satisfier should fail if final caveat has invalid signature'
+      ).to.be.false
+
+      satisfyFinal(prev)
       isValid = satisfyFinal(prev)
       expect(
         isValid,
