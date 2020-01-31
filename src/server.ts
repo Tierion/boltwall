@@ -1,8 +1,13 @@
 import express, { Response, Request, NextFunction } from 'express'
 import cors from 'cors'
 import bodyParser from 'body-parser'
+import { BoltwallConfig } from './typings'
 
-const { boltwall, TIME_CAVEAT_CONFIGS } = require('./index')
+const {
+  boltwall,
+  TIME_CAVEAT_CONFIGS,
+  ORIGIN_CAVEAT_CONFIGS,
+} = require('./index')
 
 const app: express.Application = express()
 
@@ -36,7 +41,21 @@ app.get('/', (_req, res: express.Response) => {
  * lightning invoice
  */
 
-app.use(boltwall(TIME_CAVEAT_CONFIGS))
+const {
+  PORT,
+  TIME_CAVEAT,
+  ORIGIN_CAVEAT,
+  BOLTWALL_OAUTH,
+  BOLTWALL_HODL,
+  BOLTWALL_MIN_AMOUNT,
+} = process.env
+let options: BoltwallConfig = {}
+if (TIME_CAVEAT) options = TIME_CAVEAT_CONFIGS
+if (ORIGIN_CAVEAT) options = ORIGIN_CAVEAT_CONFIGS
+if (BOLTWALL_OAUTH) options.oauth = true
+if (BOLTWALL_HODL) options.hodl = true
+if (BOLTWALL_MIN_AMOUNT) options.minAmount = BOLTWALL_MIN_AMOUNT
+app.use(boltwall(options))
 
 /******
 Any middleware our route passed after this point will be protected and require
@@ -50,7 +69,7 @@ app.get(protectedRoute, (_req, res: express.Response) =>
   })
 )
 
-app.set('port', process.env.PORT || 5000)
+app.set('port', PORT || 5000)
 
 app.listen(app.get('port'), () => {
   //eslint-disable-next-line
