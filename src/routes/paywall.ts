@@ -47,6 +47,10 @@ export default async function paywall(
     try {
       invoice = await createInvoice(req)
     } catch (e) {
+      if (req?.boltwallConfig?.oauth && !req.query.auth_uri) {
+        res.status(400)
+        return next({ message: 'Missing auth_uri in query string for oauth request'})
+      }
       // handle ln-service errors
       if (Array.isArray(e)) {
         req.logger.error('Problem generating invoice:', ...e)
@@ -66,6 +70,13 @@ export default async function paywall(
       `Request made from ${req.hostname} that requires payment. LSAT ID: ${lsat.id}`
     )
     return next({ message: 'Payment required' })
+  }
+
+  // challenge caveats should already have been verified at this point for oauth
+  // so we can just continue to the paywall as all remaining checks are against our node
+  if (req?.boltwallConfig?.oauth) {
+    if (!lsat.isSatisfied()) req.logger.warning(`LSAT submitted to oauth server from ${req.ip} that is not satisfied with preimage`)
+    return next()
   }
 
   // If we got here then we have an LSAT and we want to check on the

@@ -17,7 +17,7 @@ import { BoltwallConfig, InvoiceResponse } from '../src/typings'
 import * as helpers from '../src/helpers'
 import { challengeSatisfier } from '../src/satisfiers'
 
-describe.only('paywall', () => {
+describe('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,
     createInvStub: sinon.SinonStub,
     getInvStub: sinon.SinonStub,
@@ -284,9 +284,28 @@ describe.only('paywall', () => {
       .expect(404)
   })
 
-  xit('should skip checkInvoice call if oauth is enabled', () => {
+  it('should return 400 when oauth is enabled and missing auth_uri and lsat in request', async () => {
     app = getApp({ oauth: true })
+
+    lsat.setPreimage(invoiceResponse.secret)
+    await request
+      .agent(app)
+      .get(protectedRoute)
+      .expect(400)
+    
   })
 
-  it('should return 400 when oauth is enabled and missing auth_uri and lsat in request')
+  it('should skip checkInvoice call if oauth is enabled for authenticated request', async () => {
+    app = getApp({ oauth: true })
+    checkInvoiceStub = sinon.stub(helpers, 'checkInvoiceStatus')
+    const authUri = 'http://my-boltwall.com'
+
+    lsat.setPreimage(invoiceResponse.secret)
+    await request
+      .agent(app)
+      .get(`${protectedRoute}?auth_uri=${authUri}`)
+      .set('Authorization', lsat.toToken())
+
+    expect(checkInvoiceStub.called).to.be.false
+  })
 })

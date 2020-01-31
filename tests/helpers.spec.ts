@@ -219,7 +219,7 @@ describe('helper functions', () => {
     })
   })
 
-  describe.only('createInvoice', () => {
+  describe('createInvoice', () => {
     interface InvoiceResponseStub {
       request: string
       is_confirmed: boolean
