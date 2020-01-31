@@ -299,14 +299,29 @@ describe('helper functions', () => {
       const request = {
         query: {
           auth_uri: authUri,
+          amount: 50,
         },
         lnd: {},
-        body: { amount: 50 },
-        boltwallConfig: { oauth: true },
+        body: {
+          foo: 'bar',
+        },
+        boltwallConfig: {
+          oauth: true,
+        },
       }
-      const options = { uri: uri.href }
-      postStub = sinon.stub(rp, 'post')
 
+      // add query items to the rp uri minus the auth_uri
+      const qs = JSON.parse(
+        JSON.stringify({ ...request.query, auth_uri: undefined })
+      )
+
+      const options = {
+        uri: uri.href,
+        qs,
+        body: JSON.stringify(request.body),
+      }
+
+      postStub = sinon.stub(rp, 'post')
       postStub.withArgs(sinon.match(options)).returns(invoiceResponse)
 
       const invoice = await createInvoice((request as unknown) as Request)

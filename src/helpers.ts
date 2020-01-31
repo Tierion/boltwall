@@ -263,7 +263,12 @@ This means payer can pay whatever they want for access.'
       throw new Error('auth_uri invalid format')
     }
     const uri = new URL('/invoice', query.auth_uri)
-    const options = { uri: uri.href }
+    const options = {
+      uri: uri.href,
+      qs: JSON.parse(JSON.stringify({ ...query, auth_uri: undefined })),
+      body: JSON.stringify(body),
+    }
+
     const invoice = await rp.post(options)
     return invoice
   }
