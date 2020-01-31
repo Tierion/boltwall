@@ -23,10 +23,10 @@ export default function parseEnv(
     let mac: string | undefined = LND_MACAROON
     let lndCert: string | undefined = LND_TLS_CERT
     if (mac && !isBase64(mac)) {
-      mac = new Buffer(fs.readFileSync(mac)).toString('base64')
+      mac = Buffer.from(fs.readFileSync(mac)).toString('base64')
     }
     if (lndCert && !isBase64(lndCert)) {
-      lndCert = new Buffer(fs.readFileSync(lndCert)).toString('base64')
+      lndCert = Buffer.from(fs.readFileSync(lndCert)).toString('base64')
     }
 
     // if the tests pass above and we don't have a
