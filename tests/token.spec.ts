@@ -124,7 +124,7 @@ describe(route, () => {
       )
     })
 
-    it('should return 402 if invoice is unpaid', async () => {
+    it('should return 401 if invoice is unpaid', async () => {
       checkInvoiceStub.returns({ ...checkInvResponse, status: 'unpaid' })
 
       const res: request.Response = await request

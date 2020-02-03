@@ -45,6 +45,8 @@ const challengeSatisfier: Satisfier = {
 
     // signature is zbase32 encoded
     const sigBuffer = zbase32.decode(signature).slice(1)
+    // lightning nodes sign messages by attaching a message prefix and
+    // double hashing the value before signing
     const digest = sha256(sha256(MSG_PREFIX + challenge))
 
     return secp256k1.verify(digest, sigBuffer, Buffer.from(pubkey, 'hex'))

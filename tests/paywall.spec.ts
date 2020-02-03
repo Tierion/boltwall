@@ -292,10 +292,9 @@ describe('paywall', () => {
       .agent(app)
       .get(protectedRoute)
       .expect(400)
-    
   })
 
-  it('should skip checkInvoice call if oauth is enabled for authenticated request', async () => {
+  it('should skip checkInvoice call and pass paywall if oauth is enabled for authenticated request', async () => {
     app = getApp({ oauth: true })
     checkInvoiceStub = sinon.stub(helpers, 'checkInvoiceStatus')
     const authUri = 'http://my-boltwall.com'
@@ -305,6 +304,7 @@ describe('paywall', () => {
       .agent(app)
       .get(`${protectedRoute}?auth_uri=${authUri}`)
       .set('Authorization', lsat.toToken())
+      .expect(200)
 
     expect(checkInvoiceStub.called).to.be.false
   })

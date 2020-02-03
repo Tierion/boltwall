@@ -36,19 +36,26 @@ export async function satisfyTokenChallenge(
 
   const caveat = caveats[caveats.length - 1]
 
-  const challenge = decodeChallengeCaveat(caveat.encode())
+  const { challenge, pubkey, signature: sig } = decodeChallengeCaveat(
+    caveat.encode()
+  )
   if (!req.lnd) {
     res.status(501)
     return next({ message: 'Node does not support this method' })
   }
 
-  const { public_key: pubkey } = await lnService.getWalletInfo({
+  const { public_key: nodePubkey } = await lnService.getWalletInfo({
     lnd: req.lnd,
   })
 
-  if (challenge.pubkey !== pubkey) {
+  if (pubkey !== nodePubkey) {
     res.status(400)
     return next({ message: 'Request made with unknown public key' })
+  }
+
+  if (sig) {
+    res.status(400)
+    return next({ message: 'Macaroon already contains a token' })
   }
 
   const invoiceResponse = await checkInvoiceStatus(
@@ -65,7 +72,7 @@ export async function satisfyTokenChallenge(
   // sign challenge
   const { signature } = await lnService.signMessage({
     lnd: req.lnd,
-    message: challenge.challenge,
+    message: challenge,
   })
 
   // add signature to original challenge caveat

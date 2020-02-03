@@ -90,7 +90,7 @@ describe('satisfiers', () => {
         value: `${prev.value}${Buffer.alloc(64).toString('hex')}`,
       })
 
-      // run once more for fake prev since odd numbered runs always pass
+      // run once more for fake prev since odd numbered runs skip sig check
       satisfyFinal(prev)
       // second run should fail if the signature is invalid
       isValid = satisfyFinal(invalidSig)
