@@ -1,13 +1,18 @@
 import { Satisfier } from 'lsat-js'
 import { decodeChallengeCaveat } from '../helpers'
-import { verifySig } from '@lntools/crypto'
-
+import { secp256k1 } from 'bcrypto'
+import zbase32 from 'zbase32'
+import { createHash } from 'crypto'
 const condition = 'challenge'
 
 // singleton to keep track of whether we are on the challenge caveat
 // or the answer caveat (the challenge caveat with the signature)
 let callCount = 0
-
+const sha256 = (msg: string | Buffer): Buffer =>
+  createHash('sha256')
+    .update(msg)
+    .digest()
+const MSG_PREFIX = 'Lightning Signed Message:'
 const challengeSatisfier: Satisfier = {
   condition,
   satisfyPrevious: (prev, curr) => {
@@ -37,11 +42,12 @@ const challengeSatisfier: Satisfier = {
 
     // if we're checking a signature then we reset the call count
     callCount = 0
-    return verifySig(
-      Buffer.from(challenge, 'hex'),
-      Buffer.from(signature, 'hex'),
-      Buffer.from(pubkey, 'hex')
-    )
+
+    // signature is zbase32 encoded
+    const sigBuffer = zbase32.decode(signature).slice(1)
+    const digest = sha256(sha256(MSG_PREFIX + challenge))
+
+    return secp256k1.verify(digest, sigBuffer, Buffer.from(pubkey, 'hex'))
   },
 }
 

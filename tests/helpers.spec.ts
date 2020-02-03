@@ -5,7 +5,6 @@ import { MacaroonsBuilder } from 'macaroons.js'
 import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
 import { parsePaymentRequest } from 'ln-service'
 import crypto from 'crypto'
-import { createPrivateKey, getPublicKey } from '@lntools/crypto'
 import rp from 'request-promise-native'
 
 import { invoiceResponse } from './data'
@@ -18,7 +17,7 @@ import {
   TokenChallenge,
 } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
-import { invoice } from './data'
+import { invoice, challenge as challengeData } from './data'
 import { getLnStub } from './utilities'
 
 describe('helper functions', () => {
@@ -318,7 +317,8 @@ describe('helper functions', () => {
       const options = {
         uri: uri.href,
         qs,
-        body: JSON.stringify(request.body),
+        body: request.body,
+        json: true,
       }
 
       postStub = sinon.stub(rp, 'post')
@@ -362,15 +362,12 @@ describe('helper functions', () => {
 
   describe('decodeChallengeCaveat', () => {
     it('should correctly decode challenge caveat', () => {
-      const pk = createPrivateKey()
-      const pubkey = getPublicKey(pk)
-      const challenge = crypto.randomBytes(32).toString('hex')
-      const signature = crypto.randomBytes(32).toString('hex')
+      const { pubkey, challenge, signature } = challengeData
 
-      let caveat = `challenge=${challenge}:${pubkey.toString('hex')}:`
+      let caveat = `challenge=${challenge}:${pubkey}:`
 
       let decoded = decodeChallengeCaveat(caveat)
-      expect(decoded.pubkey).to.equal(pubkey.toString('hex'))
+      expect(decoded.pubkey).to.equal(pubkey)
       expect(decoded.challenge).to.equal(challenge)
 
       caveat += signature
@@ -378,8 +375,8 @@ describe('helper functions', () => {
       expect(decoded.signature).to.equal(signature)
 
       const malformed = [
-        `chall=${challenge}:${pubkey.toString('hex')}:`,
-        `challenge=12345:${pubkey.toString('hex')}:`,
+        `chall=${challenge}:${pubkey}:`,
+        `challenge=12345:${pubkey}:`,
         `challenge=${challenge}:12345:`,
       ]
       for (const c of malformed) {

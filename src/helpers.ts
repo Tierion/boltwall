@@ -163,10 +163,9 @@ export function createLsatFromInvoice(
   req: Request,
   invoice: InvoiceResponse
 ): Lsat {
-  assert(
-    invoice && invoice.payreq && invoice.id,
-    'Must pass an invoice with payreq and id to create LSAT'
-  )
+  assert(invoice, 'Missing invoice response. Needed to create LSAT')
+  assert(invoice.payreq, 'Invoice response missing payreq')
+  assert(invoice.id, 'Invoice response missing id (payment hash)')
 
   const { payreq, id } = invoice
   const identifier = new Identifier({
@@ -266,7 +265,8 @@ This means payer can pay whatever they want for access.'
     const options = {
       uri: uri.href,
       qs: JSON.parse(JSON.stringify({ ...query, auth_uri: undefined })),
-      body: JSON.stringify(body),
+      body,
+      json: true,
     }
 
     const invoice = await rp.post(options)

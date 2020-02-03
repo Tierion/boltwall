@@ -43,9 +43,10 @@ export default async function paywall(
 
   // handle circumstance where there is no lsat or it is expired
   if (!headers.authorization || !lsat || lsat.isExpired()) {
-    let invoice: InvoiceResponse
+    let invoice: InvoiceResponse, lsat
     try {
       invoice = await createInvoice(req)
+      lsat = createLsatFromInvoice(req, invoice)
     } catch (e) {
       if (req?.boltwallConfig?.oauth && !req.query.auth_uri) {
         res.status(400)
@@ -61,7 +62,6 @@ export default async function paywall(
       return next({ message: 'Problem generating invoice' })
     }
 
-    const lsat = createLsatFromInvoice(req, invoice)
     res.status(402)
     res.set({
       'WWW-Authenticate': lsat.toChallenge(),

@@ -1,33 +1,27 @@
 import { expect } from 'chai'
-import crypto from 'crypto'
 import { Caveat } from 'lsat-js'
-import { createPrivateKey, getPublicKey } from '@lntools/crypto'
-import secp256k1 from 'secp256k1'
+import { challenge as challengeData } from './data'
 import { challengeSatisfier } from '../src/satisfiers'
 
 describe('satisfiers', () => {
-  let pubkey: Buffer,
-    challenge: Buffer,
-    privkey: Buffer,
-    signature: Buffer,
+  let pubkey: string,
+    challenge: string,
+    signature: string,
     curr: Caveat,
     prev: Caveat
 
   before(() => {
-    privkey = createPrivateKey()
-    pubkey = getPublicKey(privkey)
-    challenge = crypto.randomBytes(32)
-    signature = secp256k1.ecdsaSign(challenge, privkey).signature
-    signature = Buffer.from(signature)
-
+    signature = challengeData.signature
+    challenge = challengeData.challenge
+    pubkey = challengeData.pubkey
     prev = new Caveat({
       condition: 'challenge',
-      value: `${challenge.toString('hex')}:${pubkey.toString('hex')}:`,
+      value: `${challenge}:${pubkey}:`,
     })
 
     curr = new Caveat({
       condition: 'challenge',
-      value: prev.value.toString() + signature.toString('hex'),
+      value: prev.value.toString() + signature,
     })
   })
 
@@ -50,9 +44,7 @@ describe('satisfiers', () => {
           name: 'pubkey mismatch',
           prev: new Caveat({
             condition: 'challenge',
-            value: `${challenge.toString('hex')}:${Buffer.alloc(33).toString(
-              'hex'
-            )}:`,
+            value: `${challenge}:${Buffer.alloc(33).toString('hex')}:`,
           }),
           curr,
         },
@@ -60,9 +52,7 @@ describe('satisfiers', () => {
           name: 'challenge mismatch',
           prev: new Caveat({
             condition: 'challenge',
-            value: `${Buffer.alloc(32).toString('hex')}:${pubkey.toString(
-              'hex'
-            )}:`,
+            value: `${Buffer.alloc(32).toString('hex')}:${pubkey}:`,
           }),
           curr,
         },

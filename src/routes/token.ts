@@ -37,7 +37,6 @@ export async function satisfyTokenChallenge(
   const caveat = caveats[caveats.length - 1]
 
   const challenge = decodeChallengeCaveat(caveat.encode())
-
   if (!req.lnd) {
     res.status(501)
     return next({ message: 'Node does not support this method' })
@@ -52,7 +51,11 @@ export async function satisfyTokenChallenge(
     return next({ message: 'Request made with unknown public key' })
   }
 
-  const invoiceResponse = await checkInvoiceStatus(lsat.paymentHash)
+  const invoiceResponse = await checkInvoiceStatus(
+    lsat.paymentHash,
+    req.lnd,
+    req.opennode
+  )
 
   if (invoiceResponse.status === 'unpaid') {
     res.status(402)
@@ -62,7 +65,7 @@ export async function satisfyTokenChallenge(
   // sign challenge
   const { signature } = await lnService.signMessage({
     lnd: req.lnd,
-    message: challenge,
+    message: challenge.challenge,
   })
 
   // add signature to original challenge caveat
