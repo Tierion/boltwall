@@ -132,7 +132,7 @@ describe(route, () => {
         .post(route)
         .send({ macaroon })
 
-      expect(res.status).to.equal(402)
+      expect(res.status).to.equal(401)
     })
 
     it('should return new macaroon in response body', async () => {
