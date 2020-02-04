@@ -1,6 +1,6 @@
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![Build Status](https://travis-ci.com/Tierion/boltwall.svg?branch=master)](https://travis-ci.com/Tierion/boltwall)
-[![Coverage Status](https://coveralls.io/repos/github/Tierion/boltwall/badge.svg)](https://coveralls.io/github/Tierion/boltwall)
+[![Coverage Status](https://coveralls.io/repos/github/Tierion/boltwall/badge.svg?branch=ci)](https://coveralls.io/github/Tierion/boltwall?branch=ci)
 
 # ⚡️ Boltwall ⚡️
 
