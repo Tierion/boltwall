@@ -27,7 +27,8 @@ app.use(boltwall())
     - [Authorization Flows](#authorization-flows)
     - [Making the Payment](#making-the-payment)
     - [A `held` Invoice is a Paid Invoice](#a-held-invoice-is-a-paid-invoice)
-  - [3rd Party Caveats and Discharge Macaroons](#3rd-party-caveats-and-discharge-macaroons)
+  - [3rd Party Authentication](#3rd-party-authentication)
+    - [Usage](#usage-1)
       - [Authentication flow](#authentication-flow-1)
   - [Documentation](#documentation)
     - [Custom Configs & Caveats](#custom-configs--caveats)
@@ -348,21 +349,34 @@ the secret is provided in the LSAT _after_ the request has been authorized. This
 that a request with the secret will be the _last_ request for that LSAT since afterwards
 it will be `paid` and therefore "expired".
 
-## 3rd Party Caveats and Discharge Macaroons
+## 3rd Party Authentication
+
+### Usage
+
+To enable, simply set `oauth` to true when initializing middleware:
+
+```javascript
+import { boltwall } from 'boltwall'
+
+// ...  rest of your server code
+
+app.use(boltwall({ oauth: true }))
+
+// ... protected routes and any other server code
+```
+
+This will add a requirement for requests to protected routes that an `auth_uri` be indicated
+in the request query. This indicates the 3rd party server that will process and confirm payments,
+ultimately signing a "challenge" to enable the holder of the corresponding LSAT access to the protected route.
+
+Both the server processing requests for protected routes and the authorizing server signing the challenge
+must have `oauth` enabled.
 
 **NOTE:**
-Boltwall's upgrade to support LSATs _deprecated_ previous support for 3rd party caveats
-and OAuth-like constructions. This will be re-introduced in a future release,
-however the API will likely be different, including an improvement that will
-remove the need for coordination between the root macaroon and discharge macaroon (lightning node)
-issuers and the need for a `CAVEAT_KEY`.
-
-To read more about the proposal for 3rd party caveats in LSATs,
-see [this comment](https://github.com/lightningnetwork/lnd/issues/288#issuecomment-559896636)
-on a pending issue in lnd. The ideas laid out below will still mostly apply and are a huge
-part of the value add of LSATs and macaroons more generally for an ecosystem of self-sovereign paywalls.
-
-_\***\* API DEPRECATED \*\***_
+Boltwall's upgrade to support LSATs _removed_ previous support for 3rd party caveats
+to enable OAuth-like constructions. A coordination step around a shared key was used to verify
+3rd party caveats and corresponding discharge macaroons. Since Boltwall v5, a new protocol
+is used that no longer requires any coordination to support 3rd party authentication.
 
 The use of macaroons for authorization allows for a lot of flexibility. Aside from the customization laid out
 in the section above covering the configurations, `boltwall`'s API also enables authorization schemes
@@ -375,7 +389,7 @@ your Google account, with Boltwall, your API can act like Google, where instead 
 service verifies payment. An example of how this can be implemented is in the [Prism Reader](https://prismreader.app) app.
 Prism Reader hosts documents provided by users. Authors of content can optionally require payment to view that content. Rather
 than Prism acting as a custodian for the funds and issuing payouts, an author can run a boltwall instance, give Prism
-the url of your API and a shared secret key (caveat key), and users will then **only be able to read your content once _your
+the url of your API, and users will then **only be able to read your content once _your
 server_ has acknowledged payment**!
 
 #### Authentication flow
@@ -403,6 +417,7 @@ The properties that can be passed (none are required) to the boltwall config obj
 - `getInvoiceDescription` - an optional function that returns a string to be used in the invoice description
 - `minAmount` - minimum amount to create invoices with if none is passed in request body
 - `hodl`- (optional, false by default) boolean, true to enable a hodl paywall.
+- `oauth`- (optional, false by default) boolean, true to enable 3rd party authentication.
 
 More indepth documentation for these properties can be found in the [docs](https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html)
 
