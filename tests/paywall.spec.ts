@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application, Request } from 'express'
 import { Caveat, Lsat } from 'lsat-js'
-import { invoiceResponse, secondInvoice } from './data'
+import { invoiceResponse, secondInvoice, challenge } from './data'
 import {
   getLnStub,
   getTestBuilder,
@@ -15,6 +15,7 @@ import {
 import getApp, { protectedRoute } from './mockApp'
 import { BoltwallConfig, InvoiceResponse } from '../src/typings'
 import * as helpers from '../src/helpers'
+import { challengeSatisfier } from '../src/satisfiers'
 
 describe('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,
@@ -27,7 +28,9 @@ describe('paywall', () => {
     lsat: Lsat,
     macaroon: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    checkInvoiceStub: sinon.SinonStub<any>
+    checkInvoiceStub: sinon.SinonStub<any>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    challengeSatisfierStub: sinon.SinonStub<any>
 
   beforeEach(() => {
     sessionSecret = setSessionSecret()
@@ -41,6 +44,7 @@ describe('paywall', () => {
     app = getApp()
     macaroon = builder.getMacaroon().serialize()
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
+    challengeSatisfierStub = sinon.stub(challengeSatisfier, 'satisfyFinal').callThrough()
   })
 
   afterEach(() => {
@@ -48,6 +52,7 @@ describe('paywall', () => {
     createInvStub.restore()
     getInvStub.restore()
     envStub.restore()
+    challengeSatisfierStub.restore()
     if (checkInvoiceStub)
       checkInvoiceStub.restore()
   })
@@ -143,45 +148,63 @@ describe('paywall', () => {
       .expect(200)
   })
 
-  it('should check all built in satisfiers by default', async () => {
+
+  it('should check all built-in satisfiers by default', async () => {
+    // test time configs
     const failedTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() - 1000 })
     const validTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() + 10000 })
     const secret = process.env.SESSION_SECRET || 'secret'
     const failedTimeMacaroon = getTestBuilder(secret).add_first_party_caveat(failedTimeCaveat.encode()).getMacaroon()
     const validTimeMacaroon = getTestBuilder(secret).add_first_party_caveat(validTimeCaveat.encode()).getMacaroon()
 
+    // test origin configs
     const failedOriginCaveat = new Caveat({ condition: 'ip', value: '1.2.3.4' })
     const validOriginCaveat = new Caveat({ condition: 'ip', value: '::ffff:127.0.0.1' })
     const failedOriginMacaroon = getTestBuilder(secret).add_first_party_caveat(failedOriginCaveat.encode()).getMacaroon()
     const validOriginMacaroon = getTestBuilder(secret).add_first_party_caveat(validOriginCaveat.encode()).getMacaroon()
   
+    const invalidChallengeCaveat = new Caveat({ condition: 'challenge', value: `${Buffer.alloc(32).toString('hex')}:${Buffer.alloc(33).toString('hex')}:`})
+    const invalidChallengeMacaroon = getTestBuilder(secret).add_first_party_caveat(invalidChallengeCaveat.encode()).getMacaroon()
+    const validChallengeCaveat1 = new Caveat({ condition: 'challenge', value: `${challenge.challenge}:${challenge.pubkey}:`})
+    const validChallengeCaveat2 = new Caveat({ condition: 'challenge', value: `${challenge.challenge}:${challenge.pubkey}:${challenge.signature}`})
+    const validChallengeMacaroon = getTestBuilder(secret).add_first_party_caveat(validChallengeCaveat1.encode()).add_first_party_caveat(validChallengeCaveat2.encode()).getMacaroon()
+    
     const tests = [
       {
         name: 'expired time',
         macaroon: failedTimeMacaroon,
-        caveat: failedTimeMacaroon,
         expectation: 401
       },
       {
         name: 'valid time',
         macaroon: validTimeMacaroon,
-        caveat: validTimeMacaroon,
         expectation: 200
       },
       {
         name: 'invalid origin',
         macaroon: failedOriginMacaroon,
-        caveat: failedOriginCaveat,
         expectation: 401
       },
       {
         name: 'valid origin',
         macaroon: validOriginMacaroon,
-        caveat: validOriginCaveat,
+        expectation: 200
+      },
+      {
+        name: 'invalid challenge',
+        macaroon: invalidChallengeMacaroon,
+        expectation: 401
+      },
+      {
+        name: 'valid challenge',
+        macaroon: validChallengeMacaroon,
         expectation: 200
       },
     ]
     
+    // want to test that challengeSatisfier is run too
+    app = getApp({ oauth: true })
+
     for (const test of tests) {
       const lsat = Lsat.fromMacaroon(test.macaroon.serialize(), invoiceResponse.request)
       lsat.setPreimage(invoiceResponse.secret)
@@ -193,6 +216,7 @@ describe('paywall', () => {
       
       expect(resp.status, `Unexpected status code ${resp.status} returned for ${test.name}.`).to.equal(test.expectation)
     }
+    expect(challengeSatisfierStub.called).to.be.true
   })
 
   it('should support custom caveats and caveat satisfiers', async () => {
@@ -258,5 +282,30 @@ describe('paywall', () => {
       .get(protectedRoute)
       .set('Authorization', lsat.toToken())
       .expect(404)
+  })
+
+  it('should return 400 when oauth is enabled and missing auth_uri and lsat in request', async () => {
+    app = getApp({ oauth: true })
+
+    lsat.setPreimage(invoiceResponse.secret)
+    await request
+      .agent(app)
+      .get(protectedRoute)
+      .expect(400)
+  })
+
+  it('should skip checkInvoice call and pass paywall if oauth is enabled for authenticated request', async () => {
+    app = getApp({ oauth: true })
+    checkInvoiceStub = sinon.stub(helpers, 'checkInvoiceStatus')
+    const authUri = 'http://my-boltwall.com'
+
+    lsat.setPreimage(invoiceResponse.secret)
+    await request
+      .agent(app)
+      .get(`${protectedRoute}?auth_uri=${authUri}`)
+      .set('Authorization', lsat.toToken())
+      .expect(200)
+
+    expect(checkInvoiceStub.called).to.be.false
   })
 })

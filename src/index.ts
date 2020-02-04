@@ -1,7 +1,7 @@
 import { Response, NextFunction, Request } from 'express'
 import { compose } from 'compose-middleware'
 import Logger from 'blgr'
-import { node, invoice, parseEnv, paywall, validateLsat } from './routes'
+import { node, invoice, parseEnv, paywall, validateLsat, token } from './routes'
 import { BoltwallConfig, LoggerInterface } from './typings'
 
 function errorHandler(
@@ -42,6 +42,7 @@ export function boltwall(
       parseEnv,
       node,
       invoice,
+      token,
       validateLsat,
       paywall,
       errorHandler,

@@ -34,4 +34,5 @@ export interface BoltwallConfig {
   getInvoiceDescription?: DescriptionGetter
   minAmount?: string | number
   hodl?: boolean
+  oauth?: boolean
 }

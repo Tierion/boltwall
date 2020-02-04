@@ -1,17 +1,23 @@
 import { expect } from 'chai'
 import { Request } from 'express'
+import sinon from 'sinon'
 import { MacaroonsBuilder } from 'macaroons.js'
 import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
 import { parsePaymentRequest } from 'ln-service'
+import crypto from 'crypto'
+import rp from 'request-promise-native'
 
 import { invoiceResponse } from './data'
 import {
   createLsatFromInvoice,
   getOriginFromRequest,
   createInvoice,
+  createChallengeCaveat,
+  decodeChallengeCaveat,
+  TokenChallenge,
 } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
-import { invoice } from './data'
+import { invoice, challenge as challengeData } from './data'
 import { getLnStub } from './utilities'
 
 describe('helper functions', () => {
@@ -190,6 +196,26 @@ describe('helper functions', () => {
           ).to.be.true
       }
     })
+
+    it('should generate correct macaroon when oauth is enabled in config', () => {
+      request.boltwallConfig = {
+        oauth: true,
+      }
+      request.query = { auth_uri: 'https://my-boltwall.net' }
+
+      const lsat = createLsatFromInvoice(request as Request, invoice)
+      const macaroon = MacaroonsBuilder.deserialize(lsat.baseMacaroon)
+      const caveat = lsat.getCaveats().find(c => c.condition === 'challenge')
+      expect(
+        macaroon.location,
+        'macaroon location should be set to the auth_uri'
+      ).to.equal(request.query.auth_uri)
+      expect(caveat, 'No challenge caveat found on lsat macaroon').to.exist
+      if (caveat)
+        expect(caveat.value).to.include(
+          parsePaymentRequest({ request: invoiceResponse.request }).destination
+        )
+    })
   })
 
   describe('createInvoice', () => {
@@ -202,7 +228,10 @@ describe('helper functions', () => {
       created_at: string
       description: string
     }
-    let createInvStub: sinon.SinonStub, invoiceResponse: InvoiceResponseStub
+    let createInvStub: sinon.SinonStub,
+      invoiceResponse: InvoiceResponseStub,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      postStub: sinon.SinonStub<any>
 
     beforeEach(() => {
       const request = parsePaymentRequest({ request: invoice.payreq })
@@ -224,6 +253,7 @@ describe('helper functions', () => {
     })
     afterEach(() => {
       createInvStub.restore()
+      if (postStub) postStub.restore()
     })
 
     it('should create an invoice using the amount provided in a request query', async () => {
@@ -242,6 +272,117 @@ describe('helper functions', () => {
 
       expect(createInvStub.called).to.be.true
       expect(result.amount).to.equal(request.query.amount)
+    })
+
+    it('should return an error if oauth is true but missing auth_uri in request', async () => {
+      const request = {
+        query: {},
+        lnd: {},
+        boltwallConfig: { oauth: true },
+        body: { amount: 50 },
+      }
+
+      let thrown = false
+      try {
+        await createInvoice((request as unknown) as Request)
+      } catch (e) {
+        thrown = true
+      }
+      expect(thrown).to.be.true
+    })
+
+    it('should request a new invoice from auth_uri if oauth is enabled', async () => {
+      const authUri = 'http://my-boltwall.com/'
+      const uri = new URL('/invoice', authUri)
+
+      const request = {
+        query: {
+          auth_uri: authUri,
+          amount: 50,
+        },
+        lnd: {},
+        body: {
+          foo: 'bar',
+        },
+        boltwallConfig: {
+          oauth: true,
+        },
+      }
+
+      // add query items to the rp uri minus the auth_uri
+      const qs = JSON.parse(
+        JSON.stringify({ ...request.query, auth_uri: undefined })
+      )
+
+      const options = {
+        uri: uri.href,
+        qs,
+        body: request.body,
+        json: true,
+      }
+
+      postStub = sinon.stub(rp, 'post')
+      postStub.withArgs(sinon.match(options)).returns(invoiceResponse)
+
+      const invoice = await createInvoice((request as unknown) as Request)
+
+      expect(postStub.called).to.be.true
+      expect(invoice).to.equal(invoiceResponse)
+    })
+  })
+
+  describe('createChallengeCaveat', () => {
+    let bytes: Buffer,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      bytesStub: sinon.SinonStub<Buffer[]> | sinon.SinonStub<any>
+    beforeEach(() => {
+      bytes = crypto.randomBytes(32)
+      bytesStub = sinon.stub(crypto, 'randomBytes')
+      bytesStub.returns(bytes)
+    })
+
+    afterEach(() => {
+      bytesStub.restore()
+    })
+    it('should return a properly encoded challenge caveat', () => {
+      const string = createChallengeCaveat(invoice.payreq)
+      const getCaveat = (): Caveat => Caveat.decode(string)
+      expect(getCaveat).to.not.throw()
+
+      const caveat = getCaveat()
+      expect(caveat.condition).to.equal('challenge')
+
+      const requestDetails = parsePaymentRequest({ request: invoice.payreq })
+      const expectedValue = `${bytes.toString('hex')}:${
+        requestDetails.destination
+      }:`
+      expect(caveat.value).to.equal(expectedValue)
+    })
+  })
+
+  describe('decodeChallengeCaveat', () => {
+    it('should correctly decode challenge caveat', () => {
+      const { pubkey, challenge, signature } = challengeData
+
+      let caveat = `challenge=${challenge}:${pubkey}:`
+
+      let decoded = decodeChallengeCaveat(caveat)
+      expect(decoded.pubkey).to.equal(pubkey)
+      expect(decoded.challenge).to.equal(challenge)
+
+      caveat += signature
+      decoded = decodeChallengeCaveat(caveat)
+      expect(decoded.signature).to.equal(signature)
+
+      const malformed = [
+        `chall=${challenge}:${pubkey}:`,
+        `challenge=12345:${pubkey}:`,
+        `challenge=${challenge}:12345:`,
+      ]
+      for (const c of malformed) {
+        const decode = (): TokenChallenge => decodeChallengeCaveat(c)
+        expect(decode).to.throw()
+      }
     })
   })
 })

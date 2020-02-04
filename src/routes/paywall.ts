@@ -43,10 +43,15 @@ export default async function paywall(
 
   // handle circumstance where there is no lsat or it is expired
   if (!headers.authorization || !lsat || lsat.isExpired()) {
-    let invoice: InvoiceResponse
+    let invoice: InvoiceResponse, lsat
     try {
       invoice = await createInvoice(req)
+      lsat = createLsatFromInvoice(req, invoice)
     } catch (e) {
+      if (req?.boltwallConfig?.oauth && !req.query.auth_uri) {
+        res.status(400)
+        return next({ message: 'Missing auth_uri in query string for oauth request'})
+      }
       // handle ln-service errors
       if (Array.isArray(e)) {
         req.logger.error('Problem generating invoice:', ...e)
@@ -57,7 +62,6 @@ export default async function paywall(
       return next({ message: 'Problem generating invoice' })
     }
 
-    const lsat = createLsatFromInvoice(req, invoice)
     res.status(402)
     res.set({
       'WWW-Authenticate': lsat.toChallenge(),
@@ -66,6 +70,13 @@ export default async function paywall(
       `Request made from ${req.hostname} that requires payment. LSAT ID: ${lsat.id}`
     )
     return next({ message: 'Payment required' })
+  }
+
+  // challenge caveats should already have been verified at this point for oauth
+  // so we can just continue to the paywall as all remaining checks are against our node
+  if (req?.boltwallConfig?.oauth) {
+    if (!lsat.isSatisfied()) req.logger.warning(`LSAT submitted to oauth server from ${req.ip} that is not satisfied with preimage`)
+    return next()
   }
 
   // If we got here then we have an LSAT and we want to check on the

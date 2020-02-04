@@ -10,9 +10,12 @@ import dotenv from 'dotenv'
 import crypto from 'crypto'
 import lnService from 'ln-service'
 import binet from 'binet'
+import rp from 'request-promise-native'
+
+import { parsePaymentRequest } from 'ln-service'
 
 import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
-import { Lsat, Identifier } from 'lsat-js'
+import { Lsat, Identifier, Caveat } from 'lsat-js'
 
 const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
 
@@ -120,6 +123,22 @@ See README for instructions: https://github.com/Tierion/boltwall'
 }
 
 /**
+ * @description A utility function to create a caveat for use in first party macaroon
+ * based OAuth protocols
+ * @param payreq - BOLT11 payment request to generate challenge from
+ * @returns string encoded caveat of the form `challenge=[random 32 byte string]:[destination pubkey]`
+ */
+export function createChallengeCaveat(payreq: string): string {
+  const details = parsePaymentRequest({ request: payreq })
+  const challenge = crypto.randomBytes(32).toString('hex')
+  const caveat = new Caveat({
+    condition: 'challenge',
+    value: `${challenge}:${details.destination}:`,
+  })
+  return caveat.encode()
+}
+
+/**
  * Utility function to get a location string to describe _where_ the server is.
  * useful for setting identifiers in macaroons
  * @param {Express.request} req - expressjs request object
@@ -144,17 +163,22 @@ export function createLsatFromInvoice(
   req: Request,
   invoice: InvoiceResponse
 ): Lsat {
-  assert(
-    invoice && invoice.payreq && invoice.id,
-    'Must pass an invoice with payreq and id to create LSAT'
-  )
+  assert(invoice, 'Missing invoice response. Needed to create LSAT')
+  assert(invoice.payreq, 'Invoice response missing payreq')
+  assert(invoice.id, 'Invoice response missing id (payment hash)')
 
   const { payreq, id } = invoice
   const identifier = new Identifier({
     paymentHash: Buffer.from(id, 'hex'),
   })
   const { SESSION_SECRET } = getEnvVars()
-  const location = getLocation(req)
+  let location = getLocation(req)
+
+  if (req.boltwallConfig && req.boltwallConfig.oauth) {
+    if (!req.query.auth_uri)
+      throw new Error('Missing auth_uri in request query')
+    location = req.query.auth_uri
+  }
 
   const builder = new MacaroonsBuilder(
     location,
@@ -175,6 +199,11 @@ export function createLsatFromInvoice(
       const caveat = getCaveat(req, invoice)
       builder.add_first_party_caveat(caveat)
     }
+  }
+
+  if (req.boltwallConfig && req.boltwallConfig.oauth) {
+    const caveat = createChallengeCaveat(invoice.payreq)
+    builder.add_first_party_caveat(caveat)
   }
 
   const macaroon = builder.getMacaroon()
@@ -221,6 +250,30 @@ This means payer can pay whatever they want for access.'
     _description = boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
+  if (boltwallConfig && boltwallConfig.oauth && !query.auth_uri) {
+    throw new Error('Missing auth_uri in request')
+  } else if (boltwallConfig && boltwallConfig.oauth && query.auth_uri) {
+    // dealing with auth_uri request
+    try {
+      const url = new URL(query.auth_uri)
+      if (!url.protocol.includes('http'))
+        throw new Error('unsupported protocol')
+    } catch (e) {
+      throw new Error('auth_uri invalid format')
+    }
+    const uri = new URL('/invoice', query.auth_uri)
+    // using JSON tools to clear auth_uri from query string
+    const qs = JSON.parse(JSON.stringify({ ...query, auth_uri: undefined }))
+    const options = {
+      uri: uri.href,
+      qs,
+      body,
+      json: true,
+    }
+
+    const invoice = await rp.post(options)
+    return invoice
+  }
   if (lnd) {
     let invoiceFunction = lnService.createInvoice
     if (boltwallConfig && boltwallConfig.hodl)
@@ -360,4 +413,40 @@ export function getOriginFromRequest(req: Request): string {
   }
 
   return origin
+}
+
+export interface TokenChallenge {
+  pubkey: string
+  challenge: string
+  signature?: string | undefined
+}
+
+/**
+ * @description parse a challenge caveat to retrieve its individual pieces:
+ * pubkey, challenge, and signature
+ * @param {String} c - encoded caveat string
+ * @returns {TokenChallenge}
+ */
+export function decodeChallengeCaveat(c: string): TokenChallenge {
+  const caveat = Caveat.decode(c)
+  assert(
+    caveat && caveat.condition === 'challenge',
+    'Expected to receive a token challenge caveat'
+  )
+  if (typeof caveat.value !== 'string')
+    throw new Error('Unknown value on challenge caveat')
+  let [challenge, pubkey, signature] = caveat.value.split(':')
+
+  challenge = challenge.trim()
+  pubkey = pubkey.trim()
+  if (signature) signature = signature.trim()
+  assert(
+    challenge && challenge.length === 64,
+    'Expected 32 byte challenge string'
+  )
+  assert(pubkey && pubkey.length === 66, 'Expected a 33-byte pubkey string')
+  const decoded = { challenge, pubkey }
+  if (signature && signature.length) return { ...decoded, signature }
+
+  return decoded
 }
