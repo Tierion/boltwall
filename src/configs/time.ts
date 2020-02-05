@@ -34,7 +34,7 @@ const getTimeCaveat: CaveatGetter = (
     // rate is expected to be in satoshis per second
     const rate = req.boltwallConfig.rate
     const seconds = amount / rate
-    time = Date.now() + seconds * 1000
+    time = Date.now() + Math.floor(seconds * 1000)
   } else {
     const milli: number = amount * 1000
     time = Date.now() + milli
