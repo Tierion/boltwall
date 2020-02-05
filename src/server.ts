@@ -48,12 +48,14 @@ const {
   BOLTWALL_OAUTH,
   BOLTWALL_HODL,
   BOLTWALL_MIN_AMOUNT,
+  BOLTWALL_RATE,
 } = process.env
 let options: BoltwallConfig = {}
 if (TIME_CAVEAT) options = TIME_CAVEAT_CONFIGS
 if (ORIGIN_CAVEAT) options = ORIGIN_CAVEAT_CONFIGS
 if (BOLTWALL_OAUTH) options.oauth = true
 if (BOLTWALL_HODL) options.hodl = true
+if (BOLTWALL_RATE) options.rate = +BOLTWALL_RATE
 if (BOLTWALL_MIN_AMOUNT) options.minAmount = BOLTWALL_MIN_AMOUNT
 app.use(boltwall(options))
 

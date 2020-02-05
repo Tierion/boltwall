@@ -75,7 +75,7 @@ export default async function paywall(
   // challenge caveats should already have been verified at this point for oauth
   // so we can just continue to the paywall as all remaining checks are against our node
   if (req?.boltwallConfig?.oauth) {
-    if (!lsat.isSatisfied()) req.logger.warning(`LSAT submitted to oauth server from ${req.ip} that is not satisfied with preimage`)
+    if (!lsat.isSatisfied()) req.logger.warning(`LSAT submitted to oauth server from ${req.ip} that is not satisfied with preimage but has valid signature.`)
     return next()
   }
 
