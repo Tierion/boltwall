@@ -16,6 +16,7 @@ describe('configs', () => {
         ? config.caveatSatisfiers[0]
         : config.caveatSatisfiers
     })
+
     it('should create valid caveat that expires after x seconds, where "x" is number satoshis paid', () => {
       if (!config.getCaveats)
         throw new Error('Expected to have a getCaveats property')
@@ -45,6 +46,48 @@ describe('configs', () => {
       expect(value).to.be.greaterThan(now)
       // increasing the range just to account for a buffer
       expect(value).to.be.lessThan(now + time + amount)
+    })
+
+    it('should support custom rates for adding expiration caveat', () => {
+      if (!config.getCaveats)
+        throw new Error('Expected to have a getCaveats property')
+      // rate is calculated as number of seconds per satoshi
+      // testing a value that would give us 1 month for 20k sats
+      const seconds = 60 * 60 * 24 * 30 // 1 month
+      const sats = 20000 // 20k sats
+      const rate = (sats / seconds).toFixed(5)
+      const req = {
+        boltwallConfig: {
+          rate,
+        },
+      }
+      const now = Date.now()
+
+      // make typescript happy since this could be an array
+      const getCaveats = Array.isArray(config.getCaveats)
+        ? config.getCaveats[0]
+        : config.getCaveats
+
+      const result: string = getCaveats(
+        (req as unknown) as Request,
+        {
+          amount: sats,
+        } as InvoiceResponse
+      )
+      const convertCaveat = (): Caveat => Caveat.decode(result)
+      const caveat = Caveat.decode(result)
+      const value: number = +caveat.value
+
+      // convert difference from ms
+      const actualSeconds = (value - now) / 1000
+
+      expect(convertCaveat).to.not.throw()
+      expect(value).to.be.greaterThan(now)
+      expect(actualSeconds).to.be.approximately(
+        seconds,
+        2500,
+        `Expected expiration to be approximately ${seconds}ms from now`
+      )
     })
 
     it('should return the expected invoice description', () => {

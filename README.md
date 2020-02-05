@@ -260,6 +260,20 @@ Currently Boltwall provides the following configs:
 This creates a restriction that any authorization is only valid for a number of seconds
 equal to the number of satoshis paid.
 
+There is also support for a custom rate expressed in satoshis/second tat can be added to the boltwall
+config object. The expiration time will be calculated according to this rate based on the number of
+satoshis required for payment in the invoice.
+
+For example, if the rate is .01 satoshis per second, and a 10,000 satoshi invoice is associated
+with an LSAT, then a caveat will be attached that expires in 1,000,000 seconds (10000/.01)
+or approximately 11.5 days.
+
+To get the above result, simply initialize boltwall like this:
+
+```javascript
+app.use(boltwall({ ...TIME_CAVEAT_CONFIGS, rate: 0.01 }))
+```
+
 #### **`ORIGIN_CAVEAT_CONFIGS`**
 
 This creates a restriction that any authorization is only valid from the IP that originally
@@ -422,6 +436,8 @@ The properties that can be passed (none are required) to the boltwall config obj
 - `minAmount` - minimum amount to create invoices with if none is passed in request body
 - `hodl`- (optional, false by default) boolean, true to enable a hodl paywall.
 - `oauth`- (optional, false by default) boolean, true to enable 3rd party authentication.
+- `rate` - (optional, undefined by default) float, a rate to be used by other caveatGetters.
+  For example, the TIME_CAVEAT_CONFIGS applies this as a satoshis/second value to calculate expiration.
 
 More indepth documentation for these properties can be found in the [docs](https://Tierion.github.io/boltwall/interfaces/_src_typings_configs_d_.boltwallconfig.html)
 
