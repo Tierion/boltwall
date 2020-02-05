@@ -19,7 +19,7 @@ import { Caveat, expirationSatisfier } from 'lsat-js'
  * amount paid
  */
 const getTimeCaveat: CaveatGetter = (
-  _req: Request,
+  req: Request,
   invoice: InvoiceResponse
 ): string => {
   const amount =
@@ -28,10 +28,21 @@ const getTimeCaveat: CaveatGetter = (
       : invoice.amount
 
   // amount is in satoshis which is equal to the amount of seconds paid for
-  const milli: number = amount * 1000
+  let time
+
+  if (req.boltwallConfig && req.boltwallConfig.rate) {
+    // rate is expected to be in satoshis per second
+    const rate = req.boltwallConfig.rate
+    const seconds = amount / rate
+    time = Date.now() + seconds * 1000
+  } else {
+    const milli: number = amount * 1000
+    time = Date.now() + milli
+  }
 
   // add 200 milliseconds of "free time" as a buffer
-  const time = Date.now() + milli + 200
+  time += 200
+
   const caveat = new Caveat({ condition: 'expiration', value: time.toString() })
   return caveat.encode()
 }

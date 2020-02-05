@@ -35,4 +35,5 @@ export interface BoltwallConfig {
   minAmount?: string | number
   hodl?: boolean
   oauth?: boolean
+  rate?: number
 }
