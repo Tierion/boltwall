@@ -1,8 +1,8 @@
 import { Satisfier } from 'lsat-js'
 import { decodeChallengeCaveat } from '../helpers'
-import { secp256k1 } from 'bcrypto'
 import zbase32 from 'zbase32'
 import { createHash } from 'crypto'
+import { ecdsaVerify } from 'secp256k1'
 const condition = 'challenge'
 
 // singleton to keep track of whether we are on the challenge caveat
@@ -49,7 +49,9 @@ const challengeSatisfier: Satisfier = {
     // double hashing the value before signing
     const digest = sha256(sha256(MSG_PREFIX + challenge))
 
-    return secp256k1.verify(digest, sigBuffer, Buffer.from(pubkey, 'hex'))
+    if (sigBuffer.length !== 64) return false
+
+    return ecdsaVerify(sigBuffer, digest, Buffer.from(pubkey, 'hex'))
   },
 }
 
