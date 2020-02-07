@@ -260,12 +260,12 @@ Currently Boltwall provides the following configs:
 This creates a restriction that any authorization is only valid for a number of seconds
 equal to the number of satoshis paid.
 
-There is also support for a custom rate expressed in satoshis/second tat can be added to the boltwall
-config object. The expiration time will be calculated according to this rate based on the number of
+There is also support for a custom rate expressed in satoshis/second that can be added to the boltwall
+config object. The expiration time will be calculated according to this rate and the number of
 satoshis required for payment in the invoice.
 
-For example, if the rate is .01 satoshis per second, and a 10,000 satoshi invoice is associated
-with an LSAT, then a caveat will be attached that expires in 1,000,000 seconds (10000/.01)
+For example, if the rate is .01 satoshis per second, and a 10,000 satoshi invoice requires payment
+to validate the LSAT, then a caveat will be attached that expires in 1,000,000 seconds (10000/.01)
 or approximately 11.5 days.
 
 To get the above result, simply initialize boltwall like this:
