@@ -8,7 +8,6 @@
   "license": "AGPL-3.0",
   "types": "./dist/index.d.ts",
   "bin": {
-    "btcpay-config": "./bin/parse_btcpay_config.js",
     "boltwall": "./bin/boltwall"
   },
   "scripts": {
