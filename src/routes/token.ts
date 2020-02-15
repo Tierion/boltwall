@@ -11,8 +11,6 @@ export async function satisfyTokenChallenge(
   res: Response,
   next: NextFunction
 ): Promise<Response | void> {
-  if (!req.boltwallConfig || !req.boltwallConfig.oauth) return next()
-
   if (!req.body || !req.body.macaroon) {
     res.status(400)
     return next({ message: 'Missing macaroon in request body' })
@@ -93,7 +91,6 @@ export async function satisfyTokenChallenge(
     }
   }
   const macaroon = builder.getMacaroon().serialize()
-
   return res.json({ macaroon })
 }
 
