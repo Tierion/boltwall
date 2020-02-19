@@ -63,8 +63,10 @@ export async function satisfyTokenChallenge(
   )
 
   if (invoiceResponse.status === 'unpaid') {
-    res.status(401)
-    return next({ message: 'Unauthorized: Token requested for unpaid invoice' })
+    res.status(402)
+    return next({
+      message: 'Payment Required: Token requested for unpaid invoice',
+    })
   }
 
   // sign challenge
