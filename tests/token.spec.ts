@@ -124,7 +124,7 @@ describe(route, () => {
       )
     })
 
-    it('should return 401 if invoice is unpaid', async () => {
+    it('should return 402 if invoice is unpaid', async () => {
       checkInvoiceStub.returns({ ...checkInvResponse, status: 'unpaid' })
 
       const res: request.Response = await request
@@ -132,7 +132,7 @@ describe(route, () => {
         .post(route)
         .send({ macaroon })
 
-      expect(res.status).to.equal(401)
+      expect(res.status).to.equal(402)
     })
 
     it('should return new macaroon in response body', async () => {

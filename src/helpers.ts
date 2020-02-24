@@ -220,6 +220,12 @@ export async function createInvoice(req: Request): Promise<InvoiceResponse> {
   const { lnd, opennode, body, boltwallConfig, query } = req
   const { expiresAt, amount } = body // time in seconds
 
+  // oauth if it's set in config and not a normal POST invoice request
+  const oauth =
+    boltwallConfig &&
+    boltwallConfig.oauth &&
+    !(req.method === 'POST' && req.path.includes('invoice'))
+
   let tokens = query.amount || amount
 
   // if no amount is sent in the request then we use the min amount
@@ -250,9 +256,9 @@ This means payer can pay whatever they want for access.'
     _description = boltwallConfig.getInvoiceDescription(req)
 
   let invoice: InvoiceResponse
-  if (boltwallConfig && boltwallConfig.oauth && !query.auth_uri) {
+  if (oauth && !query.auth_uri) {
     throw new Error('Missing auth_uri in request')
-  } else if (boltwallConfig && boltwallConfig.oauth && query.auth_uri) {
+  } else if (oauth && query.auth_uri) {
     // dealing with auth_uri request
     try {
       const url = new URL(query.auth_uri)

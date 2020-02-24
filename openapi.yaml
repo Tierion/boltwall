@@ -65,8 +65,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorMessage"
-        '401':
-          description: Unauthorized- Returned if the invoice associated with the macaroon is unpaid
+        '402':
+          description: Payment Required- Returned if the invoice associated with the macaroon is unpaid
           content:
             application/json:
               schema:

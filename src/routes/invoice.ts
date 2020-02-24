@@ -88,8 +88,6 @@ async function postNewInvoice(
 ): Promise<void | Response> {
   req.logger.info('Request to create a new invoice')
   try {
-    // for normal post requests, we don't care about oauth
-    if (req.boltwallConfig) req.boltwallConfig.oauth = false
     // create an invoice
     const invoice: InvoiceResponse = await createInvoice(req)
     res.status(200)
