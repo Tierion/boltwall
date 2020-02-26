@@ -79,15 +79,12 @@ paths:
         Given an LSAT and invoice id, get the status of an invoice (i.e. is it paid or not)
       operationId: getInvoice
       parameters:
-        - name: id
-          in: header
-          description: |
-            Hex encoded string of invoice id. Can be optional if request has a cookie that contains a root macaroon attached which should include data referencing an invoice id.
-          required: false
-          style: simple
-          explode: false
+        - in: query
+          name: id
           schema:
             type: string
+          required: true
+          description: hex encoded string of payment hash for looking up invoice
       responses:
         "200":
           description: Status of invoice and payreq string for reference
@@ -97,12 +94,6 @@ paths:
                 $ref: "#/components/schemas/InvoiceResponse"
         "400":
           description: Missing invoice id, problem getting invoice
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorMessage"
-        "401":
-          description: Request sent with an invalid LSAT
           content:
             application/json:
               schema:

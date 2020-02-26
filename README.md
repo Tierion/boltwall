@@ -135,8 +135,8 @@ Once the server is running, you can test the API:
 4. `POST http://localhost:5000/invoice` with the following JSON body to get a new invoice (there
    is no relation to any lsat and so cannot be used for authentication): `{ "amount": 30 }`
 
-5. `GET http://localhost:5000/invoice` with the appropriate LSAT in Authorization header (even with missing
-   payment hash) will return the status of the associated invoice
+5. `GET http://localhost:5000/invoice?id=[payment hash]` returns information for invoice with given
+   payment hash including payment status and payreq.
 
 Read more about the REST API in the [documentation](#documentation).
 
