@@ -1,7 +1,7 @@
 import { Response, Request, Router, NextFunction } from 'express'
 
 import { InvoiceResponse } from '../typings'
-import { Lsat } from 'lsat-js'
+// import { Lsat } from 'lsat-js'
 import { createInvoice, checkInvoiceStatus } from '../helpers'
 import { validateLsat } from '.'
 const router: Router = Router()
@@ -17,54 +17,31 @@ async function getInvoice(
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
-  const { headers } = req
-
-  if (!headers.authorization || !headers.authorization.includes('LSAT')) {
-    req.logger.info(
-      `Unauthorized request made without macaroon for ${req.originalUrl} from ${req.hostname}`
-    )
+  const { id } = req.query
+  if (!id || id.length !== 64) {
     res.status(400)
     return next({
-      message: 'Bad Request: Missing LSAT authorization header',
+      message:
+        'Missing valid payment hash in required query parameter "id" for looking up invoice',
     })
   }
 
-  // get the lsat from the auth header
-  const lsat = Lsat.fromToken(headers.authorization)
-
-  if (lsat.isExpired()) {
-    req.logger.debug(
-      `Request made with expired macaroon for ${req.originalUrl} from ${req.hostname}`
-    )
-    res.status(401)
-    return next({
-      message: 'Unauthorized: LSAT expired',
-    })
-  }
-
-  // validation happens in validateLsat middleware
-  // all this route has to do is confirm that the invoice exists
   let invoice
   try {
-    invoice = await checkInvoiceStatus(
-      lsat.paymentHash,
-      req.lnd,
-      req.opennode,
-      true
-    )
+    invoice = await checkInvoiceStatus(id, req.lnd, req.opennode)
   } catch (e) {
     // handle ln-service errors
     if (Array.isArray(e)) {
       req.logger.error(`Problem looking up invoice:`, ...e)
       if (e[0] === 503) {
         res.status(404)
-        return res.send({
-          error: { message: 'Unable to find invoice with that id' },
+        return next({
+          message: 'Unable to find invoice with that id',
         })
       } else {
         res.status(500)
-        return res.send({
-          error: { message: 'Unknown error when looking up invoice' },
+        return next({
+          message: 'Unknown error when looking up invoice',
         })
       }
     }
