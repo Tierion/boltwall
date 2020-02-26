@@ -282,8 +282,21 @@ This means payer can pay whatever they want for access.'
   }
   if (lnd) {
     let invoiceFunction = lnService.createInvoice
-    if (boltwallConfig && boltwallConfig.hodl)
+    const options = {
+      lnd: lnd,
+      description: _description,
+      expires_at: expiresAt,
+      tokens,
+      id: undefined,
+    }
+
+    if (boltwallConfig && boltwallConfig.hodl) {
+      const paymentHash = query.paymentHash || body.paymentHash
+      if (!paymentHash)
+        throw new Error('Require paymentHash to create HODL invoice')
       invoiceFunction = lnService.createHodlInvoice
+      options.id = paymentHash
+    }
 
     const {
       request: payreq,
@@ -291,12 +304,7 @@ This means payer can pay whatever they want for access.'
       description = _description,
       created_at: createdAt,
       tokens: amount,
-    } = await invoiceFunction({
-      lnd: lnd,
-      description: _description,
-      expires_at: expiresAt,
-      tokens,
-    })
+    } = await invoiceFunction(options)
     invoice = { payreq, id, description, createdAt, amount }
   } else if (opennode) {
     const {
