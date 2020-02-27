@@ -1,34 +1,53 @@
 import { Response, Request, Router, NextFunction } from 'express'
+import { Lsat } from 'lsat-js'
 
 import { InvoiceResponse } from '../typings'
-// import { Lsat } from 'lsat-js'
-import { createInvoice, checkInvoiceStatus } from '../helpers'
-import { validateLsat } from '.'
+import { createInvoice, checkInvoiceStatus, isHex } from '../helpers'
+import validateLsat from './validate'
 const router: Router = Router()
 
 /**
  * ## Route: GET /invoice
  * @description Get information about an invoice including status and secret. Request must be
  * authenticated with a macaroon. The handler will check for an LSAT and reject requests
- * without one since this is where the invoice id is extracted from.
+ * without one since this is where the invoice id is extracted from. Supports requesting for invoice
+ * based on hash in query parameter "id" OR from an attached LSAT. Valid and paid LSATs
+ * will return secret in the information.
  */
 async function getInvoice(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void | Response> {
-  const { id } = req.query
-  if (!id || id.length !== 64) {
+  let { id } = req.query
+  let lsat
+  if (req.headers.authorization) {
+    try {
+      lsat = Lsat.fromToken(req.headers.authorization)
+      if (lsat.paymentHash && !id) id = lsat.paymentHash
+    } catch (e) {
+      req.logger.warning(
+        'Failed to create an LSAT from authorization header: %s',
+        e.message || e
+      )
+    }
+  }
+
+  if (!id || id.length !== 64 || !isHex(id)) {
     res.status(400)
     return next({
       message:
-        'Missing valid payment hash in required query parameter "id" for looking up invoice',
+        'Bad Request: Missing valid payment hash in required query parameter "id" for looking up invoice',
     })
   }
 
   let invoice
   try {
-    invoice = await checkInvoiceStatus(id, req.lnd, req.opennode)
+    // if we have an LSAT included then it will have been validated already
+    // in an earlier middleware and we can include the secret (which will only
+    // be shown if it has been paid as well)
+    const includeSecret = lsat ? true : false
+    invoice = await checkInvoiceStatus(id, req.lnd, req.opennode, includeSecret)
   } catch (e) {
     // handle ln-service errors
     if (Array.isArray(e)) {
