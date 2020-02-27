@@ -76,7 +76,7 @@ paths:
     get:
       summary: get status of a given invoice based on request LSAT
       description: |
-        Given an LSAT and invoice id, get the status of an invoice (i.e. is it paid or not)
+        Given an invoice id or a valid LSAT, get the status of an invoice (i.e. is it paid or not)
       operationId: getInvoice
       parameters:
         - in: query
@@ -94,6 +94,12 @@ paths:
                 $ref: "#/components/schemas/InvoiceResponse"
         "400":
           description: Missing invoice id, problem getting invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+        "401":
+          description: Request sent with an invalid LSAT
           content:
             application/json:
               schema:
