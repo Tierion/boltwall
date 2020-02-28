@@ -203,8 +203,8 @@ $ yarn start</code></pre>
 					<li><p><code>POST http://localhost:5000/invoice</code> with the following JSON body to get a new invoice (there
 						is no relation to any lsat and so cannot be used for authentication): <code>{ &quot;amount&quot;: 30 }</code></p>
 					</li>
-					<li><p><code>GET http://localhost:5000/invoice</code> with the appropriate LSAT in Authorization header (even with missing
-						payment hash) will return the status of the associated invoice</p>
+					<li><p><code>GET http://localhost:5000/invoice?id=[payment hash]</code> returns information for invoice with given
+						payment hash including payment status and payreq.</p>
 					</li>
 				</ol>
 				<p>Read more about the REST API in the <a href="#documentation">documentation</a>.</p>
