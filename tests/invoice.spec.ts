@@ -3,7 +3,6 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application } from 'express'
 import { parsePaymentRequest } from 'ln-service'
-import { MacaroonsBuilder } from 'macaroons.js'
 import { Lsat, expirationSatisfier } from 'lsat-js'
 
 import getApp from './mockApp'
@@ -37,7 +36,9 @@ describe('/invoice', () => {
     invoiceResponse: InvoiceResponseStub,
     sessionSecret: string,
     builder: BuilderInterface,
-    app: Application
+    app: Application,
+    basePath: string,
+    validPath: string
 
   beforeEach(() => {
     // boltwall sets up authenticated client when it boots up
@@ -60,7 +61,8 @@ describe('/invoice', () => {
       created_at: '2016-08-29T09:12:33.001Z',
       description: request.description,
     }
-
+    basePath = `/invoice`
+    validPath = `${basePath}?id=${invoiceResponse.id}`
     builder = getTestBuilder(sessionSecret)
 
     getInvStub = getLnStub('getInvoice', invoiceResponse)
@@ -80,24 +82,21 @@ describe('/invoice', () => {
   })
 
   describe('GET', () => {
-    it('should return 400 Bad Request when no lsat to check', async () => {
-      const response1: request.Response = await request
-        .agent(app)
-        .get('/invoice')
+    it('should return 400 Bad Request when missing id in query parameter', async () => {
+      const response1: request.Response = await request.agent(app).get(basePath)
       const response2: request.Response = await request
         .agent(app)
-        .get('/invoice')
-        .set('Authorization', 'Basic')
+        .get(`${basePath}?id=12345`)
 
       for (const resp of [response1, response2]) {
         expect(resp.status).to.equal(400)
         expect(resp).to.have.nested.property('body.error.message')
         expect(resp.body.error.message).to.match(/Bad Request/g)
-        expect(resp.body.error.message).to.match(/LSAT/g)
+        expect(resp.body.error.message).to.match(/payment hash/g)
       }
     })
 
-    it('should return 401 if macaroon is expired', async () => {
+    it('should return 401 if sent with expired LSAT', async () => {
       const expirationCaveat = getExpirationCaveat(-100)
 
       const macaroon = builder
@@ -109,7 +108,7 @@ describe('/invoice', () => {
 
       const response: request.Response = await request
         .agent(app)
-        .get('/invoice')
+        .get(basePath)
         .set('Authorization', lsat.toToken())
 
       expect(response.status).to.equal(401)
@@ -118,40 +117,21 @@ describe('/invoice', () => {
       expect(response.body.error.message).to.match(/expired/g)
     })
 
-    it('should return 401 if macaroon has invalid signature', async () => {
+    it('should return 401 if sent with LSAT that has invalid signature', async () => {
       const macaroon = getTestBuilder('another secret')
         .getMacaroon()
         .serialize()
 
       const response: request.Response = await request
         .agent(app)
-        .get('/invoice')
+        .get(basePath)
         .set('Authorization', `LSAT ${macaroon}:`)
 
       expect(response.status).to.equal(401)
       expect(response).to.have.nested.property('body.error.message')
     })
 
-    it('should return 400 if no invoice id in the macaroon', async () => {
-      const macaroon = new MacaroonsBuilder('location', 'secret', 'identifier')
-        .getMacaroon()
-        .serialize()
-      const response: request.Response = await request
-        .agent(app)
-        .get('/invoice')
-        .set('Authorization', `LSAT ${macaroon}:`)
-
-      expect(response.status).to.equal(400)
-      expect(response).to.have.nested.property('body.error.message')
-      // confirm it gives an error message about a missing invoice
-      expect(response.body.error.message).to.match(/malformed/i)
-    })
-
     it('should return 404 if requested invoice does not exist', async () => {
-      // create a macaroon that has an invoice attached to it but our getInvoice request
-      // should return a fake error that the invoice wasn't found
-      const macaroon = builder.getMacaroon().serialize()
-
       // Setup response from getInvoice with response that it could not be found
       getInvStub.restore()
 
@@ -162,10 +142,8 @@ describe('/invoice', () => {
         { details: 'unable to locate invoice' },
       ])
 
-      const response: request.Response = await request
-        .agent(app)
-        .get('/invoice')
-        .set('Authorization', `LSAT ${macaroon}:`)
+      const response: request.Response = await request.agent(app).get(validPath)
+
       expect(response.status).to.equal(404)
       expect(response).to.have.nested.property('body.error.message')
 
@@ -173,13 +151,12 @@ describe('/invoice', () => {
       expect(response.body.error.message).to.match(/invoice/g)
     })
 
-    it('should return invoice information w/ status for a request w/ valid LSAT macaroon', async () => {
+    it('should return invoice information w/ status for valid requests', async () => {
       const response: InvoiceResponse = {
         id: invoiceResponse.id,
         payreq: invoiceResponse.request,
         createdAt: invoiceResponse.created_at,
         amount: invoiceResponse.tokens,
-        secret: invoiceResponse.secret,
         status: 'paid',
         description: invoiceResponse.description,
       }
@@ -190,15 +167,25 @@ describe('/invoice', () => {
       const macaroon = builder.getMacaroon().serialize()
       app = getApp({ caveatSatisfiers: expirationSatisfier })
 
-      const supertestResp: request.Response = await request
+      // first test just with the invoice id in the request query parameter
+      let supertestResp: request.Response = await request
         .agent(app)
-        .get('/invoice')
+        .get(validPath)
+
+      expect(supertestResp.body).to.eql(response)
+
+      // test next with a paid invoice and LSAT sent in the request
+      // this should include the secret
+      response.secret = invoiceResponse.secret
+      supertestResp = await request
+        .agent(app)
+        .get(basePath)
         .set('Authorization', `LSAT ${macaroon}:`)
 
       expect(supertestResp.body).to.eql(response)
     })
 
-    it('should not return the secret if invoice is unpaid', async () => {
+    it('should not return the secret if invoice is unpaid or LSAT is invalid', async () => {
       const macaroon = builder.getMacaroon().serialize()
 
       // Setup response from getInvoice w/ unconfirmed invoice
@@ -213,6 +200,7 @@ describe('/invoice', () => {
         .get('/invoice')
         .set('Authorization', `LSAT ${macaroon}:`)
 
+      expect(response.body).to.not.have.property('error')
       expect(response.body).to.not.have.property('secret')
     })
   })

@@ -21,6 +21,7 @@ export default async function validateLsat(
   next: NextFunction
 ): Promise<void> {
   const { headers } = req
+
   // if hodl is enabled and there is not already an auth header
   // then we need to check if there is a paymentHash in the request body
   if (

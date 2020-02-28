@@ -241,7 +241,7 @@ describe('helper functions', () => {
         is_confirmed: true,
         id: request.id,
         secret: invoice.secret,
-        tokens: 30,
+        tokens: request.tokens,
         created_at: '2016-08-29T09:12:33.001Z',
         description: request.description,
       }
@@ -257,7 +257,11 @@ describe('helper functions', () => {
     })
 
     it('should create an invoice using the amount provided in a request query', async () => {
-      const request = { lnd: {}, query: { amount: 50 }, body: {} }
+      const request = {
+        lnd: {},
+        query: { amount: invoiceResponse.tokens },
+        body: {},
+      }
 
       createInvStub
         .withArgs({
