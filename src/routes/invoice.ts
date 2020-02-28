@@ -9,10 +9,8 @@ const router: Router = Router()
 /**
  * ## Route: GET /invoice
  * @description Get information about an invoice including status and secret. Request must be
- * authenticated with a macaroon. The handler will check for an LSAT and reject requests
- * without one since this is where the invoice id is extracted from. Supports requesting for invoice
- * based on hash in query parameter "id" OR from an attached LSAT. Valid and paid LSATs
- * will return secret in the information.
+ * authenticated with an LSAT if requesting secret. Supports requesting for invoice
+ * based on hash in query parameter "id" OR from an attached LSAT.
  */
 async function getInvoice(
   req: Request,

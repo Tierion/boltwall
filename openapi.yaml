@@ -77,6 +77,7 @@ paths:
       summary: get status of a given invoice based on request LSAT
       description: |
         Given an invoice id or a valid LSAT, get the status of an invoice (i.e. is it paid or not)
+        as well as payment information like payment request and id.
       operationId: getInvoice
       parameters:
         - in: query
