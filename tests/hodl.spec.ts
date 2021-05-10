@@ -9,7 +9,7 @@ import {
   getEnvStub,
   getLnStub,
   getTestBuilder,
-  BuilderInterface,
+  getSerializedMacaroon,
 } from './utilities'
 import { Lsat } from 'lsat-js'
 
@@ -20,7 +20,7 @@ describe('hodl paywall', () => {
     getInvStub: sinon.SinonStub,
     settleHodlStub: sinon.SinonStub,
     sessionSecret: string,
-    builder: BuilderInterface,
+    builder: any,
     paymentHash: string,
     heldInvoice: InvoiceResponseStub,
     app: Application
@@ -107,7 +107,7 @@ describe('hodl paywall', () => {
       is_held: false,
     })
 
-    const macaroon = builder.getMacaroon().serialize()
+    const macaroon = getSerializedMacaroon(builder)
     const resp: request.Response = await request
       .agent(app)
       .get(protectedRoute)
@@ -133,7 +133,7 @@ describe('hodl paywall', () => {
       is_held: true, // checking that access is allowed if getInvoice returns is_held: true
     })
 
-    const macaroon = builder.getMacaroon().serialize()
+    const macaroon = getSerializedMacaroon(builder)
     await request
       .agent(app)
       .get(protectedRoute)
@@ -145,7 +145,7 @@ describe('hodl paywall', () => {
   })
 
   it('should settle a held invoice when the LSAT includes the secret', async () => {
-    const macaroon = builder.getMacaroon().serialize()
+    const macaroon = getSerializedMacaroon(builder)
     const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)
 
@@ -169,7 +169,7 @@ describe('hodl paywall', () => {
       is_held: false,
     })
 
-    const macaroon = builder.getMacaroon().serialize()
+    const macaroon = getSerializedMacaroon(builder)
     const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)
 
@@ -200,7 +200,7 @@ describe('hodl paywall', () => {
         description: invoiceResponse.description,
       }
 
-      const macaroon = builder.getMacaroon().serialize()
+      const macaroon = getSerializedMacaroon(builder)
 
       const supertestResp: request.Response = await request
         .agent(app)

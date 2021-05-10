@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
+import * as Macaroon from 'macaroon'
 
 import { Lsat, verifyFirstPartyMacaroon, Satisfier } from 'lsat-js'
 import { getEnvVars, isHex } from '../helpers'
@@ -83,7 +84,7 @@ export default async function validateLsat(
 
   // verify macaroon
   const { SESSION_SECRET } = getEnvVars()
-  const macaroon = lsat.getMacaroon()
+  const macaroon = Macaroon.importMacaroons(lsat.getMacaroon())[0]
 
   type DefaultConfigs = {
     [key:string]: BoltwallConfig
@@ -99,7 +100,7 @@ export default async function validateLsat(
       satisfiers.push(...caveatSatisfiers)
     }
   }
-
+  
   if (req.boltwallConfig && req.boltwallConfig.oauth) {
     satisfiers.push(challengeSatisfier)
   }
@@ -108,9 +109,9 @@ export default async function validateLsat(
     const caveatSatisfiers = Array.isArray(req.boltwallConfig?.caveatSatisfiers) ? req.boltwallConfig?.caveatSatisfiers : [req.boltwallConfig?.caveatSatisfiers]
     satisfiers = [...satisfiers, ...caveatSatisfiers]
   }
-  
+
   const isValid = verifyFirstPartyMacaroon(
-    macaroon.serialize(),
+    Macaroon.bytesToBase64(macaroon._exportBinaryV2()),
     SESSION_SECRET,
     satisfiers,
     req

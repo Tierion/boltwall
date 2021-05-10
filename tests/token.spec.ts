@@ -6,7 +6,12 @@ import { MacaroonInterface, Lsat, Caveat } from 'lsat-js'
 import crypto from 'crypto'
 
 import * as helpers from '../src/helpers'
-import { getLnStub, getTestBuilder, getEnvStub } from './utilities'
+import {
+  getLnStub,
+  getTestBuilder,
+  getEnvStub,
+  getSerializedMacaroon,
+} from './utilities'
 import { invoiceResponse, nodeInfo, invoiceDetails } from './data'
 import getApp from './mockApp'
 import { InvoiceResponse } from '../src/typings'
@@ -64,8 +69,8 @@ describe(route, () => {
       }
       const builder = getTestBuilder(sessionSecret)
       challengeCaveat = helpers.createChallengeCaveat(invoiceResponse.request)
-      builder.add_first_party_caveat(challengeCaveat)
-      macaroon = builder.getMacaroon().serialize()
+      builder.addFirstPartyCaveat(challengeCaveat)
+      macaroon = getSerializedMacaroon(builder)
     })
 
     afterEach(() => {
@@ -88,10 +93,8 @@ describe(route, () => {
     })
 
     it('should return 400 if macaroon is missing challenge caveat', async () => {
-      const invalidMacaroon = getTestBuilder(sessionSecret)
-        .getMacaroon()
-        .serialize()
-
+      let invalidMacaroon = getTestBuilder(sessionSecret)
+      invalidMacaroon = getSerializedMacaroon(invalidMacaroon)
       const res: request.Response = await request
         .agent(app)
         .post(route)

@@ -11,8 +11,8 @@ import {
   getLnStub,
   getTestBuilder,
   getEnvStub,
-  BuilderInterface,
   getExpirationCaveat,
+  getSerializedMacaroon,
 } from './utilities'
 import { invoice } from './data'
 
@@ -35,7 +35,7 @@ describe('/invoice', () => {
     lndGrpcStub: sinon.SinonStub,
     invoiceResponse: InvoiceResponseStub,
     sessionSecret: string,
-    builder: BuilderInterface,
+    builder: any,
     app: Application,
     basePath: string,
     validPath: string
@@ -99,12 +99,9 @@ describe('/invoice', () => {
     it('should return 401 if sent with expired LSAT', async () => {
       const expirationCaveat = getExpirationCaveat(-100)
 
-      const macaroon = builder
-        .add_first_party_caveat(expirationCaveat.encode())
-        .getMacaroon()
-        .serialize()
+      builder.addFirstPartyCaveat(expirationCaveat.encode())
 
-      const lsat = Lsat.fromMacaroon(macaroon)
+      const lsat = Lsat.fromMacaroon(getSerializedMacaroon(builder))
 
       const response: request.Response = await request
         .agent(app)
@@ -119,13 +116,11 @@ describe('/invoice', () => {
 
     it('should return 401 if sent with LSAT that has invalid signature', async () => {
       const macaroon = getTestBuilder('another secret')
-        .getMacaroon()
-        .serialize()
 
       const response: request.Response = await request
         .agent(app)
         .get(basePath)
-        .set('Authorization', `LSAT ${macaroon}:`)
+        .set('Authorization', `LSAT ${getSerializedMacaroon(macaroon)}:`)
 
       expect(response.status).to.equal(401)
       expect(response).to.have.nested.property('body.error.message')
@@ -163,8 +158,8 @@ describe('/invoice', () => {
 
       // add extra expiration caveats. it should pass if newer is more restrictive
       // but not yet past current time
-      builder.add_first_party_caveat(`expiration=${Date.now() + 500}`)
-      const macaroon = builder.getMacaroon().serialize()
+      builder.addFirstPartyCaveat(`expiration=${Date.now() + 500}`)
+      const macaroon = getSerializedMacaroon(builder)
       app = getApp({ caveatSatisfiers: expirationSatisfier })
 
       // first test just with the invoice id in the request query parameter
@@ -186,7 +181,7 @@ describe('/invoice', () => {
     })
 
     it('should not return the secret if invoice is unpaid or LSAT is invalid', async () => {
-      const macaroon = builder.getMacaroon().serialize()
+      const macaroon = getSerializedMacaroon(builder)
 
       // Setup response from getInvoice w/ unconfirmed invoice
       getInvStub.restore()

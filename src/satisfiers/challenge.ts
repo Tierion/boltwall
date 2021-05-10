@@ -18,6 +18,7 @@ const challengeSatisfier: Satisfier = {
   satisfyPrevious: (prev, curr) => {
     const prevDecoded = decodeChallengeCaveat(prev.encode())
     const currDecoded = decodeChallengeCaveat(curr.encode())
+
     if (prevDecoded.challenge !== currDecoded.challenge) return false
     if (prevDecoded.pubkey !== currDecoded.pubkey) return false
     if (!currDecoded.signature) return false
@@ -34,9 +35,10 @@ const challengeSatisfier: Satisfier = {
     if (!signature && callCount === 1) return true
     // but if any other instance does not have signature then it should fail
     else if (!signature) {
-      // when missing a signature, always keep count at 1 to indicate waiting
-      // for the next challenge caveat with the signature
-      callCount = 1
+      // reset count, not allowing for multiple challenge caveats for same pubkey
+      // if second one doesn't have a signature
+      // TODO: confirm if this is the behavior we want and works for more traffic
+      callCount = 0
       return false
     }
 

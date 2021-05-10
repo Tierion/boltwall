@@ -1,8 +1,8 @@
 import { expect } from 'chai'
 import { Request } from 'express'
 import sinon from 'sinon'
-import { MacaroonsBuilder } from 'macaroons.js'
-import { MacaroonInterface, Identifier, Lsat, Caveat } from 'lsat-js'
+import * as Macaroon from 'macaroon'
+import { Identifier, Lsat, Caveat } from 'lsat-js'
 import { parsePaymentRequest } from 'ln-service'
 import crypto from 'crypto'
 import rp from 'request-promise-native'
@@ -171,17 +171,22 @@ describe('helper functions', () => {
         )
 
         // get the macaroon from the lsat so we can test its caveats
-        const macaroon: MacaroonInterface = MacaroonsBuilder.deserialize(
+        const macaroon: Macaroon.MacaroonJSONV2 = Macaroon.importMacaroon(
           lsat.baseMacaroon
-        )
+        )._exportAsJSONObjectV2()
         let hasFirstMacaroon = false,
           hasSecondMacaroon = false
 
+        const caveatPackets = macaroon.c
+
+        // possibly undefined because of types
+        if (caveatPackets == undefined) return 0
+
         // for each caveat we want to see if it matches the expected caveat getters
-        for (const { rawValue } of macaroon.caveatPackets) {
-          if (rawValue.toString() === firstCaveat) hasFirstMacaroon = true
-          else if (rawValue.toString() === secondCaveat)
-            hasSecondMacaroon = true
+        for (const { i } of caveatPackets) {
+          if (!i) continue // satisfy optional parameter in type declaration
+          if (i === firstCaveat) hasFirstMacaroon = true
+          else if (i === secondCaveat) hasSecondMacaroon = true
         }
 
         expect(
@@ -204,10 +209,12 @@ describe('helper functions', () => {
       request.query = { auth_uri: 'https://my-boltwall.net' }
 
       const lsat = createLsatFromInvoice(request as Request, invoice)
-      const macaroon = MacaroonsBuilder.deserialize(lsat.baseMacaroon)
+      const macaroon = Macaroon.importMacaroon(
+        lsat.baseMacaroon
+      )._exportAsJSONObjectV2()
       const caveat = lsat.getCaveats().find(c => c.condition === 'challenge')
       expect(
-        macaroon.location,
+        macaroon.l,
         'macaroon location should be set to the auth_uri'
       ).to.equal(request.query.auth_uri)
       expect(caveat, 'No challenge caveat found on lsat macaroon').to.exist

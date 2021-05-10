@@ -7,15 +7,17 @@ import { invoiceResponse, secondInvoice, challenge } from './data'
 import {
   getLnStub,
   getTestBuilder,
-  BuilderInterface,
   getExpirationCaveat,
   setSessionSecret,
-  getEnvStub
+  getEnvStub,
+  BaseMacaroonClass,
+  getSerializedMacaroon
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
 import { BoltwallConfig, InvoiceResponse } from '../src/typings'
 import * as helpers from '../src/helpers'
 import { challengeSatisfier } from '../src/satisfiers'
+import * as Macaroon from 'macaroon'
 
 describe('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,
@@ -23,7 +25,7 @@ describe('paywall', () => {
     getInvStub: sinon.SinonStub,
     envStub: sinon.SinonStub,
     sessionSecret: string,
-    builder: BuilderInterface,
+    builder: typeof BaseMacaroonClass, // TODO: need to get the Macaroon class from js-macaroon
     app: Application,
     lsat: Lsat,
     macaroon: string,
@@ -42,7 +44,7 @@ describe('paywall', () => {
     builder = getTestBuilder(sessionSecret)
     envStub = getEnvStub(sessionSecret)
     app = getApp()
-    macaroon = builder.getMacaroon().serialize()
+    macaroon = Macaroon.bytesToBase64(builder._exportBinaryV2())
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     challengeSatisfierStub = sinon.stub(challengeSatisfier, 'satisfyFinal').callThrough()
   })
@@ -92,11 +94,9 @@ describe('paywall', () => {
   it('should return 401 with expiration message if macaroon is expired', async () => {
     const expirationCaveat = getExpirationCaveat(-100)
 
-    macaroon = builder
-      .add_first_party_caveat(expirationCaveat.encode())
-      .getMacaroon()
-      .serialize()
-
+    builder
+      .addFirstPartyCaveat(expirationCaveat.encode())
+    macaroon = getSerializedMacaroon(builder)
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
   
     const response: request.Response = await request
@@ -111,9 +111,7 @@ describe('paywall', () => {
   })
 
   it('should return 401 for invalid macaroon', async () => {
-    macaroon = getTestBuilder('another secret')
-      .getMacaroon()
-      .serialize()
+    macaroon = getSerializedMacaroon(getTestBuilder('another secret'))
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     
     const response: request.Response = await request
@@ -154,20 +152,29 @@ describe('paywall', () => {
     const failedTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() - 1000 })
     const validTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() + 10000 })
     const secret = process.env.SESSION_SECRET || 'secret'
-    const failedTimeMacaroon = getTestBuilder(secret).add_first_party_caveat(failedTimeCaveat.encode()).getMacaroon()
-    const validTimeMacaroon = getTestBuilder(secret).add_first_party_caveat(validTimeCaveat.encode()).getMacaroon()
+    const failedTimeMacaroon = getTestBuilder(secret)
+    failedTimeMacaroon.addFirstPartyCaveat(failedTimeCaveat.encode())
+    const validTimeMacaroon = getTestBuilder(secret)
+    validTimeMacaroon.addFirstPartyCaveat(validTimeCaveat.encode())
 
     // test origin configs
     const failedOriginCaveat = new Caveat({ condition: 'ip', value: '1.2.3.4' })
     const validOriginCaveat = new Caveat({ condition: 'ip', value: '::ffff:127.0.0.1' })
-    const failedOriginMacaroon = getTestBuilder(secret).add_first_party_caveat(failedOriginCaveat.encode()).getMacaroon()
-    const validOriginMacaroon = getTestBuilder(secret).add_first_party_caveat(validOriginCaveat.encode()).getMacaroon()
+    const failedOriginMacaroon = getTestBuilder(secret)
+    failedOriginMacaroon.addFirstPartyCaveat(failedOriginCaveat.encode())
+
+    const validOriginMacaroon = getTestBuilder(secret)
+    validOriginMacaroon.addFirstPartyCaveat(validOriginCaveat.encode())
   
     const invalidChallengeCaveat = new Caveat({ condition: 'challenge', value: `${Buffer.alloc(32).toString('hex')}:${Buffer.alloc(33).toString('hex')}:`})
-    const invalidChallengeMacaroon = getTestBuilder(secret).add_first_party_caveat(invalidChallengeCaveat.encode()).getMacaroon()
+    const invalidChallengeMacaroon = getTestBuilder(secret)
+    invalidChallengeMacaroon.addFirstPartyCaveat(invalidChallengeCaveat.encode())
+
     const validChallengeCaveat1 = new Caveat({ condition: 'challenge', value: `${challenge.challenge}:${challenge.pubkey}:`})
     const validChallengeCaveat2 = new Caveat({ condition: 'challenge', value: `${challenge.challenge}:${challenge.pubkey}:${challenge.signature}`})
-    const validChallengeMacaroon = getTestBuilder(secret).add_first_party_caveat(validChallengeCaveat1.encode()).add_first_party_caveat(validChallengeCaveat2.encode()).getMacaroon()
+    const validChallengeMacaroon = getTestBuilder(secret)
+    validChallengeMacaroon.addFirstPartyCaveat(validChallengeCaveat1.encode())
+    validChallengeMacaroon.addFirstPartyCaveat(validChallengeCaveat2.encode())
     
     const tests = [
       {
@@ -200,13 +207,18 @@ describe('paywall', () => {
         macaroon: validChallengeMacaroon,
         expectation: 200
       },
+      {
+        name: 'invalid challenge after valid',
+        macaroon: invalidChallengeMacaroon,
+        expectation: 401
+      },
     ]
     
     // want to test that challengeSatisfier is run too
     app = getApp({ oauth: true })
 
     for (const test of tests) {
-      const lsat = Lsat.fromMacaroon(test.macaroon.serialize(), invoiceResponse.request)
+      const lsat = Lsat.fromMacaroon(getSerializedMacaroon(test.macaroon), invoiceResponse.request)
       lsat.setPreimage(invoiceResponse.secret)
 
       const resp: request.Response = await request

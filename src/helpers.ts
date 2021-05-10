@@ -5,7 +5,7 @@
 
 import { Request } from 'express'
 import assert from 'assert'
-import { MacaroonsBuilder, MacaroonsConstants } from 'macaroons.js'
+import * as Macaroon from 'macaroon'
 import dotenv from 'dotenv'
 import crypto from 'crypto'
 import lnService from 'ln-service'
@@ -17,7 +17,7 @@ import { parsePaymentRequest } from 'ln-service'
 import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
 import { Lsat, Identifier, Caveat } from 'lsat-js'
 
-const { MACAROON_SUGGESTED_SECRET_LENGTH } = MacaroonsConstants
+export const MACAROON_SUGGESTED_SECRET_LENGTH = 32
 
 interface EnvVars {
   PORT?: string
@@ -180,11 +180,12 @@ export function createLsatFromInvoice(
     location = req.query.auth_uri
   }
 
-  const builder = new MacaroonsBuilder(
-    location,
-    SESSION_SECRET,
-    identifier.toString()
-  )
+  const builder = Macaroon.newMacaroon({
+    version: 1,
+    location: location,
+    rootKey: SESSION_SECRET,
+    identifier: identifier.toString(),
+  })
 
   // if config has custom caveat getters, need to retrieve them
   // and add first party caveats
@@ -197,17 +198,19 @@ export function createLsatFromInvoice(
 
     for (const getCaveat of caveatGetters) {
       const caveat = getCaveat(req, invoice)
-      builder.add_first_party_caveat(caveat)
+      builder.addFirstPartyCaveat(caveat)
     }
   }
 
   if (req.boltwallConfig && req.boltwallConfig.oauth) {
     const caveat = createChallengeCaveat(invoice.payreq)
-    builder.add_first_party_caveat(caveat)
+    builder.addFirstPartyCaveat(caveat)
   }
 
-  const macaroon = builder.getMacaroon()
-  return Lsat.fromMacaroon(macaroon.serialize(), payreq)
+  const builderBin = builder._exportBinaryV2()
+  assert(builderBin, 'Unable to get binary from macaroon builder')
+  const macaroon = Macaroon.bytesToBase64(builderBin)
+  return Lsat.fromMacaroon(macaroon, payreq)
 }
 
 /**
