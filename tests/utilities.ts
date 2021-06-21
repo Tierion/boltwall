@@ -4,8 +4,8 @@ import * as Macaroon from 'macaroon'
 import { randomBytes } from 'crypto'
 
 import * as helpers from '../src/helpers'
-import { invoice } from './data'
-import { Identifier, Caveat } from 'lsat-js'
+import { invoice } from './fixtures'
+import { Identifier, Caveat, MacaroonClass } from 'lsat-js'
 
 // getStub is a utility for generating a sinon stub for an lnService method
 export function getLnStub(
@@ -36,7 +36,7 @@ export function setSessionSecret(): string {
 export const getExpirationCaveat = (time = 1000): Caveat =>
   new Caveat({ condition: 'expiration', value: Date.now() + time })
 
-export function getTestBuilder(secret: string) {
+export function getTestBuilder(secret: string): MacaroonClass {
   const request = lnService.parsePaymentRequest({ request: invoice.payreq })
 
   const identifier = new Identifier({
@@ -52,7 +52,5 @@ export function getTestBuilder(secret: string) {
   return builder
 }
 
-export const BaseMacaroonClass = getTestBuilder('secret')
-
-export const getSerializedMacaroon = (mac: typeof BaseMacaroonClass): string =>
+export const getSerializedMacaroon = (mac: MacaroonClass): string =>
   Macaroon.bytesToBase64(mac._exportBinaryV2())

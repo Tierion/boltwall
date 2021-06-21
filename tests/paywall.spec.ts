@@ -2,15 +2,14 @@ import * as request from 'supertest'
 import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application, Request } from 'express'
-import { Caveat, Lsat } from 'lsat-js'
-import { invoiceResponse, secondInvoice, challenge } from './data'
+import { Caveat, Lsat, MacaroonClass } from 'lsat-js'
+import { invoiceResponse, secondInvoice, challenge } from './fixtures'
 import {
   getLnStub,
   getTestBuilder,
   getExpirationCaveat,
   setSessionSecret,
   getEnvStub,
-  BaseMacaroonClass,
   getSerializedMacaroon
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
@@ -25,7 +24,7 @@ describe('paywall', () => {
     getInvStub: sinon.SinonStub,
     envStub: sinon.SinonStub,
     sessionSecret: string,
-    builder: typeof BaseMacaroonClass, // TODO: need to get the Macaroon class from js-macaroon
+    builder: MacaroonClass,
     app: Application,
     lsat: Lsat,
     macaroon: string,
@@ -151,28 +150,27 @@ describe('paywall', () => {
     // test time configs
     const failedTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() - 1000 })
     const validTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() + 10000 })
-    const secret = process.env.SESSION_SECRET || 'secret'
-    const failedTimeMacaroon = getTestBuilder(secret)
+    const failedTimeMacaroon = getTestBuilder(sessionSecret)
     failedTimeMacaroon.addFirstPartyCaveat(failedTimeCaveat.encode())
-    const validTimeMacaroon = getTestBuilder(secret)
+    const validTimeMacaroon = getTestBuilder(sessionSecret)
     validTimeMacaroon.addFirstPartyCaveat(validTimeCaveat.encode())
 
     // test origin configs
     const failedOriginCaveat = new Caveat({ condition: 'ip', value: '1.2.3.4' })
     const validOriginCaveat = new Caveat({ condition: 'ip', value: '::ffff:127.0.0.1' })
-    const failedOriginMacaroon = getTestBuilder(secret)
+    const failedOriginMacaroon = getTestBuilder(sessionSecret)
     failedOriginMacaroon.addFirstPartyCaveat(failedOriginCaveat.encode())
 
-    const validOriginMacaroon = getTestBuilder(secret)
+    const validOriginMacaroon = getTestBuilder(sessionSecret)
     validOriginMacaroon.addFirstPartyCaveat(validOriginCaveat.encode())
   
-    const invalidChallengeCaveat = new Caveat({ condition: 'challenge', value: `${Buffer.alloc(32).toString('hex')}:${Buffer.alloc(33).toString('hex')}:`})
-    const invalidChallengeMacaroon = getTestBuilder(secret)
+    const invalidChallengeCaveat = new Caveat({ condition: 'challenge', value: `deadbeef:deadbeef:`})
+    const invalidChallengeMacaroon = getTestBuilder(sessionSecret)
     invalidChallengeMacaroon.addFirstPartyCaveat(invalidChallengeCaveat.encode())
 
     const validChallengeCaveat1 = new Caveat({ condition: 'challenge', value: `${challenge.challenge}:${challenge.pubkey}:`})
     const validChallengeCaveat2 = new Caveat({ condition: 'challenge', value: `${challenge.challenge}:${challenge.pubkey}:${challenge.signature}`})
-    const validChallengeMacaroon = getTestBuilder(secret)
+    const validChallengeMacaroon = getTestBuilder(sessionSecret)
     validChallengeMacaroon.addFirstPartyCaveat(validChallengeCaveat1.encode())
     validChallengeMacaroon.addFirstPartyCaveat(validChallengeCaveat2.encode())
     
@@ -319,5 +317,63 @@ describe('paywall', () => {
       .expect(200)
 
     expect(checkInvoiceStub.called).to.be.false
+  })
+
+  describe('oauth', () => {
+    function prepareLsat(...caveats: Caveat[]): Lsat {
+      for (const c of caveats) {
+        builder.addFirstPartyCaveat(c.encode())
+      }
+      const lsat = Lsat.fromMacaroon(getSerializedMacaroon(builder), invoiceResponse.request)
+      lsat.setPreimage(invoiceResponse.secret)
+      return lsat
+    }
+
+    async function testResponse(lsat: Lsat, expectedStatus: number): Promise<void> {
+      const resp: request.Response = await request
+        .agent(app)
+        .get(protectedRoute)
+        .set('Authorization', `${lsat.toToken()}`)
+      
+      expect(resp.status).to.equal(expectedStatus)
+    }
+
+    let validChallenge: Caveat, validResponse:Caveat, invalidResponse: Caveat
+    beforeEach(() => {
+      app = getApp({ oauth: true })
+      validChallenge = new Caveat({
+        condition: 'challenge', 
+        value: `${challenge.challenge}:${challenge.pubkey}:`
+      })
+      validResponse = new Caveat({
+        condition: 'challenge', 
+        value: `${challenge.challenge}:${challenge.pubkey}:${challenge.signature}`
+      })
+      invalidResponse = new Caveat({
+        condition: 'challenge', 
+        value: `${challenge.challenge}:${challenge.pubkey}:deadbeef`
+      })
+    })
+
+    it('should return 401 if there are multiple challenge caveats and none have signature', async () => {
+      const lsat = prepareLsat(validChallenge, validChallenge);
+      await testResponse(lsat, 401)
+    })
+    
+    it('should return 401 if there is a challenge caveat with an invalid signature', async () => {
+      const lsat = prepareLsat(validChallenge, invalidResponse);
+      await testResponse(lsat, 401)
+    })
+
+    it('should return 401 if there are more than 2 challenge caveats', async () => {
+      const lsat = prepareLsat(validChallenge, validChallenge, validResponse)
+      await testResponse(lsat, 401)
+    })
+
+    it('should return 200 if signature caveat is not immediately after challenge', async () => {
+      const validTimeCaveat = new Caveat({ condition: 'expiration', value: Date.now() + 10000 })
+      const lsat = prepareLsat(validChallenge, validTimeCaveat, validResponse);
+      await testResponse(lsat, 200)
+    })
   })
 })

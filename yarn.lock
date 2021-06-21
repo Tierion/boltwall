@@ -557,9 +557,9 @@
   integrity sha512-UmUm94/QZvU5xLcUlNR8hA7Ac+fGpO1EG/a8bcWVz0P0LqtxFmun9Y2bbtuckwGboWJIT70DoWq1r3hb56n3DA==
 
 "@types/node@^13.1.0":
-  version "13.13.51"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.51.tgz#a424c5282f99fc1ca41f11b727b6aea80668bcba"
-  integrity sha512-66/xg5I5Te4oGi5Jws11PtNmKkZbOPZWyBZZ/l5AOrWj1Dyw+6Ge/JhYTq/2/Yvdqyhrue8RL+DGI298OJ0xcg==
+  version "13.13.52"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-13.13.52.tgz#03c13be70b9031baaed79481c0c0cfb0045e53f7"
+  integrity sha512-s3nugnZumCC//n4moGGe6tkNMyYEdaDBitVjwPxXmR5lnMG5dHePinH2EdxkG3Rh1ghFHHixAG4NJhpJW1rthQ==
 
 "@types/range-parser@*":
   version "1.2.3"
@@ -4117,9 +4117,9 @@ lru-cache@^6.0.0:
   dependencies:
     yallist "^4.0.0"
 
-"lsat-js@github:Tierion/lsat-js#prepare":
+"lsat-js@https://github.com/Tierion/lsat-js.git#prepare":
   version "1.0.7"
-  resolved "https://codeload.github.com/Tierion/lsat-js/tar.gz/2a122e9168001eea9725e197a5e03880f1a009e2"
+  resolved "https://github.com/Tierion/lsat-js.git#e0dc5c02e8a19d949040e31883e3c9a3a94c741b"
   dependencies:
     "@types/node" "^13.1.0"
     "@types/sjcl" "^1.0.29"

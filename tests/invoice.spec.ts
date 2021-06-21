@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application } from 'express'
 import { parsePaymentRequest } from 'ln-service'
-import { Lsat, expirationSatisfier } from 'lsat-js'
+import { Lsat, expirationSatisfier, MacaroonClass } from 'lsat-js'
 
 import getApp from './mockApp'
 
@@ -14,7 +14,7 @@ import {
   getExpirationCaveat,
   getSerializedMacaroon,
 } from './utilities'
-import { invoice } from './data'
+import { invoice } from './fixtures'
 
 import { InvoiceResponse } from '../src/typings'
 
@@ -35,7 +35,7 @@ describe('/invoice', () => {
     lndGrpcStub: sinon.SinonStub,
     invoiceResponse: InvoiceResponseStub,
     sessionSecret: string,
-    builder: any,
+    builder: MacaroonClass,
     app: Application,
     basePath: string,
     validPath: string

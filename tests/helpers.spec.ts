@@ -7,7 +7,7 @@ import { parsePaymentRequest } from 'ln-service'
 import crypto from 'crypto'
 import rp from 'request-promise-native'
 
-import { invoiceResponse } from './data'
+import { invoiceResponse } from './fixtures'
 import {
   createLsatFromInvoice,
   getOriginFromRequest,
@@ -17,7 +17,7 @@ import {
   TokenChallenge,
 } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
-import { invoice, challenge as challengeData } from './data'
+import { invoice, challenge as challengeData } from './fixtures'
 import { getLnStub } from './utilities'
 
 describe('helper functions', () => {

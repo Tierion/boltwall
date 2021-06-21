@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { Application } from 'express'
 
 import getApp from './mockApp'
-import { nodeInfo } from './data'
+import { nodeInfo } from './fixtures'
 import { getLnStub, getEnvStub } from './utilities'
 
 describe('/node', () => {

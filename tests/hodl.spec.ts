@@ -3,7 +3,7 @@ import { Application } from 'express'
 import { expect } from 'chai'
 
 import getApp, { protectedRoute } from './mockApp'
-import { invoiceResponse, InvoiceResponseStub } from './data'
+import { invoiceResponse, InvoiceResponseStub } from './fixtures'
 import { InvoiceResponse } from '../src/typings'
 import {
   getEnvStub,

@@ -12,7 +12,7 @@ import {
   getEnvStub,
   getSerializedMacaroon,
 } from './utilities'
-import { invoiceResponse, nodeInfo, invoiceDetails } from './data'
+import { invoiceResponse, nodeInfo, invoiceDetails } from './fixtures'
 import getApp from './mockApp'
 import { InvoiceResponse } from '../src/typings'
 
