@@ -4117,9 +4117,10 @@ lru-cache@^6.0.0:
   dependencies:
     yallist "^4.0.0"
 
-"lsat-js@https://github.com/Tierion/lsat-js.git#prepare":
-  version "1.0.7"
-  resolved "https://github.com/Tierion/lsat-js.git#e0dc5c02e8a19d949040e31883e3c9a3a94c741b"
+lsat-js@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/lsat-js/-/lsat-js-2.0.0.tgz#b50caf2efea451f75a18f899b8fe12fc0a02e6d8"
+  integrity sha512-IlNvoG8pZT3xBCRtaCXwtwEj/J3Bu0JIyhV2Rk4euynosc4iQZTql93MI5G5pcAVCSoCRHevzq7R3RaPRnnPFQ==
   dependencies:
     "@types/node" "^13.1.0"
     "@types/sjcl" "^1.0.29"

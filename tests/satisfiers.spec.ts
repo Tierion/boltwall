@@ -102,7 +102,6 @@ describe('satisfiers', () => {
           value: `${prev.value}${Buffer.alloc(64).toString('hex')}`,
         })
 
-        // second run should fail if the signature is invalid
         const isValid = challengeSatisfier.satisfyFinal(invalidSig)
         expect(
           isValid,

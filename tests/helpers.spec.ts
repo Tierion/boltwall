@@ -7,7 +7,6 @@ import { parsePaymentRequest } from 'ln-service'
 import crypto from 'crypto'
 import rp from 'request-promise-native'
 
-import { invoiceResponse } from './fixtures'
 import {
   createLsatFromInvoice,
   getOriginFromRequest,
@@ -17,7 +16,11 @@ import {
   TokenChallenge,
 } from '../src/helpers'
 import { InvoiceResponse } from '../src/typings'
-import { invoice, challenge as challengeData } from './fixtures'
+import {
+  invoice,
+  challenge as challengeData,
+  invoiceResponse,
+} from './fixtures'
 import { getLnStub } from './utilities'
 
 describe('helper functions', () => {
@@ -174,8 +177,8 @@ describe('helper functions', () => {
         const macaroon: Macaroon.MacaroonJSONV2 = Macaroon.importMacaroon(
           lsat.baseMacaroon
         )._exportAsJSONObjectV2()
-        let hasFirstMacaroon = false,
-          hasSecondMacaroon = false
+        let hasFirstCaveat = false,
+          hasSecondCaveat = false
 
         const caveatPackets = macaroon.c
 
@@ -185,18 +188,18 @@ describe('helper functions', () => {
         // for each caveat we want to see if it matches the expected caveat getters
         for (const { i } of caveatPackets) {
           if (!i) continue // satisfy optional parameter in type declaration
-          if (i === firstCaveat) hasFirstMacaroon = true
-          else if (i === secondCaveat) hasSecondMacaroon = true
+          if (i === firstCaveat) hasFirstCaveat = true
+          else if (i === secondCaveat) hasSecondCaveat = true
         }
 
         expect(
-          hasFirstMacaroon,
+          hasFirstCaveat,
           `generated lsat macaroon should have had caveats from custom ${name}`
         ).to.be.true
 
         if (Array.isArray(request.boltwallConfig.getCaveats))
           expect(
-            hasSecondMacaroon,
+            hasSecondCaveat,
             `generated lsat macaroon should have had caveats from custom ${name}`
           ).to.be.true
       }

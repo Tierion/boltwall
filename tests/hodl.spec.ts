@@ -5,13 +5,8 @@ import { expect } from 'chai'
 import getApp, { protectedRoute } from './mockApp'
 import { invoiceResponse, InvoiceResponseStub } from './fixtures'
 import { InvoiceResponse } from '../src/typings'
-import {
-  getEnvStub,
-  getLnStub,
-  getTestBuilder,
-  getSerializedMacaroon,
-} from './utilities'
-import { Lsat } from 'lsat-js'
+import { getEnvStub, getLnStub, getTestBuilder } from './utilities'
+import { getRawMacaroon, Lsat, MacaroonClass } from 'lsat-js'
 
 describe('hodl paywall', () => {
   let envStub: sinon.SinonStub,
@@ -20,7 +15,7 @@ describe('hodl paywall', () => {
     getInvStub: sinon.SinonStub,
     settleHodlStub: sinon.SinonStub,
     sessionSecret: string,
-    builder: any,
+    builder: MacaroonClass,
     paymentHash: string,
     heldInvoice: InvoiceResponseStub,
     app: Application
@@ -107,7 +102,7 @@ describe('hodl paywall', () => {
       is_held: false,
     })
 
-    const macaroon = getSerializedMacaroon(builder)
+    const macaroon = getRawMacaroon(builder)
     const resp: request.Response = await request
       .agent(app)
       .get(protectedRoute)
@@ -133,7 +128,7 @@ describe('hodl paywall', () => {
       is_held: true, // checking that access is allowed if getInvoice returns is_held: true
     })
 
-    const macaroon = getSerializedMacaroon(builder)
+    const macaroon = getRawMacaroon(builder)
     await request
       .agent(app)
       .get(protectedRoute)
@@ -145,7 +140,7 @@ describe('hodl paywall', () => {
   })
 
   it('should settle a held invoice when the LSAT includes the secret', async () => {
-    const macaroon = getSerializedMacaroon(builder)
+    const macaroon = getRawMacaroon(builder)
     const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)
 
@@ -169,7 +164,7 @@ describe('hodl paywall', () => {
       is_held: false,
     })
 
-    const macaroon = getSerializedMacaroon(builder)
+    const macaroon = getRawMacaroon(builder)
     const lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     lsat.setPreimage(invoiceResponse.secret)
 
@@ -200,7 +195,7 @@ describe('hodl paywall', () => {
         description: invoiceResponse.description,
       }
 
-      const macaroon = getSerializedMacaroon(builder)
+      const macaroon = getRawMacaroon(builder)
 
       const supertestResp: request.Response = await request
         .agent(app)

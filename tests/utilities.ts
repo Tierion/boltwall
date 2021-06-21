@@ -51,6 +51,3 @@ export function getTestBuilder(secret: string): MacaroonClass {
   })
   return builder
 }
-
-export const getSerializedMacaroon = (mac: MacaroonClass): string =>
-  Macaroon.bytesToBase64(mac._exportBinaryV2())

@@ -2,16 +2,11 @@ import * as request from 'supertest'
 import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application } from 'express'
-import { MacaroonInterface, Lsat, Caveat } from 'lsat-js'
+import { Lsat, Caveat, getRawMacaroon } from 'lsat-js'
 import crypto from 'crypto'
 
 import * as helpers from '../src/helpers'
-import {
-  getLnStub,
-  getTestBuilder,
-  getEnvStub,
-  getSerializedMacaroon,
-} from './utilities'
+import { getLnStub, getTestBuilder, getEnvStub } from './utilities'
 import { invoiceResponse, nodeInfo, invoiceDetails } from './fixtures'
 import getApp from './mockApp'
 import { InvoiceResponse } from '../src/typings'
@@ -26,7 +21,7 @@ describe(route, () => {
 
   before(() => {
     // boltwall sets up authenticated client when it boots up
-    // need to stub this to avoid connection errors and speed up tests
+    // need to stub this to avoid connection errors and to speed up tests
     lndGrpcStub = getLnStub('authenticatedLndGrpc', { lnd: {} })
     // keep known session secret so we can decode macaroons
     sessionSecret = 'my super secret'
@@ -43,7 +38,7 @@ describe(route, () => {
     let checkInvoiceStub: // eslint-disable-next-line @typescript-eslint/no-explicit-any
       sinon.SinonStub<any> | sinon.SinonStub<InvoiceResponse[]>,
       checkInvResponse: InvoiceResponse,
-      macaroon: MacaroonInterface,
+      macaroon: string,
       challengeCaveat: string,
       getInfoStub: sinon.SinonStub,
       signMessageStub: sinon.SinonStub,
@@ -70,7 +65,7 @@ describe(route, () => {
       const builder = getTestBuilder(sessionSecret)
       challengeCaveat = helpers.createChallengeCaveat(invoiceResponse.request)
       builder.addFirstPartyCaveat(challengeCaveat)
-      macaroon = getSerializedMacaroon(builder)
+      macaroon = getRawMacaroon(builder)
     })
 
     afterEach(() => {
@@ -93,12 +88,12 @@ describe(route, () => {
     })
 
     it('should return 400 if macaroon is missing challenge caveat', async () => {
-      let invalidMacaroon = getTestBuilder(sessionSecret)
-      invalidMacaroon = getSerializedMacaroon(invalidMacaroon)
+      const builder = getTestBuilder(sessionSecret)
+      const mac = getRawMacaroon(builder)
       const res: request.Response = await request
         .agent(app)
         .post(route)
-        .send({ macaroon: invalidMacaroon })
+        .send({ macaroon: mac })
 
       expect(res.status).to.equal(400)
       expect(res.body.error).to.exist

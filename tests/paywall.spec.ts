@@ -2,7 +2,7 @@ import * as request from 'supertest'
 import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application, Request } from 'express'
-import { Caveat, Lsat, MacaroonClass } from 'lsat-js'
+import { Caveat, getRawMacaroon, Lsat, MacaroonClass } from 'lsat-js'
 import { invoiceResponse, secondInvoice, challenge } from './fixtures'
 import {
   getLnStub,
@@ -10,13 +10,11 @@ import {
   getExpirationCaveat,
   setSessionSecret,
   getEnvStub,
-  getSerializedMacaroon
 } from './utilities'
 import getApp, { protectedRoute } from './mockApp'
 import { BoltwallConfig, InvoiceResponse } from '../src/typings'
 import * as helpers from '../src/helpers'
 import { challengeSatisfier } from '../src/satisfiers'
-import * as Macaroon from 'macaroon'
 
 describe('paywall', () => {
   let lndGrpcStub: sinon.SinonStub,
@@ -43,7 +41,7 @@ describe('paywall', () => {
     builder = getTestBuilder(sessionSecret)
     envStub = getEnvStub(sessionSecret)
     app = getApp()
-    macaroon = Macaroon.bytesToBase64(builder._exportBinaryV2())
+    macaroon = getRawMacaroon(builder)
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     challengeSatisfierStub = sinon.stub(challengeSatisfier, 'satisfyFinal').callThrough()
   })
@@ -95,7 +93,7 @@ describe('paywall', () => {
 
     builder
       .addFirstPartyCaveat(expirationCaveat.encode())
-    macaroon = getSerializedMacaroon(builder)
+    macaroon = getRawMacaroon(builder)
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
   
     const response: request.Response = await request
@@ -110,7 +108,7 @@ describe('paywall', () => {
   })
 
   it('should return 401 for invalid macaroon', async () => {
-    macaroon = getSerializedMacaroon(getTestBuilder('another secret'))
+    macaroon = getRawMacaroon(getTestBuilder('another secret'))
     lsat = Lsat.fromMacaroon(macaroon, invoiceResponse.request)
     
     const response: request.Response = await request
@@ -216,7 +214,7 @@ describe('paywall', () => {
     app = getApp({ oauth: true })
 
     for (const test of tests) {
-      const lsat = Lsat.fromMacaroon(getSerializedMacaroon(test.macaroon), invoiceResponse.request)
+      const lsat = Lsat.fromMacaroon(getRawMacaroon(test.macaroon), invoiceResponse.request)
       lsat.setPreimage(invoiceResponse.secret)
 
       const resp: request.Response = await request
@@ -324,7 +322,7 @@ describe('paywall', () => {
       for (const c of caveats) {
         builder.addFirstPartyCaveat(c.encode())
       }
-      const lsat = Lsat.fromMacaroon(getSerializedMacaroon(builder), invoiceResponse.request)
+      const lsat = Lsat.fromMacaroon(getRawMacaroon(builder), invoiceResponse.request)
       lsat.setPreimage(invoiceResponse.secret)
       return lsat
     }

@@ -2,10 +2,10 @@ import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
 import * as Macaroon from 'macaroon'
 
-import { Lsat, verifyFirstPartyMacaroon, Satisfier, getCaveatsFromMacaroon } from 'lsat-js'
+import { Lsat, verifyMacaroonCaveats, Satisfier, getRawMacaroon } from 'lsat-js'
 import { getEnvVars, isHex } from '../helpers'
 import * as configs from '../configs'
-import { challengeSatisfier, hasValidChallengeCaveats } from '../satisfiers'
+import { challengeSatisfier } from '../satisfiers'
 import { BoltwallConfig } from '../typings'
 
 /**
@@ -110,8 +110,8 @@ export default async function validateLsat(
     satisfiers = [...satisfiers, ...caveatSatisfiers]
   }
 
-  const isValid = verifyFirstPartyMacaroon(
-    Macaroon.bytesToBase64(macaroon._exportBinaryV2()),
+  const isValid = verifyMacaroonCaveats(
+    getRawMacaroon(macaroon),
     SESSION_SECRET,
     satisfiers,
     req

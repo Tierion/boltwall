@@ -1,5 +1,5 @@
 import { Response, Request, Router, NextFunction } from 'express'
-import { Lsat } from 'lsat-js'
+import { getRawMacaroon, Lsat } from 'lsat-js'
 import { checkInvoiceStatus, decodeChallengeCaveat } from '../helpers'
 import lnService from 'ln-service'
 import * as Macaroon from 'macaroon'
@@ -92,7 +92,7 @@ export async function satisfyTokenChallenge(
       builder.addFirstPartyCaveat(getter(req, invoiceResponse))
     }
   }
-  const macaroon = Macaroon.bytesToBase64(builder._exportBinaryV2())
+  const macaroon = getRawMacaroon(builder)
   return res.json({ macaroon })
 }
 

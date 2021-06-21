@@ -3,7 +3,12 @@ import { expect } from 'chai'
 import sinon from 'sinon'
 import { Application } from 'express'
 import { parsePaymentRequest } from 'ln-service'
-import { Lsat, expirationSatisfier, MacaroonClass } from 'lsat-js'
+import {
+  Lsat,
+  expirationSatisfier,
+  MacaroonClass,
+  getRawMacaroon,
+} from 'lsat-js'
 
 import getApp from './mockApp'
 
@@ -12,7 +17,6 @@ import {
   getTestBuilder,
   getEnvStub,
   getExpirationCaveat,
-  getSerializedMacaroon,
 } from './utilities'
 import { invoice } from './fixtures'
 
@@ -101,7 +105,7 @@ describe('/invoice', () => {
 
       builder.addFirstPartyCaveat(expirationCaveat.encode())
 
-      const lsat = Lsat.fromMacaroon(getSerializedMacaroon(builder))
+      const lsat = Lsat.fromMacaroon(getRawMacaroon(builder))
 
       const response: request.Response = await request
         .agent(app)
@@ -120,7 +124,7 @@ describe('/invoice', () => {
       const response: request.Response = await request
         .agent(app)
         .get(basePath)
-        .set('Authorization', `LSAT ${getSerializedMacaroon(macaroon)}:`)
+        .set('Authorization', `LSAT ${getRawMacaroon(macaroon)}:`)
 
       expect(response.status).to.equal(401)
       expect(response).to.have.nested.property('body.error.message')
@@ -159,7 +163,7 @@ describe('/invoice', () => {
       // add extra expiration caveats. it should pass if newer is more restrictive
       // but not yet past current time
       builder.addFirstPartyCaveat(`expiration=${Date.now() + 500}`)
-      const macaroon = getSerializedMacaroon(builder)
+      const macaroon = getRawMacaroon(builder)
       app = getApp({ caveatSatisfiers: expirationSatisfier })
 
       // first test just with the invoice id in the request query parameter
@@ -181,7 +185,7 @@ describe('/invoice', () => {
     })
 
     it('should not return the secret if invoice is unpaid or LSAT is invalid', async () => {
-      const macaroon = getSerializedMacaroon(builder)
+      const macaroon = getRawMacaroon(builder)
 
       // Setup response from getInvoice w/ unconfirmed invoice
       getInvStub.restore()
