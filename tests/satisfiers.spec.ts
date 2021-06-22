@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { Caveat } from 'lsat-js'
-import { challenge as challengeData } from './data'
+import { challenge as challengeData } from './fixtures'
 import { challengeSatisfier } from '../src/satisfiers'
 
 describe('satisfiers', () => {
@@ -29,83 +29,85 @@ describe('satisfiers', () => {
     it('should have the right condition "challenge"', () => {
       expect(challengeSatisfier.condition).to.equal('challenge')
     })
-
-    it('should satisfyPrevious if both have same challenge and pubkey', () => {
-      expect(challengeSatisfier).to.have.property('satisfyPrevious')
-
-      const isValid = challengeSatisfier.satisfyPrevious
-        ? challengeSatisfier.satisfyPrevious(prev, curr)
-        : false
-
-      expect(isValid).to.be.true
-
-      const invalid = [
-        {
-          name: 'pubkey mismatch',
-          prev: new Caveat({
-            condition: 'challenge',
-            value: `${challenge}:${Buffer.alloc(33).toString('hex')}:`,
-          }),
-          curr,
-        },
-        {
-          name: 'challenge mismatch',
-          prev: new Caveat({
-            condition: 'challenge',
-            value: `${Buffer.alloc(32).toString('hex')}:${pubkey}:`,
-          }),
-          curr,
-        },
-      ]
-
-      for (const test of invalid) {
-        const expectInvalid = challengeSatisfier.satisfyPrevious
-          ? challengeSatisfier.satisfyPrevious(test.prev, test.curr)
+    describe('satisfyPrevious', () => {
+      it('should pass if both have same challenge and pubkey', () => {
+        const isValid = challengeSatisfier.satisfyPrevious
+          ? challengeSatisfier.satisfyPrevious(prev, curr)
           : false
 
-        expect(expectInvalid, `Expected ${test.name} to return invalid`).to.be
-          .false
-      }
-    })
-
-    it('should satisfy final if the signature matches the pubkey and return false otherwise', () => {
-      expect(challengeSatisfier).to.have.property('satisfyFinal')
-
-      const { satisfyFinal } = challengeSatisfier
-
-      // first run with a challenge without signature should pass
-      let isValid = satisfyFinal(prev)
-      expect(isValid, 'First run should pass even if no signature present').to
-        .be.true
-
-      isValid = satisfyFinal(curr)
-      expect(
-        isValid,
-        'Satisfier should pass if final caveat has proper signature'
-      ).to.be.true
-
-      //run with a bad signature
-      const invalidSig = new Caveat({
-        condition: 'challenge',
-        value: `${prev.value}${Buffer.alloc(64).toString('hex')}`,
+        expect(isValid).to.be.true
       })
 
-      // run once more for fake prev since odd numbered runs skip sig check
-      satisfyFinal(prev)
-      // second run should fail if the signature is invalid
-      isValid = satisfyFinal(invalidSig)
-      expect(
-        isValid,
-        'Satisfier should fail if final caveat has invalid signature'
-      ).to.be.false
+      it('should fail if there are mismatches', () => {
+        const invalid = [
+          {
+            name: 'pubkey mismatch',
+            prev: new Caveat({
+              condition: 'challenge',
+              value: `${challenge}:${Buffer.alloc(33).toString('hex')}:`,
+            }),
+            curr,
+          },
+          {
+            name: 'challenge mismatch',
+            prev: new Caveat({
+              condition: 'challenge',
+              value: `${Buffer.alloc(32).toString('hex')}:${pubkey}:`,
+            }),
+            curr,
+          },
+        ]
 
-      // run twice both without signature to confirm failure with missing signature
-      satisfyFinal(prev)
-      isValid = satisfyFinal(prev)
-      expect(
-        isValid,
-        'Satisfier should fail if final caveat does not have signature'
-      ).to.be.false
+        for (const test of invalid) {
+          const expectInvalid = challengeSatisfier.satisfyPrevious
+            ? challengeSatisfier.satisfyPrevious(test.prev, test.curr)
+            : false
+
+          expect(expectInvalid, `Expected ${test.name} to return invalid`).to.be
+            .false
+        }
+      })
+
+      it('should fail if prev and current have same pubkey and current doesnt have signature', () => {
+        const badCurr = new Caveat({
+          condition: 'challenge',
+          value: prev.value.toString(),
+        })
+
+        const isValid = challengeSatisfier.satisfyPrevious
+          ? challengeSatisfier.satisfyPrevious(prev, badCurr)
+          : false
+
+        expect(isValid).to.be.false
+      })
+    })
+
+    describe('satisfyFinal', () => {
+      it('should pass if no signature present', () => {
+        const isValid = challengeSatisfier.satisfyFinal(prev)
+        expect(isValid).to.be.true
+      })
+
+      it('should pass if final caveat has proper signature', () => {
+        const isValid = challengeSatisfier.satisfyFinal(curr)
+        expect(
+          isValid,
+          'Satisfier should pass if final caveat has proper signature'
+        ).to.be.true
+      })
+
+      it('should fail if caveat has invalid signature', () => {
+        const invalidSig = new Caveat({
+          condition: 'challenge',
+          value: `${prev.value}${Buffer.alloc(64).toString('hex')}`,
+        })
+
+        const isValid = challengeSatisfier.satisfyFinal(invalidSig)
+        expect(
+          isValid,
+          'Satisfier should fail if final caveat has invalid signature'
+        ).to.be.false
+      })
     })
   })
 })

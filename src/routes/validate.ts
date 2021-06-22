@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import assert from 'assert'
+import * as Macaroon from 'macaroon'
 
-import { Lsat, verifyFirstPartyMacaroon, Satisfier } from 'lsat-js'
+import { Lsat, verifyMacaroonCaveats, Satisfier, getRawMacaroon } from 'lsat-js'
 import { getEnvVars, isHex } from '../helpers'
 import * as configs from '../configs'
 import { challengeSatisfier } from '../satisfiers'
@@ -83,7 +84,7 @@ export default async function validateLsat(
 
   // verify macaroon
   const { SESSION_SECRET } = getEnvVars()
-  const macaroon = lsat.getMacaroon()
+  const macaroon = Macaroon.importMacaroon(lsat.baseMacaroon)
 
   type DefaultConfigs = {
     [key:string]: BoltwallConfig
@@ -99,7 +100,7 @@ export default async function validateLsat(
       satisfiers.push(...caveatSatisfiers)
     }
   }
-
+  
   if (req.boltwallConfig && req.boltwallConfig.oauth) {
     satisfiers.push(challengeSatisfier)
   }
@@ -108,14 +109,14 @@ export default async function validateLsat(
     const caveatSatisfiers = Array.isArray(req.boltwallConfig?.caveatSatisfiers) ? req.boltwallConfig?.caveatSatisfiers : [req.boltwallConfig?.caveatSatisfiers]
     satisfiers = [...satisfiers, ...caveatSatisfiers]
   }
-  
-  const isValid = verifyFirstPartyMacaroon(
-    macaroon.serialize(),
+
+  const isValid = verifyMacaroonCaveats(
+    getRawMacaroon(macaroon),
     SESSION_SECRET,
     satisfiers,
     req
   )
-
+  
   if (!isValid) {
     req.logger.debug('Request made with invalid LSAT macaroon')
     res.status(401)

@@ -1,6 +1,5 @@
 declare module 'ln-service'
 declare module 'opennode'
-declare module 'macaroons.js'
 declare module 'blgr'
 declare module 'binet'
 declare module 'bcrypto'

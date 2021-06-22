@@ -1,8 +1,8 @@
 import { Response, Request, Router, NextFunction } from 'express'
-import { Lsat } from 'lsat-js'
+import { getRawMacaroon, Lsat } from 'lsat-js'
 import { checkInvoiceStatus, decodeChallengeCaveat } from '../helpers'
 import lnService from 'ln-service'
-import { MacaroonsBuilder } from 'macaroons.js'
+import * as Macaroon from 'macaroon'
 
 const router: Router = Router()
 
@@ -79,8 +79,8 @@ export async function satisfyTokenChallenge(
   caveat.value = caveat.value + signature
 
   // add new caveat to macaroon
-  const builder = MacaroonsBuilder.modify(lsat.getMacaroon())
-  builder.add_first_party_caveat(caveat.encode())
+  const builder = Macaroon.importMacaroon(lsat.baseMacaroon)
+  builder.addFirstPartyCaveat(caveat.encode())
 
   // if there are any other custom caveats on the config
   // loop through and add those caveats to the new macaroon
@@ -89,10 +89,10 @@ export async function satisfyTokenChallenge(
     if (!Array.isArray(getCaveats)) getCaveats = [getCaveats]
 
     for (const getter of getCaveats) {
-      builder.add_first_party_caveat(getter(req, invoiceResponse))
+      builder.addFirstPartyCaveat(getter(req, invoiceResponse))
     }
   }
-  const macaroon = builder.getMacaroon().serialize()
+  const macaroon = getRawMacaroon(builder)
   return res.json({ macaroon })
 }
 
