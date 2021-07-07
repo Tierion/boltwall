@@ -319,7 +319,7 @@ app.use((req, res, next) => {
   }
   next()
 })
-app.use(boltwall{ hodl: true })
+app.use(boltwall({ hodl: true }))
 // all routes after this will require payment to a hodl invoice
 app.get('/protected', (req, res) => res.send('This route is protected'))
 ```
