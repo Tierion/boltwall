@@ -23,8 +23,8 @@ app.use(boltwall())
     - [Authentication Flow](#authentication-flow)
     - [Custom Authorization w/ Macaroons](#custom-authorization-w-macaroons)
     - [Pre-built Configs](#pre-built-configs)
-      - [**`TIME_CAVEAT_CONFIGS`**](#timecaveatconfigs)
-      - [**`ORIGIN_CAVEAT_CONFIGS`**](#origincaveatconfigs)
+      - [**`TIME_CAVEAT_CONFIGS`**](#time_caveat_configs)
+      - [**`ORIGIN_CAVEAT_CONFIGS`**](#origin_caveat_configs)
   - [HODL Invoices](#hodl-invoices)
     - [Example Implementation and Access Flow](#example-implementation-and-access-flow)
     - [Generation](#generation)
@@ -319,7 +319,7 @@ app.use((req, res, next) => {
   }
   next()
 })
-app.use(boltwall{ hodl: true })
+app.use(boltwall({ hodl: true }))
 // all routes after this will require payment to a hodl invoice
 app.get('/protected', (req, res) => res.send('This route is protected'))
 ```
