@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import isBase64 from 'is-base64'
 import lnService from 'ln-service'
 
-import { testEnvVars, getEnvVars } from '../helpers'
+import { testEnvVars, getEnvVars, isHex } from '../helpers'
 
 export default function parseEnv(
   req: Request,
@@ -22,10 +22,10 @@ export default function parseEnv(
     // If LND vars aren't base64 strings, assume they are files
     let mac: string | undefined = LND_MACAROON
     let lndCert: string | undefined = LND_TLS_CERT
-    if (mac && !isBase64(mac)) {
+    if (mac && !isBase64(LND_MACAROON) && !isHex(mac)) {
       mac = Buffer.from(fs.readFileSync(mac)).toString('base64')
     }
-    if (lndCert && !isBase64(lndCert)) {
+    if (lndCert && !isBase64(lndCert) && !isHex(lndCert)) {
       lndCert = Buffer.from(fs.readFileSync(lndCert)).toString('base64')
     }
 
