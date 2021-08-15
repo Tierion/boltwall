@@ -19,7 +19,7 @@ import { getOriginFromRequest } from '../helpers'
  * // Always returns `Request made for authorization restricted to single origin`
  * @returns {string}
  */
-const getOriginInvoiceDescription: DescriptionGetter = () =>
+const getOriginInvoiceDescription: DescriptionGetter = (): string =>
   `Request made for authorization restricted to single origin`
 
 /**

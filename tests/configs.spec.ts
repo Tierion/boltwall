@@ -92,6 +92,7 @@ describe('configs', () => {
 
     it('should return the expected invoice description', () => {
       const { getInvoiceDescription } = config
+
       if (!getInvoiceDescription)
         throw new Error('expected to have invoice description getter')
 
