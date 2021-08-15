@@ -12,21 +12,17 @@ import {
 } from '../typings'
 import { Caveat, expirationSatisfier } from 'lsat-js'
 
-const getTimeValueFromRequest = (req: Request, amount: number): number => {
-  let time
-
+const getSecondsToPayFor = (req: Request, amount: number): number => {
+  let seconds
   if (req.boltwallConfig && req.boltwallConfig.rate) {
     // rate is expected to be in satoshis per second
     const rate = req.boltwallConfig.rate
-    const seconds = amount / rate
-    // need to convert seconds to milliseconds
-    time = Date.now() + Math.floor(seconds * 1000)
+    seconds = amount / rate
   } else {
-    // amount is in satoshis which is equal to the amount of seconds paid for
-    const milli: number = amount * 1000
-    time = Date.now() + milli
+    seconds = amount
   }
-  return time
+
+  return Math.ceil(seconds)
 }
 /**
  * @type {CaveatGetter}
@@ -43,12 +39,16 @@ const getTimeCaveat: CaveatGetter = (
       ? parseInt(invoice.amount, 10)
       : invoice.amount
 
-  let time = getTimeValueFromRequest(req, amount)
+  // need to convert seconds to milliseconds
+  let time = Date.now() + getSecondsToPayFor(req, amount) * 1000
 
   // add 200 milliseconds of "free time" as a buffer
   time += 200
 
-  const caveat = new Caveat({ condition: 'expiration', value: time.toString() })
+  const caveat = new Caveat({
+    condition: 'expiration',
+    value: time.toString(),
+  })
   return caveat.encode()
 }
 
@@ -70,7 +70,7 @@ const getTimedInvoiceDescription: DescriptionGetter = (req, tokens) => {
     if (!title) title = '[unknown data]'
     info = `${title} in ${appName}`
   }
-  if (!time && tokens) time = getTimeValueFromRequest(req, tokens)
+  if (!time && tokens) time = getSecondsToPayFor(req, tokens)
   else if (!time && amount) time = amount
 
   return `Payment to access ${info} for ${time} seconds`
