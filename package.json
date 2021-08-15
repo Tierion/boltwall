@@ -1,6 +1,6 @@
 {
   "name": "boltwall",
-  "version": "6.0.1",
+  "version": "6.0.2",
   "description": "A Nodejs + Express middleware for adding a lightning-based paywall to API routes w/ macaroons for flexible delegation.",
   "main": "dist/index.js",
   "repository": "git@github.com:Tierion/boltwall.git",
@@ -34,7 +34,7 @@
     "ln-service": "https://github.com/bucko13/ln-service#path",
     "lsat-js": "^2.0.0",
     "macaroon": "git+https://github.com/tierion/js-macaroon.git#ts",
-    "opennode": "1.1.1",
+    "opennode": "1.2.1",
     "request-promise": "^4.2.5",
     "request-promise-native": "^1.0.8",
     "secp256k1": "^4.0.0",
