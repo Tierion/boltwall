@@ -89,8 +89,8 @@
 							<li><a href="#authentication-flow">Authentication Flow</a></li>
 							<li><a href="#custom-authorization-w-macaroons">Custom Authorization w/ Macaroons</a></li>
 							<li><a href="#pre-built-configs">Pre-built Configs</a><ul>
-									<li><a href="#timecaveatconfigs"><strong><code>TIME_CAVEAT_CONFIGS</code></strong></a></li>
-									<li><a href="#origincaveatconfigs"><strong><code>ORIGIN_CAVEAT_CONFIGS</code></strong></a></li>
+									<li><a href="#time_caveat_configs"><strong><code>TIME_CAVEAT_CONFIGS</code></strong></a></li>
+									<li><a href="#origin_caveat_configs"><strong><code>ORIGIN_CAVEAT_CONFIGS</code></strong></a></li>
 									<li><a href="#hodl-invoices">HODL Invoices</a></li>
 								</ul>
 							</li>
@@ -350,7 +350,7 @@ app.use(boltwall(TIME_CAVEAT_CONFIGS))
   }
   next()
 })
-app.use(boltwall{ <span class="hljs-attr">hodl</span>: <span class="hljs-literal">true</span> })
+app.use(boltwall({ <span class="hljs-attr">hodl</span>: <span class="hljs-literal">true</span> }))
 <span class="hljs-comment">// all routes after this will require payment to a hodl invoice</span>
 app.get(<span class="hljs-string">'/protected'</span>, (req, res) =&gt; res.send(<span class="hljs-string">'This route is protected'</span>))</code></pre>
 				<ol>
