@@ -10,7 +10,7 @@ import { Satisfier } from 'lsat-js'
  * @example
  * (req) => `Access for ${req.body.amount} seconds of access.`
  */
-export type DescriptionGetter = (req: Request) => string
+export type DescriptionGetter = (req: Request, tokens?: number) => string
 
 /**
  * Describes a function that will create a caveat to attach onto a discharge macaroon.

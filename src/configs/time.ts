@@ -12,6 +12,22 @@ import {
 } from '../typings'
 import { Caveat, expirationSatisfier } from 'lsat-js'
 
+const getTimeValueFromRequest = (req: Request, amount: number): number => {
+  let time
+
+  if (req.boltwallConfig && req.boltwallConfig.rate) {
+    // rate is expected to be in satoshis per second
+    const rate = req.boltwallConfig.rate
+    const seconds = amount / rate
+    // need to convert seconds to milliseconds
+    time = Date.now() + Math.floor(seconds * 1000)
+  } else {
+    // amount is in satoshis which is equal to the amount of seconds paid for
+    const milli: number = amount * 1000
+    time = Date.now() + milli
+  }
+  return time
+}
 /**
  * @type {CaveatGetter}
  * @description Creates a general caveat where the macaroon this is attached to
@@ -27,19 +43,7 @@ const getTimeCaveat: CaveatGetter = (
       ? parseInt(invoice.amount, 10)
       : invoice.amount
 
-  let time
-
-  if (req.boltwallConfig && req.boltwallConfig.rate) {
-    // rate is expected to be in satoshis per second
-    const rate = req.boltwallConfig.rate
-    const seconds = amount / rate
-    // need to convert seconds to milliseconds
-    time = Date.now() + Math.floor(seconds * 1000)
-  } else {
-    // amount is in satoshis which is equal to the amount of seconds paid for
-    const milli: number = amount * 1000
-    time = Date.now() + milli
-  }
+  let time = getTimeValueFromRequest(req, amount)
 
   // add 200 milliseconds of "free time" as a buffer
   time += 200
@@ -55,8 +59,8 @@ const getTimeCaveat: CaveatGetter = (
  * we return an invoice description indicating what is being paid for and the time
  * for access.
  */
-const getTimedInvoiceDescription: DescriptionGetter = (req: Request) => {
-  let { time, title, appName } = req.body // time in seconds
+const getTimedInvoiceDescription: DescriptionGetter = (req, tokens) => {
+  let { time, title, appName } = req.body
   const { amount } = req.body
 
   let info
@@ -66,7 +70,8 @@ const getTimedInvoiceDescription: DescriptionGetter = (req: Request) => {
     if (!title) title = '[unknown data]'
     info = `${title} in ${appName}`
   }
-  if (!time) time = amount
+  if (!time && tokens) time = getTimeValueFromRequest(req, tokens)
+  else if (!time && amount) time = amount
 
   return `Payment to access ${info} for ${time} seconds`
 }

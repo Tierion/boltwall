@@ -229,7 +229,7 @@ export async function createInvoice(req: Request): Promise<InvoiceResponse> {
     boltwallConfig.oauth &&
     !(req.method === 'POST' && req.path.includes('invoice'))
 
-  let tokens = query.amount || amount
+  let tokens: number | string = query.amount || amount
 
   // if no amount is sent in the request then we use the min amount
   if (boltwallConfig && boltwallConfig.minAmount && !tokens)
@@ -256,7 +256,7 @@ This means payer can pay whatever they want for access.'
   let _description
 
   if (boltwallConfig && boltwallConfig.getInvoiceDescription)
-    _description = boltwallConfig.getInvoiceDescription(req)
+    _description = boltwallConfig.getInvoiceDescription(req, +tokens)
 
   let invoice: InvoiceResponse
   if (oauth && !query.auth_uri) {
