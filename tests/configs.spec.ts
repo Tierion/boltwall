@@ -7,7 +7,7 @@ import { Satisfier, Caveat, verifyCaveats } from 'lsat-js'
 
 describe('configs', () => {
   describe('TIME_CAVEAT_CONFIGS', () => {
-    let config: BoltwallConfig, satisfier: Satisfier
+    let config: BoltwallConfig, satisfier: Satisfier, rate: number
     beforeEach(() => {
       config = TIME_CAVEAT_CONFIGS
       if (!config.caveatSatisfiers)
@@ -15,6 +15,8 @@ describe('configs', () => {
       satisfier = Array.isArray(config.caveatSatisfiers)
         ? config.caveatSatisfiers[0]
         : config.caveatSatisfiers
+      // sats per second
+      rate = 10
     })
 
     it('should create valid caveat that expires after x seconds, where "x" is number satoshis paid', () => {
@@ -28,24 +30,24 @@ describe('configs', () => {
         ? config.getCaveats[0]
         : config.getCaveats
 
-      const amount = 1000
+      const amount = 999
 
       const result: string = getCaveats(
-        {} as Request, // not used in this getter
+        { boltwallConfig: { ...config, rate } } as Request, // not used in this getter
         { amount } as InvoiceResponse
       )
 
       // time is in milliseconds, so need to convert amount paid
-      // from satoshis (should be number of seconds) to milliseconds
-      const time = amount * 1000
+      // from satoshis (should be number of seconds) to milliseconds divided by rate
+      const expectedTime = now + (amount * 1000) / rate
+
       const convertCaveat = (): Caveat => Caveat.decode(result)
       const caveat = Caveat.decode(result)
       const value: number = +caveat.value
-
       expect(convertCaveat).to.not.throw()
       expect(value).to.be.greaterThan(now)
       // increasing the range just to account for a buffer
-      expect(value).to.be.lessThan(now + time + amount)
+      expect(value).to.be.lessThan(expectedTime + 350)
     })
 
     it('should support custom rates for adding expiration caveat', () => {
@@ -97,7 +99,7 @@ describe('configs', () => {
         throw new Error('expected to have invoice description getter')
 
       const reqBase = { method: 'GET', originalUrl: '/test', ip: '127.0.0.1' }
-      const time = 1000
+      const time = 999
       const requests = [
         {
           name: 'no appName, title, or time',

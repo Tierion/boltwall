@@ -5021,10 +5021,10 @@ opener@^1.5.2:
   resolved "https://registry.yarnpkg.com/opener/-/opener-1.5.2.tgz#5d37e1f35077b9dcac4301372271afdeb2a13598"
   integrity sha512-ur5UIdyw5Y7yEj9wLzhqXiy6GZ3Mwx0yGI+5sMn2r0N0v3cKJvUmFH5yPP+WXh9e0xfyzyJX95D8l088DNFj7A==
 
-opennode@1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/opennode/-/opennode-1.1.1.tgz#112fd83fcd66c0865cc79a8a5979721da4b98723"
-  integrity sha512-I9jljZvSTA63kFgi6N5EN7+6rRFCkxop0Rn1Wm5Zrd8CC/JC1RiuI06n4DgCp+ncgIL9YOZ1+rdXLFLBxl9xhA==
+opennode@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/opennode/-/opennode-1.2.1.tgz#5dcddbde023b69fb32cbd18ff0b3f47c165fa2d0"
+  integrity sha512-0KLUDVUCTNRmu43SEoY782vRh1+xDSaU9uE+uuinZ512yOLGZq3xJbZrEJTjrEUjcYjyQIf1qcT3KrclutTuDg==
   dependencies:
     axios "^0.18.0"
 
