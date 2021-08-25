@@ -537,9 +537,9 @@
   integrity sha512-NYrtPht0wGzhwe9+/idPaBB+TqkY9AhTvOLMkThm0IoEfLaiVQZwBwyJ5puCkO3AUCWrmcoePjp2mbFocKy4SQ==
 
 "@types/node@*":
-  version "15.0.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.2.tgz#51e9c0920d1b45936ea04341aa3e2e58d339fb67"
-  integrity sha512-p68+a+KoxpoB47015IeYZYRrdqMUcpbK8re/zpFB8Ld46LHC1lPEbp3EXgkEhAYEcPvjJF6ZO+869SQ0aH1dcA==
+  version "16.7.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.7.1.tgz#c6b9198178da504dfca1fd0be9b2e1002f1586f0"
+  integrity sha512-ncRdc45SoYJ2H4eWU9ReDfp3vtFqDYhjOsKlFFUDEn8V1Bgr2RjYal8YT5byfadWIRluhPFU6JiDOl0H6Sl87A==
 
 "@types/node@10.12.18":
   version "10.12.18"
@@ -602,9 +602,9 @@
   integrity sha512-EZQUP3hSZQyTQRfiLqelC9NMWd1kqLcmQE0dMiklxBkgi84T+cHOhnKpgk4NnOWpGX863yE6+IaGnOXUNFqDnQ==
 
 "@types/sjcl@^1.0.29":
-  version "1.0.29"
-  resolved "https://registry.yarnpkg.com/@types/sjcl/-/sjcl-1.0.29.tgz#bd154ee15421fe24be2db4a20322f38069c1ca71"
-  integrity sha512-gP9M7Oq4xAoDpuueWHeOTasccV4K6iFBEBPbR0tXejKT/e/Gkla0XcJ9REmgSCICt6y8/ubcvXFtiZ4ZLQ6BKA==
+  version "1.0.30"
+  resolved "https://registry.yarnpkg.com/@types/sjcl/-/sjcl-1.0.30.tgz#c1db866622ef4da56af081fa2e258d76fb255b89"
+  integrity sha512-4ebBtj1rx3Kh3To5RnPua+U4JzVwH2MxUmHQvAlxWpzmfmupBRyyXAIEQceon+e5tW9aBeOApTYA6EXfBysRyQ==
 
 "@types/superagent@*":
   version "4.1.4"
@@ -627,9 +627,9 @@
   integrity sha512-wHNBMnkoEBiRAd3s8KTKwIuO9biFtTf0LehITzBhSco+HQI0xkXZbLOD55SW3Aqw3oUkHstkm5SPv58yaAdFPQ==
 
 "@types/uuid@^3.4.6":
-  version "3.4.9"
-  resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-3.4.9.tgz#fcf01997bbc9f7c09ae5f91383af076d466594e1"
-  integrity sha512-XDwyIlt/47l2kWLTzw/mtrpLdB+GPSskR2n/PIcPn+VYhVO77rGhRncIR5GPU0KRzXuqkDO+J5qqrG0Y8P6jzQ==
+  version "3.4.10"
+  resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-3.4.10.tgz#637d3c8431f112edf6728ac9bdfadfe029540f48"
+  integrity sha512-BgeaZuElf7DEYZhWYDTc/XcLZXdVgFkVSTa13BqKvbnmUrxr3TJFKofUxCtDO9UQOdhnV+HPOESdHiHKZOJV1A==
 
 "@typescript-eslint/eslint-plugin@^2.9.0":
   version "2.18.0"
@@ -1251,10 +1251,10 @@ bolt09@0.0.1:
   resolved "https://registry.yarnpkg.com/bolt09/-/bolt09-0.0.1.tgz#cd62d5022928fed776ed1ecc59f3cf2e4176a258"
   integrity sha512-o9In+fstEAq3jdWZv5CJ9D5EXr3Q5y0giGfXYJvmHw3HhSeocO211XvcWl+4iX7SeflL7b1GYXOY6G/5LQMA5Q==
 
-bolt11@^1.2.7:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/bolt11/-/bolt11-1.3.1.tgz#583af1e3af1f0456be0ebeb0470af023ddfcde9b"
-  integrity sha512-dmTcJGIQ4RcSDgXMijhUO4JWskCelXhbpcedWsF7YoFcPw3QYzYWCowO0+GJFT2TvrHXtlYdbnMBT85Se8IJSA==
+bolt11@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/bolt11/-/bolt11-1.3.2.tgz#7fc13ed7b1c86fab2e57927af057df55d7841b10"
+  integrity sha512-WW86n1QdusD6t3j64B+GZLztj4skwoH/LBiiIrt7zpQvtaGJsRMavv22tDwoDBF/Yb143omPIq+R6sJaRRUP9w==
   dependencies:
     "@types/bn.js" "^4.11.3"
     bech32 "^1.1.2"
@@ -4117,15 +4117,15 @@ lru-cache@^6.0.0:
   dependencies:
     yallist "^4.0.0"
 
-lsat-js@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/lsat-js/-/lsat-js-2.0.0.tgz#b50caf2efea451f75a18f899b8fe12fc0a02e6d8"
-  integrity sha512-IlNvoG8pZT3xBCRtaCXwtwEj/J3Bu0JIyhV2Rk4euynosc4iQZTql93MI5G5pcAVCSoCRHevzq7R3RaPRnnPFQ==
+lsat-js@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/lsat-js/-/lsat-js-2.0.3.tgz#1972a88b79250e3079ef0e676be836197ece89b5"
+  integrity sha512-lmxxW4kszz9RgdO7NSwRmJ/uHyQvmy6YKSY6INkrPRjjBn/wYZZnwKNYPK8OyTfe0kwEAnNKeMa6lzfZ/jR3iA==
   dependencies:
     "@types/node" "^13.1.0"
     "@types/sjcl" "^1.0.29"
     "@types/uuid" "^3.4.6"
-    bolt11 "^1.2.7"
+    bolt11 "^1.3.2"
     bsert "^0.0.10"
     bufio "^1.0.6"
     macaroon "git+https://github.com/tierion/js-macaroon.git#ts"
@@ -4514,9 +4514,9 @@ nan@^2.12.1, nan@^2.13.2:
   integrity sha512-INOFj37C7k3AfaNTtX8RhsTw7qRy7eLET14cROi9+5HAVbbHuIWUHEauBv5qT4Av2tWasiTY1Jw6puUNqRJXQg==
 
 nan@^2.14.0:
-  version "2.14.2"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.2.tgz#f5376400695168f4cc694ac9393d0c9585eeea19"
-  integrity sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.15.0.tgz#3f34a473ff18e15c1b5626b62903b5ad6e665fee"
+  integrity sha512-8ZtvEnA2c5aYCZYd1cvgdnU6cqwixRoYg70xPLWUws5ORTa/lnw+u4amixRS/Ac5U5mQVgp9pnlSUnbNWFaWZQ==
 
 nanomatch@^1.2.9:
   version "1.2.13"

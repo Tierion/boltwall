@@ -32,7 +32,7 @@
     "dotenv": "8.0.0",
     "express": "4.17.1",
     "ln-service": "https://github.com/bucko13/ln-service#path",
-    "lsat-js": "^2.0.2",
+    "lsat-js": "^2.0.3",
     "macaroon": "git+https://github.com/tierion/js-macaroon.git#ts",
     "opennode": "1.2.1",
     "request-promise": "^4.2.5",
