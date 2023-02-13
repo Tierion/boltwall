@@ -279,6 +279,11 @@ app.use(boltwall({ ...TIME_CAVEAT_CONFIGS, rate: 0.01 }))
 This creates a restriction that any authorization is only valid from the IP that originally
 made the request for access.
 
+#### **`ORIGIN_CAVEAT_CONFIGS`**
+
+This creates a restriction that any authorization is only valid for the route that originally
+was requested to access. There is an additional option to add MASTER_ROUTE to your environment variables to create an LSAT that works to access all routes.
+
 ## HODL Invoices
 
 HODL invoices are a unique payment construction in lightning that allow a payee
