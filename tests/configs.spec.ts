@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { Request } from 'express'
 
-import { TIME_CAVEAT_CONFIGS, ORIGIN_CAVEAT_CONFIGS } from '../src/configs'
+import { TIME_CAVEAT_CONFIGS, ORIGIN_CAVEAT_CONFIGS, ROUTE_CAVEAT_CONFIGS } from '../src/configs'
 import { BoltwallConfig, InvoiceResponse, CaveatGetter } from '../src/typings'
 import { Satisfier, Caveat, verifyCaveats } from 'lsat-js'
 
@@ -279,6 +279,105 @@ describe('configs', () => {
         request
       )
       expect(isValid).to.be.false
+    })
+  })
+
+  describe('ROUTE_CAVEAT_CONFIGS', () => {
+    let config: BoltwallConfig,
+      satisfier: Satisfier,
+      getCaveats: CaveatGetter,
+      condition: string
+
+    beforeEach(() => {
+      config = ROUTE_CAVEAT_CONFIGS
+      condition = 'route'
+
+      if (!config.caveatSatisfiers)
+        throw new Error('Missing caveat satisfiers on route config')
+
+      if (!config.getCaveats)
+        throw new Error('Missing caveat getter from route config')
+
+      satisfier = Array.isArray(config.caveatSatisfiers)
+        ? config.caveatSatisfiers[0]
+        : config.caveatSatisfiers
+
+      getCaveats = Array.isArray(config.getCaveats)
+        ? config.getCaveats[0]
+        : config.getCaveats
+    })
+
+    it('should create a caveat that restricts access by route and be able to satisfy it', () => {
+      const request: any = { path: '/path' }
+      const expected = 'Request made for authorization restricted to /path route'
+
+      const description = config.getInvoiceDescription ? config.getInvoiceDescription(request) : null
+      expect(description).to.equal(expected)
+    })
+
+    it('should create a caveat that restricts access by route and be able to satisfy it', () => {
+      const path = '/test'
+      const expected = new Caveat({ condition, value: path })
+
+      const request = { path }
+
+      const caveat = getCaveats(
+        (request as unknown) as Request,
+        {} as InvoiceResponse
+      )
+      const decoded = Caveat.decode(caveat)
+      const isValid = satisfier.satisfyFinal(expected, request)
+
+      expect(
+        caveat,
+        `Request to generate expected caveat`
+      ).to.equal(expected.encode())
+      expect(satisfier.condition).to.equal(decoded.condition)
+      expect(isValid).to.be.true
+      
+    })
+
+    it('should create a caveat that restricts access by route and fail to satisfy it', () => {
+      const expected = new Caveat({ condition, value: '/path' })
+      const request = { path: '/failTest' }
+
+      const actual = getCaveats(
+        (request as unknown) as Request,
+        {} as InvoiceResponse
+      )
+      const decodedActual = Caveat.decode(actual)
+      const isValid = satisfier.satisfyFinal(expected, request)
+
+      expect(
+        actual,
+        `Request to NOT generate expected caveat`
+      ).to.not.be.equal(expected.encode())
+      expect(satisfier.condition).to.equal(decodedActual.condition)
+      expect(decodedActual.condition).to.equal(expected.condition)
+      expect(decodedActual.value).to.not.equal(expected.value)
+      expect(isValid).to.be.false
+    })
+
+    it('should create a caveat that restricts access by route and satify it from master path', () => {
+      const expected = new Caveat({ condition, value: '/master' })
+      const request = { path: '/otherPath' }
+
+      const actual = getCaveats(
+        (request as unknown) as Request,
+        {} as InvoiceResponse
+      )
+      const decodedActual = Caveat.decode(actual)
+      const isValid = satisfier.satisfyFinal(expected, request)
+
+      expect(
+        actual,
+        `Expected request NOT to generate expected caveat`
+      ).to.not.be.equal(expected.encode())
+      expect(satisfier.condition).to.equal(decodedActual.condition)
+      expect(decodedActual.condition).to.equal(expected.condition)
+      expect(decodedActual.value).to.not.equal(expected.value)
+      // still valid because caveat from master route
+      expect(isValid).to.be.true
     })
   })
 })

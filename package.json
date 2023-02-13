@@ -17,7 +17,7 @@
     "build": "tsc --project tsconfig.build.json",
     "clean": "rm -rf dist && mkdir dist && rm -rf bin && mkdir bin",
     "lint": "tsc --noEmit --project tsconfig.json && eslint --ext .ts src --quiet",
-    "test": "LOG_LEVEL=none nyc ts-mocha -p tsconfig.json tests/**/*.spec.ts",
+    "test": "LOG_LEVEL=none MASTER_ROUTE=/master nyc ts-mocha -p tsconfig.json tests/**/*.spec.ts",
     "test:watch": "LOG_LEVEL=none ts-mocha -p tsconfig.json --reporter spec --watch --watch-extensions ts tests/**/*.spec.ts",
     "prepare": "npm run clean",
     "docs": "./docs.sh",

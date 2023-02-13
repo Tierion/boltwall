@@ -51,4 +51,4 @@ export function boltwall(
 }
 
 // expose common configs
-export { TIME_CAVEAT_CONFIGS, ORIGIN_CAVEAT_CONFIGS } from './configs'
+export { TIME_CAVEAT_CONFIGS, ORIGIN_CAVEAT_CONFIGS, ROUTE_CAVEAT_CONFIGS } from './configs'
