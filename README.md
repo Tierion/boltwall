@@ -283,7 +283,12 @@ made the request for access.
 #### **`ROUTE_CAVEAT_CONFIGS`**
 
 This creates a restriction that any authorization is only valid for the route that originally
-was requested to access. There is an additional option to add MASTER_ROUTE to your environment variables to create an LSAT that works to access all routes.
+was requested to access. There is an option to add a master route sto your config to create an LSAT that works to access all routes. Another option is to allow subroutes, meaning an LSAT to access "/protected" will also grant access to "/protected/images"
+
+```javascript
+app.use(boltwall({ ...ROUTE_CAVEAT_CONFIGS, masterRoute: '/master', allowSubroutes: true }))
+```
+
 
 ## HODL Invoices
 

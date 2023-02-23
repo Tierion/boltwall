@@ -289,7 +289,7 @@ describe('configs', () => {
       condition: string
 
     beforeEach(() => {
-      config = ROUTE_CAVEAT_CONFIGS
+      config = {...ROUTE_CAVEAT_CONFIGS, masterRoute: "/master"}
       condition = 'route'
 
       if (!config.caveatSatisfiers)
@@ -307,11 +307,11 @@ describe('configs', () => {
         : config.getCaveats
     })
 
-    it('should create a caveat that restricts access by route and be able to satisfy it', () => {
-      const request: any = { path: '/path' }
+    it('should create an invoice description with the route you are requesting access to', () => {
+      const request = { path: '/path' }
       const expected = 'Request made for authorization restricted to /path route'
 
-      const description = config.getInvoiceDescription ? config.getInvoiceDescription(request) : null
+      const description = config.getInvoiceDescription ? config.getInvoiceDescription(request as Request) : null
       expect(description).to.equal(expected)
     })
 
@@ -360,7 +360,7 @@ describe('configs', () => {
 
     it('should create a caveat that restricts access by route and satify it from master path', () => {
       const expected = new Caveat({ condition, value: '/master' })
-      const request = { path: '/otherPath' }
+      const request = { path: '/someOtherPath', boltwallConfig: { masterRoute: '/master' } }
 
       const actual = getCaveats(
         (request as unknown) as Request,
@@ -378,6 +378,48 @@ describe('configs', () => {
       expect(decodedActual.value).to.not.equal(expected.value)
       // still valid because caveat from master route
       expect(isValid).to.be.true
+    })
+
+    it('should create a caveat that restricts access by route and satified with a subroute when subroutes allowed', () => {
+      const expected = new Caveat({ condition, value: '/route' })
+      const request = { path: '/route/subroute', boltwallConfig: { allowSubroutes: true } }
+
+      const actual = getCaveats(
+        (request as unknown) as Request,
+        {} as InvoiceResponse
+      )
+      const decodedActual = Caveat.decode(actual)
+      const isValid = satisfier.satisfyFinal(expected, request)
+
+      expect(
+        actual,
+        `Expected request NOT to generate expected caveat`
+      ).to.not.be.equal(expected.encode())
+      expect(satisfier.condition).to.equal(decodedActual.condition)
+      expect(decodedActual.condition).to.equal(expected.condition)
+      expect(decodedActual.value).to.not.equal(expected.value)
+      expect(isValid).to.be.true
+    })
+
+    it('should create a caveat that restricts access by route and NOT satified with a subroute when subroutes NOT allowed', () => {
+      const expected = new Caveat({ condition, value: '/route' })
+      const request = { path: '/route/subroute', boltwallConfig: { allowSubroutes: false } }
+
+      const actual = getCaveats(
+        (request as unknown) as Request,
+        {} as InvoiceResponse
+      )
+      const decodedActual = Caveat.decode(actual)
+      const isValid = satisfier.satisfyFinal(expected, request)
+
+      expect(
+        actual,
+        `Expected request NOT to generate expected caveat`
+      ).to.not.be.equal(expected.encode())
+      expect(satisfier.condition).to.equal(decodedActual.condition)
+      expect(decodedActual.condition).to.equal(expected.condition)
+      expect(decodedActual.value).to.not.equal(expected.value)
+      expect(isValid).to.be.false
     })
   })
 })

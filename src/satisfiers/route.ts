@@ -1,6 +1,5 @@
 import { Satisfier, Caveat } from 'lsat-js'
 import { Request } from 'express'
-const { MASTER_ROUTE } = process.env
 
 /**
  * @description A satisfier for validating caveats based on the original route
@@ -10,10 +9,14 @@ const { MASTER_ROUTE } = process.env
 const routeSatisfier: Satisfier = {
   condition: 'route',
   satisfyFinal: (caveat: Caveat, req: Request) => {
-    const path = req.path
-    if (caveat.condition === 'route' && (caveat.value === path || caveat.value === MASTER_ROUTE)) return true
+    const master = req.boltwallConfig?.masterRoute
+    let pathMatches
+    if(req.boltwallConfig?.allowSubroutes) {
+      pathMatches = (req.path+'/').startsWith(caveat.value+'/')
+    } else pathMatches = (caveat.value === req.path)
+    if (caveat.condition === 'route' && (pathMatches || caveat.value === master)) return true
     else return false
   },
 }
 
-export default routeSatisfier
+export { routeSatisfier }
