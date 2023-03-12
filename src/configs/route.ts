@@ -14,7 +14,8 @@ import { routeSatisfier } from '../satisfiers'
  * @description Generates an invoice description indiciating that this is for payment
  * of an invoice for restricting access based on a single route.
  * @example
- * // Always returns `Request made for authorization restricted to a single route`
+ * getRouteInvoiceDescription({ path: "/protected" }) 
+ * // Returns `Request made for authorization restricted to /protected route`
  * @returns {string}
  */
 const getRouteInvoiceDescription: DescriptionGetter = (req: Request): string =>

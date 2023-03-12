@@ -2,8 +2,9 @@ import { Satisfier, Caveat } from 'lsat-js'
 import { Request } from 'express'
 
 /**
- * @description A satisfier for validating caveats based on the original route
- * used in the exported boltwallConfig ROUTE_CAVEAT_CONFIGS
+ * @description A satisfier for validating caveats by comparing the route
+ * the LSAT was created for and the requested path. A valid LSAT 
+ * created at the master route will work regardless the requested path.
  * @type Satisfier
  */
 const routeSatisfier: Satisfier = {
