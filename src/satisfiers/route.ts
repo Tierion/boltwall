@@ -11,9 +11,12 @@ const routeSatisfier: Satisfier = {
   condition: 'route',
   satisfyFinal: (caveat: Caveat, req: Request) => {
     const master = req.boltwallConfig?.masterRoute
+    const requestedPath = !req.path.endsWith('/') ? req.path+'/' : req.path
+    const caveatPath = !String(caveat.value).endsWith('/') ? caveat.value+'/' : String(caveat.value)
+    console.log({requestedPath, caveatPath})
     let pathMatches
     if(req.boltwallConfig?.allowSubroutes) {
-      pathMatches = (req.path+'/').startsWith(caveat.value+'/')
+      pathMatches = requestedPath.startsWith(caveatPath)
     } else pathMatches = (caveat.value === req.path)
     if (caveat.condition === 'route' && (pathMatches || caveat.value === master)) return true
     else return false
