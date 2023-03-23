@@ -7,6 +7,7 @@ const {
   boltwall,
   TIME_CAVEAT_CONFIGS,
   ORIGIN_CAVEAT_CONFIGS,
+  ROUTE_CAVEAT_CONFIGS
 } = require('./index')
 
 const app: express.Application = express()
@@ -45,6 +46,7 @@ const {
   PORT,
   TIME_CAVEAT,
   ORIGIN_CAVEAT,
+  ROUTE_CAVEAT,
   BOLTWALL_OAUTH,
   BOLTWALL_HODL,
   BOLTWALL_MIN_AMOUNT,
@@ -53,6 +55,7 @@ const {
 let options: BoltwallConfig = {}
 if (TIME_CAVEAT) options = TIME_CAVEAT_CONFIGS
 if (ORIGIN_CAVEAT) options = ORIGIN_CAVEAT_CONFIGS
+if (ROUTE_CAVEAT) options = ROUTE_CAVEAT_CONFIGS
 if (BOLTWALL_OAUTH) options.oauth = true
 if (BOLTWALL_HODL) options.hodl = true
 if (BOLTWALL_RATE) options.rate = +BOLTWALL_RATE

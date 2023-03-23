@@ -36,4 +36,6 @@ export interface BoltwallConfig {
   hodl?: boolean
   oauth?: boolean
   rate?: number
+  masterRoute?: string
+  allowSubroutes?: boolean
 }

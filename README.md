@@ -25,6 +25,7 @@ app.use(boltwall())
     - [Pre-built Configs](#pre-built-configs)
       - [**`TIME_CAVEAT_CONFIGS`**](#time_caveat_configs)
       - [**`ORIGIN_CAVEAT_CONFIGS`**](#origin_caveat_configs)
+      - [**`ROUTE_CAVEAT_CONFIGS`**](#route_caveat_configs)
   - [HODL Invoices](#hodl-invoices)
     - [Example Implementation and Access Flow](#example-implementation-and-access-flow)
     - [Generation](#generation)
@@ -278,6 +279,16 @@ app.use(boltwall({ ...TIME_CAVEAT_CONFIGS, rate: 0.01 }))
 
 This creates a restriction that any authorization is only valid from the IP that originally
 made the request for access.
+
+#### **`ROUTE_CAVEAT_CONFIGS`**
+
+This creates a restriction that any authorization is only valid for the route that originally
+was requested to access. There is an option to add a master route to your config to create an LSAT that works to access all routes. Another option is to allow sub-routes, meaning an LSAT to access "/protected" will also grant access to "/protected/images"
+
+```javascript
+app.use(boltwall({ ...ROUTE_CAVEAT_CONFIGS, masterRoute: '/master', allowSubroutes: true }))
+```
+
 
 ## HODL Invoices
 
