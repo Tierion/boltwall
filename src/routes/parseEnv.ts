@@ -3,21 +3,54 @@ import * as fs from 'fs'
 import isBase64 from 'is-base64'
 import lnService from 'ln-service'
 
-import { testEnvVars, getEnvVars, isHex } from '../helpers'
+import { getEnvVars, isHex } from '../helpers'
+import { loadCln } from '../cln'
 
-export default function parseEnv(
+// testEnvVars,
+
+export default async function parseEnv(
   req: Request,
   _res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   try {
-    testEnvVars(req.logger)
+    // const {
+    //   LND_TLS_CERT,
+    //   LND_MACAROON,
+    //   LND_SOCKET,
+    //   CLN_TLS_LOCATION,
+    //   CLN_TLS_KEY_LOCATION,
+    //   CLN_TLS_CHAIN_LOCATION,
+    //   CLN_URI,
+    // } = process.env
+
+    // testEnvVars(req.logger)
     const {
       OPEN_NODE_KEY,
       LND_TLS_CERT,
       LND_MACAROON,
       LND_SOCKET,
+      CLN,
+      CLN_TLS_LOCATION,
+      CLN_TLS_CHAIN_LOCATION,
+      CLN_TLS_KEY_LOCATION,
+      CLN_URI,
     } = getEnvVars()
+
+    if (CLN) {
+      let tls_location: string = CLN_TLS_LOCATION as string
+      let tls_chain_location: string = CLN_TLS_CHAIN_LOCATION as string
+      let tls_key_location: string = CLN_TLS_KEY_LOCATION as string
+      let cln_uri: string = CLN_URI as string
+      const cln = await loadCln(
+        tls_location,
+        tls_key_location,
+        tls_chain_location,
+        cln_uri
+      )
+      req.cln = cln
+      next()
+    }
 
     // If LND vars aren't base64 strings, assume they are files
     let mac: string | undefined = LND_MACAROON

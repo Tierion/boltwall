@@ -26,6 +26,11 @@ interface EnvVars {
   LND_MACAROON?: string
   SESSION_SECRET: string
   LND_SOCKET?: string
+  CLN_TLS_LOCATION?: string
+  CLN_TLS_KEY_LOCATION?: string
+  CLN_TLS_CHAIN_LOCATION?: string
+  CLN?: boolean
+  CLN_URI?: string
 }
 
 /**
@@ -47,7 +52,23 @@ export function getEnvVars(): EnvVars {
       .toString('hex')
   }
 
-  const { LND_TLS_CERT, LND_MACAROON, LND_SOCKET } = process.env
+  const {
+    LND_TLS_CERT,
+    LND_MACAROON,
+    LND_SOCKET,
+    CLN_TLS_LOCATION,
+    CLN_TLS_KEY_LOCATION,
+    CLN_TLS_CHAIN_LOCATION,
+    CLN_URI,
+  } = process.env
+
+  const hasClnConfigs: boolean =
+    CLN_TLS_LOCATION &&
+    CLN_TLS_KEY_LOCATION &&
+    CLN_TLS_CHAIN_LOCATION &&
+    CLN_URI
+      ? true
+      : false
 
   const hasLndConfigs: boolean =
     LND_TLS_CERT || LND_MACAROON || LND_SOCKET ? true : false
@@ -62,6 +83,11 @@ export function getEnvVars(): EnvVars {
     LND_MACAROON: process.env.LND_MACAROON as string,
     SESSION_SECRET: process.env.SESSION_SECRET as string,
     LND_SOCKET: process.env.LND_SOCKET as string,
+    CLN: hasClnConfigs,
+    CLN_TLS_LOCATION: process.env.CLN_TLS_LOCATION,
+    CLN_TLS_KEY_LOCATION: process.env.CLN_TLS_KEY_LOCATION,
+    CLN_TLS_CHAIN_LOCATION: process.env.CLN_TLS_CHAIN_LOCATION,
+    CLN_URI: process.env.CLN_URI,
   }
 }
 
