@@ -104,6 +104,10 @@ export function testEnvVars(logger: LoggerInterface): boolean | Error {
     LND_MACAROON,
     LND_SOCKET,
     SESSION_SECRET,
+    CLN_TLS_LOCATION,
+    CLN_TLS_KEY_LOCATION,
+    CLN_TLS_CHAIN_LOCATION,
+    CLN_URI,
   } = getEnvVars()
 
   // first check if we have a session secret w/ sufficient bytes
@@ -124,6 +128,17 @@ export function testEnvVars(logger: LoggerInterface): boolean | Error {
   // if we have no lnd configs but an OPEN_NODE_KEY then return true
   if (lndConfigs.every(config => config === undefined) && OPEN_NODE_KEY)
     return true
+
+  //Check Cln configs
+  const clnConfigs = [
+    CLN_TLS_LOCATION,
+    CLN_TLS_CHAIN_LOCATION,
+    CLN_TLS_KEY_LOCATION,
+    CLN_URI,
+  ]
+
+  //if we have all cln configs return true
+  if (clnConfigs.every(config => config !== undefined)) return true
 
   // if missing LND_SOCKET then throw an error since this is bare minimum needed to make connection
   if (lndConfigs.some(config => config === undefined) && !LND_SOCKET)

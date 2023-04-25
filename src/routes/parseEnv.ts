@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import isBase64 from 'is-base64'
 import lnService from 'ln-service'
 
-import { getEnvVars, isHex } from '../helpers'
+import { getEnvVars, isHex, testEnvVars } from '../helpers'
 import loadCln from '../configs/cln'
 
 // testEnvVars,
@@ -26,7 +26,7 @@ export default async function parseEnv(
     //   CLN_URI,
     // } = process.env
 
-    // testEnvVars(req.logger)
+    testEnvVars(req.logger)
     const {
       OPEN_NODE_KEY,
       LND_TLS_CERT,
