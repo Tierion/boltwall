@@ -383,6 +383,7 @@ export async function checkInvoiceStatus(
   lnd?: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   opennode?: any,
+  cln?: any,
   returnSecret = false
 ): Promise<InvoiceResponse> {
   if (!invoiceId) throw new Error('Missing invoice id.')
@@ -411,6 +412,14 @@ export async function checkInvoiceStatus(
     status = data.status
     payreq = data['lightning_invoice'].payreq
     createdAt = data.created_at
+  } else if (cln) {
+    const clnData = await getClnInvoice(cln, invoiceId)
+    status = clnData.status
+    amount = clnData.amount
+    payreq = clnData.payment_req
+    createdAt = ''
+    secret = clnData.secret
+    description = clnData.description
   } else {
     throw new Error(
       'No lightning node information configured on request object'
@@ -552,4 +561,50 @@ async function createClnInvoice(
 
 function convertToMsat(amount: number) {
   return Number(amount) * 1000
+}
+
+async function getClnInvoice(
+  cln: any,
+  payment_hash: string
+): Promise<{
+  amount: number
+  status: string
+  payment_req: string
+  secret: string
+  description: string
+}> {
+  try {
+    //convert payment_hash from hex to bytes
+    const payment_hash_in_bytes = Buffer.from(payment_hash, 'hex')
+    return new Promise(async (resolve, reject) => {
+      await cln.listInvoices(
+        {
+          payment_hash: payment_hash_in_bytes,
+        },
+        (err: any, response: any) => {
+          if (err) {
+            console.log(err)
+            reject(err)
+          }
+          if (response) {
+            const res = response.invoices[0]
+            const invoice = {
+              amount: convertMsatToSat(res.amount_received_msat.msat),
+              status: res.status.toLowerCase(),
+              payment_req: res.bolt11,
+              secret: res.payment_preimage.toString('hex'),
+              description: res.description,
+            }
+            resolve(invoice)
+          }
+        }
+      )
+    })
+  } catch (error) {
+    throw error
+  }
+}
+
+function convertMsatToSat(amount: string) {
+  return Number(amount) / 1000
 }
