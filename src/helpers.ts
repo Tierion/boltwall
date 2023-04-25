@@ -16,6 +16,7 @@ import { parsePaymentRequest } from 'ln-service'
 
 import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
 import { Lsat, Identifier, Caveat } from 'lsat-js'
+import { v4 as uuidv4 } from 'uuid'
 
 export const MACAROON_SUGGESTED_SECRET_LENGTH = 32
 
@@ -246,8 +247,9 @@ export function createLsatFromInvoice(
  * @returns {InvoiceResponse} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
 export async function createInvoice(req: Request): Promise<InvoiceResponse> {
-  const { lnd, opennode, body, boltwallConfig, query } = req
+  const { lnd, opennode, body, boltwallConfig, query, cln } = req
   const { expiresAt, amount } = body // time in seconds
+  const { CLN } = getEnvVars()
 
   // oauth if it's set in config and not a normal POST invoice request
   const oauth =
@@ -348,6 +350,15 @@ This means payer can pay whatever they want for access.'
       auto_settle: false,
     })
     invoice = { payreq, id, description, createdAt, amount }
+  } else if (CLN) {
+    const clnInvoice = await createClnInvoice(cln, tokens, _description)
+    invoice = {
+      payreq: clnInvoice.bolt11,
+      id: clnInvoice.payment_hash,
+      description: _description,
+      amount: tokens,
+      createdAt: '',
+    }
   } else {
     throw new Error(
       'No lightning node information configured on request object'
@@ -492,4 +503,53 @@ export function decodeChallengeCaveat(c: string): TokenChallenge {
   if (signature && signature.length) return { ...decoded, signature }
 
   return decoded
+}
+
+async function createClnInvoice(
+  cln: any,
+  token: string | number,
+  description: string | undefined
+): Promise<{
+  payment_hash: string
+  bolt11: ''
+}> {
+  try {
+    const label = uuidv4()
+    let params = {}
+    if (!token) {
+      params = {
+        amount_msat: { any: true },
+        label,
+        description,
+      }
+    } else {
+      params = {
+        amount_msat: { amount: { msat: convertToMsat(token as number) } },
+        label,
+        description,
+      }
+    }
+
+    return new Promise(async (resolve, reject) => {
+      await cln.invoice(params, (err: any, response: any) => {
+        if (err) {
+          console.log(err)
+          reject(err)
+        }
+        if (response) {
+          resolve({
+            payment_hash: response.payment_hash.toString('hex'),
+            bolt11: response.bolt11,
+          })
+        }
+      })
+    })
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
+}
+
+function convertToMsat(amount: number) {
+  return Number(amount) * 1000
 }

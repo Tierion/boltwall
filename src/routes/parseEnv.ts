@@ -4,9 +4,11 @@ import isBase64 from 'is-base64'
 import lnService from 'ln-service'
 
 import { getEnvVars, isHex } from '../helpers'
-import { loadCln } from '../cln'
+import loadCln from '../configs/cln'
 
 // testEnvVars,
+
+// import * as grpc from 'grpc'
 
 export default async function parseEnv(
   req: Request,
@@ -37,21 +39,6 @@ export default async function parseEnv(
       CLN_URI,
     } = getEnvVars()
 
-    if (CLN) {
-      let tls_location: string = CLN_TLS_LOCATION as string
-      let tls_chain_location: string = CLN_TLS_CHAIN_LOCATION as string
-      let tls_key_location: string = CLN_TLS_KEY_LOCATION as string
-      let cln_uri: string = CLN_URI as string
-      const cln = await loadCln(
-        tls_location,
-        tls_key_location,
-        tls_chain_location,
-        cln_uri
-      )
-      req.cln = cln
-      next()
-    }
-
     // If LND vars aren't base64 strings, assume they are files
     let mac: string | undefined = LND_MACAROON
     let lndCert: string | undefined = LND_TLS_CERT
@@ -61,10 +48,19 @@ export default async function parseEnv(
     if (lndCert && !isBase64(lndCert) && !isHex(lndCert)) {
       lndCert = Buffer.from(fs.readFileSync(lndCert)).toString('base64')
     }
-
+    //Try loading CLN first
+    if (CLN) {
+      const cln = await loadCln(
+        CLN_TLS_LOCATION as string,
+        CLN_TLS_KEY_LOCATION as string,
+        CLN_TLS_CHAIN_LOCATION as string,
+        CLN_URI as string
+      )
+      req.cln = cln
+    }
     // if the tests pass above and we don't have a
     // OPEN_NODE_KEY then we need to setup the lnd service
-    if (!OPEN_NODE_KEY) {
+    else if (!OPEN_NODE_KEY) {
       const { lnd } = lnService.authenticatedLndGrpc({
         cert: lndCert,
         macaroon: mac,
