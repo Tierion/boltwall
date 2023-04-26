@@ -11,5 +11,6 @@ declare namespace Express {
     lnd?: any
     opennode?: any
     hostname: string
+    cln?: any
   }
 }

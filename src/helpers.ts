@@ -16,6 +16,7 @@ import { parsePaymentRequest } from 'ln-service'
 
 import { InvoiceResponse, CaveatGetter, LoggerInterface } from './typings'
 import { Lsat, Identifier, Caveat } from 'lsat-js'
+import { v4 as uuidv4 } from 'uuid'
 
 export const MACAROON_SUGGESTED_SECRET_LENGTH = 32
 
@@ -26,6 +27,11 @@ interface EnvVars {
   LND_MACAROON?: string
   SESSION_SECRET: string
   LND_SOCKET?: string
+  CLN_TLS_LOCATION?: string
+  CLN_TLS_KEY_LOCATION?: string
+  CLN_TLS_CHAIN_LOCATION?: string
+  CLN?: boolean
+  CLN_URI?: string
 }
 
 /**
@@ -47,7 +53,23 @@ export function getEnvVars(): EnvVars {
       .toString('hex')
   }
 
-  const { LND_TLS_CERT, LND_MACAROON, LND_SOCKET } = process.env
+  const {
+    LND_TLS_CERT,
+    LND_MACAROON,
+    LND_SOCKET,
+    CLN_TLS_LOCATION,
+    CLN_TLS_KEY_LOCATION,
+    CLN_TLS_CHAIN_LOCATION,
+    CLN_URI,
+  } = process.env
+
+  const hasClnConfigs: boolean =
+    CLN_TLS_LOCATION &&
+    CLN_TLS_KEY_LOCATION &&
+    CLN_TLS_CHAIN_LOCATION &&
+    CLN_URI
+      ? true
+      : false
 
   const hasLndConfigs: boolean =
     LND_TLS_CERT || LND_MACAROON || LND_SOCKET ? true : false
@@ -62,6 +84,11 @@ export function getEnvVars(): EnvVars {
     LND_MACAROON: process.env.LND_MACAROON as string,
     SESSION_SECRET: process.env.SESSION_SECRET as string,
     LND_SOCKET: process.env.LND_SOCKET as string,
+    CLN: hasClnConfigs,
+    CLN_TLS_LOCATION: process.env.CLN_TLS_LOCATION,
+    CLN_TLS_KEY_LOCATION: process.env.CLN_TLS_KEY_LOCATION,
+    CLN_TLS_CHAIN_LOCATION: process.env.CLN_TLS_CHAIN_LOCATION,
+    CLN_URI: process.env.CLN_URI,
   }
 }
 
@@ -77,6 +104,10 @@ export function testEnvVars(logger: LoggerInterface): boolean | Error {
     LND_MACAROON,
     LND_SOCKET,
     SESSION_SECRET,
+    CLN_TLS_LOCATION,
+    CLN_TLS_KEY_LOCATION,
+    CLN_TLS_CHAIN_LOCATION,
+    CLN_URI,
   } = getEnvVars()
 
   // first check if we have a session secret w/ sufficient bytes
@@ -97,6 +128,17 @@ export function testEnvVars(logger: LoggerInterface): boolean | Error {
   // if we have no lnd configs but an OPEN_NODE_KEY then return true
   if (lndConfigs.every(config => config === undefined) && OPEN_NODE_KEY)
     return true
+
+  //Check Cln configs
+  const clnConfigs = [
+    CLN_TLS_LOCATION,
+    CLN_TLS_CHAIN_LOCATION,
+    CLN_TLS_KEY_LOCATION,
+    CLN_URI,
+  ]
+
+  //if we have all cln configs return true
+  if (clnConfigs.every(config => config !== undefined)) return true
 
   // if missing LND_SOCKET then throw an error since this is bare minimum needed to make connection
   if (lndConfigs.some(config => config === undefined) && !LND_SOCKET)
@@ -220,8 +262,9 @@ export function createLsatFromInvoice(
  * @returns {InvoiceResponse} invoice - returns an invoice with a payreq, id, description, createdAt, and
  */
 export async function createInvoice(req: Request): Promise<InvoiceResponse> {
-  const { lnd, opennode, body, boltwallConfig, query } = req
+  const { lnd, opennode, body, boltwallConfig, query, cln } = req
   const { expiresAt, amount } = body // time in seconds
+  const { CLN } = getEnvVars()
 
   // oauth if it's set in config and not a normal POST invoice request
   const oauth =
@@ -322,6 +365,15 @@ This means payer can pay whatever they want for access.'
       auto_settle: false,
     })
     invoice = { payreq, id, description, createdAt, amount }
+  } else if (CLN) {
+    const clnInvoice = await createClnInvoice(cln, tokens, _description)
+    invoice = {
+      payreq: clnInvoice.bolt11,
+      id: clnInvoice.payment_hash,
+      description: _description,
+      amount: tokens,
+      createdAt: '',
+    }
   } else {
     throw new Error(
       'No lightning node information configured on request object'
@@ -346,6 +398,7 @@ export async function checkInvoiceStatus(
   lnd?: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   opennode?: any,
+  cln?: any,
   returnSecret = false
 ): Promise<InvoiceResponse> {
   if (!invoiceId) throw new Error('Missing invoice id.')
@@ -374,6 +427,14 @@ export async function checkInvoiceStatus(
     status = data.status
     payreq = data['lightning_invoice'].payreq
     createdAt = data.created_at
+  } else if (cln) {
+    const clnData = await getClnInvoice(cln, invoiceId)
+    status = clnData.status
+    amount = clnData.amount
+    payreq = clnData.payment_req
+    createdAt = ''
+    secret = clnData.secret
+    description = clnData.description
   } else {
     throw new Error(
       'No lightning node information configured on request object'
@@ -466,4 +527,99 @@ export function decodeChallengeCaveat(c: string): TokenChallenge {
   if (signature && signature.length) return { ...decoded, signature }
 
   return decoded
+}
+
+async function createClnInvoice(
+  cln: any,
+  token: string | number,
+  description: string | undefined
+): Promise<{
+  payment_hash: string
+  bolt11: ''
+}> {
+  try {
+    const label = uuidv4()
+    let params = {}
+    if (!token) {
+      params = {
+        amount_msat: { any: true },
+        label,
+        description,
+      }
+    } else {
+      params = {
+        amount_msat: { amount: { msat: convertToMsat(token as number) } },
+        label,
+        description,
+      }
+    }
+
+    return new Promise(async (resolve, reject) => {
+      await cln.invoice(params, (err: any, response: any) => {
+        if (err) {
+          console.log(err)
+          reject(err)
+        }
+        if (response) {
+          resolve({
+            payment_hash: response.payment_hash.toString('hex'),
+            bolt11: response.bolt11,
+          })
+        }
+      })
+    })
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
+}
+
+function convertToMsat(amount: number) {
+  return Number(amount) * 1000
+}
+
+async function getClnInvoice(
+  cln: any,
+  payment_hash: string
+): Promise<{
+  amount: number
+  status: string
+  payment_req: string
+  secret: string
+  description: string
+}> {
+  try {
+    //convert payment_hash from hex to bytes
+    const payment_hash_in_bytes = Buffer.from(payment_hash, 'hex')
+    return new Promise(async (resolve, reject) => {
+      await cln.listInvoices(
+        {
+          payment_hash: payment_hash_in_bytes,
+        },
+        (err: any, response: any) => {
+          if (err) {
+            console.log(err)
+            reject(err)
+          }
+          if (response) {
+            const res = response.invoices[0]
+            const invoice = {
+              amount: convertMsatToSat(res.amount_received_msat.msat),
+              status: res.status.toLowerCase(),
+              payment_req: res.bolt11,
+              secret: res.payment_preimage.toString('hex'),
+              description: res.description,
+            }
+            resolve(invoice)
+          }
+        }
+      )
+    })
+  } catch (error) {
+    throw error
+  }
+}
+
+function convertMsatToSat(amount: string) {
+  return Number(amount) / 1000
 }
