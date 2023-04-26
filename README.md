@@ -13,7 +13,7 @@ app.use(boltwall())
 ```
 
 - [⚡️ Boltwall ⚡️](#%e2%9a%a1%ef%b8%8f-boltwall-%e2%9a%a1%ef%b8%8f)
-    - [Supported Features](#supported-features)
+  - [Supported Features](#supported-features)
   - [System Requirements](#system-requirements)
   - [Usage](#usage)
   - [Test the API](#test-the-api)
@@ -149,7 +149,7 @@ for authentication/authorization.
 
 ### Lightning Configs
 
-**Lightning configs (either lnd connection info _or_ OpenNode API key depending on connection type)
+**Lightning configs (either lnd connection info, core lightning(cln) _or_ OpenNode API key depending on connection type)
 are required environment variables**
 
 If you are connecting to a lightning node you will need the following in your project's `.env` file
@@ -174,6 +174,22 @@ OPEN_NODE_KEY=[API KEY HERE]
 ```
 
 If you have both the lnd configs and OpenNode, _lnd will take precedence_.
+
+Alternatively, if you are using Core Lightning for managing payments,
+You will have to provide the details below for your node
+
+```
+CLN_TLS_LOCATION=["/path/to/ca.pem"]
+CLN_TLS_KEY_LOCATION=["/path/to/client-key.pem"]
+CLN_TLS_CHAIN_LOCATION=["/path/to/client.pem"]
+CLN_URI=[address of node here, e.g.localhost:10020]
+```
+
+#### Note
+
+The CLN currently only supports the paywall feature.
+
+Also, you will need to have a folder named `proto` at the root of your project, with two files name `cln.proto` and `primitives.proto` respectively. You can get the content of `cln.proto` [from here](https://github.com/ElementsProject/lightning/blob/master/cln-grpc/proto/node.proto) and the content of `primitives.proto` [from here](https://github.com/ElementsProject/lightning/blob/master/cln-grpc/proto/primitives.proto).
 
 A `SESSION_SECRET` can also be set but will be generated with a secure number of random bytes if
 none is provided.
@@ -286,9 +302,14 @@ This creates a restriction that any authorization is only valid for the route th
 was requested to access. There is an option to add a master route to your config to create an LSAT that works to access all routes. Another option is to allow sub-routes, meaning an LSAT to access "/protected" will also grant access to "/protected/images"
 
 ```javascript
-app.use(boltwall({ ...ROUTE_CAVEAT_CONFIGS, masterRoute: '/master', allowSubroutes: true }))
+app.use(
+  boltwall({
+    ...ROUTE_CAVEAT_CONFIGS,
+    masterRoute: '/master',
+    allowSubroutes: true,
+  })
+)
 ```
-
 
 ## HODL Invoices
 
@@ -323,9 +344,9 @@ app.use((req, res, next) => {
     // otherwise the hodl invoice can't be redeemed
     const secret = crypto.randomBytes(32)
     const paymentHash = crypto
-        .createHash('sha256')
-        .update(secret)
-        .digest()
+      .createHash('sha256')
+      .update(secret)
+      .digest()
     req.body.paymentHash = paymentHash
   }
   next()
