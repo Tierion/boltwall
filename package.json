@@ -1,6 +1,6 @@
 {
-  "name": "boltwall-cln-support",
-  "version": "6.0.14",
+  "name": "boltwall",
+  "version": "6.0.4",
   "description": "A Nodejs + Express middleware for adding a lightning-based paywall to API routes w/ macaroons for flexible delegation.",
   "main": "dist/index.js",
   "repository": "git@github.com:Tierion/boltwall.git",
